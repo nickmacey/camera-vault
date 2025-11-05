@@ -16,6 +16,7 @@ interface PhotoCardProps {
 }
 
 const PhotoCard = ({ photo, onClick }: PhotoCardProps) => {
+  const displayScore = cleanScore(photo.score, photo.description);
   const displayDescription = cleanDescription(photo.description);
 
   return (
