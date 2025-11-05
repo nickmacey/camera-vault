@@ -9,47 +9,53 @@ export function cn(...inputs: ClassValue[]) {
 export function cleanDescription(description: string | null | undefined): string {
   if (!description) return "";
   
-  let cleaned = description;
+  let cleaned = description.trim();
   
   // Remove markdown code blocks
   cleaned = cleaned.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
   
-  // If it's a JSON object, try to parse and extract description
-  if (cleaned.trim().startsWith('{')) {
+  // If it's a JSON object or starts with {, try to parse and extract description
+  if (cleaned.startsWith('{')) {
     try {
       const parsed = JSON.parse(cleaned);
       if (parsed.description) {
         return parsed.description;
       }
     } catch (e) {
-      // If parsing fails, try regex extraction
-      const match = cleaned.match(/"description"\s*:\s*"([^"]+)"/i);
+      // If parsing fails, try regex extraction for description value
+      const match = cleaned.match(/"description"\s*:\s*"([^"]*(?:\\.[^"]*)*)"/i);
       if (match) {
-        return match[1];
+        return match[1].replace(/\\"/g, '"');
       }
     }
   }
   
-  // Remove any remaining JSON-like syntax
-  cleaned = cleaned.replace(/^\{.*?"description"\s*:\s*"/i, '');
-  cleaned = cleaned.replace(/"[,\}].*$/g, '');
+  // If it contains JSON-like structure but parsing failed, extract manually
+  if (cleaned.includes('"description"')) {
+    const match = cleaned.match(/"description"\s*:\s*"([^"]*(?:\\.[^"]*)*)"/i);
+    if (match) {
+      return match[1].replace(/\\"/g, '"');
+    }
+  }
   
-  return cleaned.trim();
+  return cleaned;
 }
 
 // Extract score from potentially JSON-wrapped data
 export function cleanScore(score: number | null | undefined, description: string | null | undefined): number | null {
-  if (score !== null && score !== undefined) return score;
+  if (score !== null && score !== undefined && score > 0) return score;
   
   // Try to extract from description if it contains JSON
   if (description && description.includes('"score"')) {
+    const trimmed = description.trim();
     try {
-      const parsed = JSON.parse(description);
-      if (parsed.score !== undefined) {
-        return parsed.score;
+      const parsed = JSON.parse(trimmed);
+      if (parsed.score !== undefined && parsed.score !== null) {
+        return Number(parsed.score);
       }
     } catch (e) {
-      const match = description.match(/"score"\s*:\s*(\d+(?:\.\d+)?)/i);
+      // Regex to extract score value
+      const match = trimmed.match(/"score"\s*:\s*(\d+(?:\.\d+)?)/i);
       if (match) {
         return parseFloat(match[1]);
       }
@@ -57,4 +63,21 @@ export function cleanScore(score: number | null | undefined, description: string
   }
   
   return null;
+}
+
+// Generate a display name from description
+export function generateNameFromDescription(description: string | null | undefined, fallback: string = "Untitled"): string {
+  const cleaned = cleanDescription(description);
+  if (!cleaned) return fallback;
+  
+  // Take first 50 characters of description
+  const truncated = cleaned.substring(0, 50);
+  
+  // Split into words and take first 3-5 words
+  const words = truncated.split(/\s+/).slice(0, 4);
+  
+  // Capitalize first letter of each word and join
+  return words
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
 }
