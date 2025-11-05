@@ -33,7 +33,7 @@ const PhotoCard = ({ photo, onClick }: PhotoCardProps) => {
         {displayScore !== null && (
           <div className="absolute top-2 right-2">
             <div className="bg-green-500 text-white text-sm font-bold px-3 py-1 rounded-full shadow-lg">
-              {displayScore.(score?: number;)}
+              {displayScore.toFixed(1)}
             </div>
           </div>
         )}
