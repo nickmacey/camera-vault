@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cleanDescription, cleanScore } from "@/lib/utils";
 
 interface Photo {
   id: string;
@@ -23,6 +24,9 @@ export const Lightbox = ({ photo, photos, onClose, onNavigate }: LightboxProps) 
   const currentIndex = photos.findIndex(p => p.id === photo.id);
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < photos.length - 1;
+  
+  const displayScore = cleanScore(photo.score, photo.description);
+  const displayDescription = cleanDescription(photo.description);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -91,9 +95,9 @@ export const Lightbox = ({ photo, photos, onClose, onNavigate }: LightboxProps) 
         onClick={(e) => e.stopPropagation()}
       >
         <div className="relative">
-          {photo.score && (
+          {displayScore && (
             <div className="absolute top-4 right-4 z-10 bg-red-500 text-white text-lg font-bold px-4 py-2 rounded-full shadow-lg">
-              {photo.score.toFixed(1)}
+              {displayScore.toFixed(1)}
             </div>
           )}
           <img
@@ -108,9 +112,9 @@ export const Lightbox = ({ photo, photos, onClose, onNavigate }: LightboxProps) 
           <h3 className="text-xl font-semibold text-white mb-2">
             {photo.filename.replace(/\.(jpg|jpeg|png|gif|webp)$/i, '')}
           </h3>
-          {photo.description && (
+          {displayDescription && (
             <p className="text-gray-300 text-sm leading-relaxed">
-              {photo.description.replace(/```json\s*/gi, '').replace(/```\s*/g, '').replace(/^\{.*?"description"\s*:\s*"/i, '').replace(/"[,\}].*$/g, '')}
+              {displayDescription}
             </p>
           )}
           {photo.width && photo.height && (

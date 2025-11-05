@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { cleanDescription, cleanScore } from "@/lib/utils";
 
 interface PhotoCardProps {
   photo: {
@@ -14,6 +15,9 @@ interface PhotoCardProps {
 }
 
 const PhotoCard = ({ photo, onClick }: PhotoCardProps) => {
+  const displayScore = cleanScore(photo.score, photo.description);
+  const displayDescription = cleanDescription(photo.description);
+  
   return (
     <Card 
       className="overflow-hidden group hover:shadow-lg transition-all duration-300 cursor-pointer"
@@ -25,10 +29,10 @@ const PhotoCard = ({ photo, onClick }: PhotoCardProps) => {
           alt={photo.filename}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
-        {photo.score && (
+        {displayScore && (
           <div className="absolute top-2 right-2">
             <div className="bg-red-500 text-white text-sm font-bold px-3 py-1 rounded-full shadow-lg">
-              {photo.score.toFixed(1)}
+              {displayScore.toFixed(1)}
             </div>
           </div>
         )}
@@ -38,9 +42,9 @@ const PhotoCard = ({ photo, onClick }: PhotoCardProps) => {
         <h3 className="font-semibold text-sm mb-1 truncate">
           {photo.filename.replace(/\.(jpg|jpeg|png|gif|webp)$/i, '')}
         </h3>
-        {photo.description && (
+        {displayDescription && (
           <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
-            {photo.description.replace(/```json\s*/gi, '').replace(/```\s*/g, '').replace(/^\{.*?"description"\s*:\s*"/i, '').replace(/"[,\}].*$/g, '')}
+            {displayDescription}
           </p>
         )}
       </div>
