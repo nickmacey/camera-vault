@@ -18,6 +18,15 @@ interface PhotoCardProps {
 const PhotoCard = ({ photo, onClick }: PhotoCardProps) => {
   const displayScore = cleanScore(photo.score, photo.description);
   const displayDescription = cleanDescription(photo.description);
+  
+  // Debug logging
+  console.log('PhotoCard Debug:', {
+    filename: photo.filename,
+    rawScore: photo.score,
+    rawDescription: photo.description,
+    displayScore,
+    displayDescription: displayDescription.substring(0, 100)
+  });
 
   return (
     <Card
