@@ -6,6 +6,7 @@ interface PhotoCardProps {
     id: string;
     url: string;
     filename: string;
+    name?: string;
     description?: string;
     score?: number;
     width?: number;
@@ -15,11 +16,10 @@ interface PhotoCardProps {
 }
 
 const PhotoCard = ({ photo, onClick }: PhotoCardProps) => {
-  const displayScore = cleanScore(photo.score, photo.description);
   const displayDescription = cleanDescription(photo.description);
-  
+
   return (
-    <Card 
+    <Card
       className="overflow-hidden group hover:shadow-lg transition-all duration-300 cursor-pointer"
       onClick={onClick}
     >
@@ -31,7 +31,7 @@ const PhotoCard = ({ photo, onClick }: PhotoCardProps) => {
         />
         {displayScore !== null && (
           <div className="absolute top-2 right-2">
-            <div className="bg-red-500 text-white text-sm font-bold px-3 py-1 rounded-full shadow-lg">
+            <div className="bg-green-500 text-white text-sm font-bold px-3 py-1 rounded-full shadow-lg">
               {displayScore.toFixed(1)}
             </div>
           </div>
@@ -40,12 +40,10 @@ const PhotoCard = ({ photo, onClick }: PhotoCardProps) => {
 
       <div className="p-4">
         <h3 className="font-semibold text-sm mb-1 truncate">
-          {photo.filename.replace(/\.(jpg|jpeg|png|gif|webp)$/i, '')}
+          {photo.filename.replace(/\.(jpg|jpeg|png|gif|webp)$/i, "")}
         </h3>
         {displayDescription && (
-          <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
-            {displayDescription}
-          </p>
+          <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">{displayDescription}</p>
         )}
       </div>
     </Card>
