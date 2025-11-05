@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cleanDescription, cleanScore, generateNameFromDescription } from "@/lib/utils";
+import { cleanDescription, cleanScore } from "@/lib/utils";
 
 interface Photo {
   id: string;
@@ -27,7 +27,6 @@ export const Lightbox = ({ photo, photos, onClose, onNavigate }: LightboxProps) 
   
   const displayScore = cleanScore(photo.score, photo.description);
   const displayDescription = cleanDescription(photo.description);
-  const displayName = generateNameFromDescription(photo.description, photo.filename);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -103,7 +102,7 @@ export const Lightbox = ({ photo, photos, onClose, onNavigate }: LightboxProps) 
           )}
           <img
             src={photo.url}
-            alt={displayName}
+            alt={photo.filename}
             className="max-w-full max-h-[70vh] object-contain rounded-lg"
           />
         </div>
@@ -111,7 +110,7 @@ export const Lightbox = ({ photo, photos, onClose, onNavigate }: LightboxProps) 
         {/* Photo info */}
         <div className="mt-4 text-center max-w-2xl">
           <h3 className="text-xl font-semibold text-white mb-2">
-            {displayName}
+            {photo.filename.replace(/\.(jpg|jpeg|png|gif|webp)$/i, '')}
           </h3>
           {displayDescription && (
             <p className="text-gray-300 text-sm leading-relaxed">
