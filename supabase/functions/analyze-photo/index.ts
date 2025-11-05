@@ -5,6 +5,16 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Generate a URL-friendly slug from text
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .substring(0, 50);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -29,14 +39,23 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: "You are a professional photo critic. Analyze photos and provide a score from 0-10 and a brief description. Return ONLY valid JSON with 'score' (number) and 'description' (string) fields."
+            content: "You are a professional photo critic. Analyze photos objectively and provide clear, natural descriptions that highlight what makes each photo special or noteworthy."
           },
           {
             role: "user",
             content: [
               {
                 type: "text",
-                text: `Analyze this photo (${filename}) and rate it from 0-10 based on composition, lighting, subject matter, and overall impact. Provide a score and brief description.`
+                text: `Analyze this photo and rate it from 0-10 based on composition, lighting, subject matter, and overall impact. 
+
+Return your response as valid JSON with exactly these fields:
+{
+  "score": <number between 0-10>,
+  "description": "<2-3 sentence natural description of what makes this photo interesting or noteworthy>",
+  "suggestedName": "<short 2-4 word descriptive title for this photo>"
+}
+
+Be specific and descriptive but natural - avoid technical jargon.`
               },
               {
                 type: "image_url",
@@ -69,25 +88,44 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const content = data.choices[0]?.message?.content || "{}";
+    let content = data.choices[0]?.message?.content || "{}";
+    
+    // Clean up markdown code blocks if present
+    content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
     
     let analysis;
     try {
       analysis = JSON.parse(content);
-    } catch {
+    } catch (e) {
+      console.error("Failed to parse AI response:", content);
       // If AI didn't return valid JSON, extract info manually
       const scoreMatch = content.match(/score[:\s]+(\d+(?:\.\d+)?)/i);
       const score = scoreMatch ? parseFloat(scoreMatch[1]) : 5.0;
+      
+      // Try to extract description
+      let description = content.substring(0, 200);
+      const descMatch = content.match(/description[:\s]+"([^"]+)"/i);
+      if (descMatch) {
+        description = descMatch[1];
+      }
+      
       analysis = {
         score: Math.min(10, Math.max(0, score)),
-        description: content.substring(0, 200)
+        description: description,
+        suggestedName: "Untitled Photo"
       };
     }
+
+    // Generate filename from suggestedName
+    const nameSlug = analysis.suggestedName 
+      ? slugify(analysis.suggestedName)
+      : `photo-${Date.now()}`;
 
     return new Response(
       JSON.stringify({
         score: analysis.score || 5.0,
-        description: analysis.description || "Photo analyzed"
+        description: analysis.description || "A memorable moment captured in time.",
+        suggestedName: nameSlug
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

@@ -46,6 +46,11 @@ const PhotoUpload = () => {
       file.type.startsWith("image/")
     );
 
+    if (droppedFiles.length > 20) {
+      toast.error("Maximum 20 photos per upload. Please select fewer files.");
+      return;
+    }
+
     if (droppedFiles.length > 0) {
       setFiles(droppedFiles);
     }
@@ -54,6 +59,10 @@ const PhotoUpload = () => {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const selectedFiles = Array.from(e.target.files);
+      if (selectedFiles.length > 20) {
+        toast.error("Maximum 20 photos per upload. Please select fewer files.");
+        return;
+      }
       setFiles(selectedFiles);
     }
   };
@@ -80,76 +89,87 @@ const PhotoUpload = () => {
       if (!user) throw new Error("Not authenticated");
 
       let successCount = 0;
+      const batchSize = 3; // Process 3 files concurrently
       
-      for (const file of files) {
-        try {
-          // Upload to storage
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${user.id}/${crypto.randomUUID()}.${fileExt}`;
-          
-          const { error: uploadError } = await supabase.storage
-            .from('photos')
-            .upload(fileName, file);
-
-          if (uploadError) throw uploadError;
-
-          // Get image dimensions
-          const img = new Image();
-          const imageUrl = URL.createObjectURL(file);
-          await new Promise((resolve) => {
-            img.onload = resolve;
-            img.src = imageUrl;
-          });
-
-          let score = null;
-          let description = null;
-
-          // AI Analysis if enabled
-          if (useAI) {
-            try {
-              const reader = new FileReader();
-              const base64 = await new Promise<string>((resolve) => {
-                reader.onloadend = () => {
-                  const result = reader.result as string;
-                  resolve(result.split(',')[1]);
-                };
-                reader.readAsDataURL(file);
-              });
-
-              const { data: analysisData, error: analysisError } = await supabase.functions.invoke('analyze-photo', {
-                body: { imageBase64: base64, filename: file.name }
-              });
-
-              if (!analysisError && analysisData) {
-                score = analysisData.score;
-                description = analysisData.description;
-              }
-            } catch (error) {
-              console.error('AI analysis failed:', error);
-            }
-          }
-
-          // Save to database
-          const { error: dbError } = await supabase
-            .from('photos')
-            .insert({
-              user_id: user.id,
-              filename: file.name,
-              storage_path: fileName,
-              description: description,
-              score: score,
-              width: img.width,
-              height: img.height,
-              status: 'new'
+      for (let i = 0; i < files.length; i += batchSize) {
+        const batch = files.slice(i, i + batchSize);
+        
+        await Promise.all(batch.map(async (file) => {
+          try {
+            // Get image dimensions first
+            const img = new Image();
+            const imageUrl = URL.createObjectURL(file);
+            await new Promise((resolve) => {
+              img.onload = resolve;
+              img.src = imageUrl;
             });
 
-          if (dbError) throw dbError;
-          
-          URL.revokeObjectURL(imageUrl);
-          successCount++;
-        } catch (error) {
-          console.error(`Failed to upload ${file.name}:`, error);
-        }
+            let score = null;
+            let description = null;
+            let suggestedName = file.name.replace(/\.[^/.]+$/, ""); // Remove extension
+
+            // AI Analysis if enabled
+            if (useAI) {
+              try {
+                const reader = new FileReader();
+                const base64 = await new Promise<string>((resolve) => {
+                  reader.onloadend = () => {
+                    const result = reader.result as string;
+                    resolve(result.split(',')[1]);
+                  };
+                  reader.readAsDataURL(file);
+                });
+
+                const { data: analysisData, error: analysisError } = await supabase.functions.invoke('analyze-photo', {
+                  body: { imageBase64: base64, filename: file.name }
+                });
+
+                if (!analysisError && analysisData) {
+                  score = analysisData.score;
+                  description = analysisData.description;
+                  suggestedName = analysisData.suggestedName || suggestedName;
+                }
+              } catch (error) {
+                console.error('AI analysis failed:', error);
+              }
+            }
+
+            // Upload to storage with descriptive name
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${user.id}/${suggestedName}-${Date.now()}.${fileExt}`;
+            
+            const { error: uploadError } = await supabase.storage
+              .from('photos')
+              .upload(fileName, file);
+
+            if (uploadError) throw uploadError;
+
+            // Save to database
+            const displayName = suggestedName.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            const { error: dbError } = await supabase
+              .from('photos')
+              .insert({
+                user_id: user.id,
+                filename: displayName,
+                storage_path: fileName,
+                description: description,
+                score: score,
+                width: img.width,
+                height: img.height,
+                status: 'new'
+              });
+
+            if (dbError) throw dbError;
+            
+            URL.revokeObjectURL(imageUrl);
+            successCount++;
+          } catch (error) {
+            console.error(`Failed to upload ${file.name}:`, error);
+          }
+        }));
+        
+        // Update progress toast
+        toast.loading(`Uploading... ${Math.min(i + batchSize, files.length)}/${files.length}`, { id: toastId });
       }
 
       toast.success(`Successfully uploaded ${successCount} photo(s)!`, { id: toastId });

@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
-import { Filter, Grid, List } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
+import { Grid, Filter } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -9,17 +11,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import PhotoCard from "@/components/PhotoCard";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import PhotoCard from "./PhotoCard";
+import { Lightbox } from "./Lightbox";
 
 const PhotoGallery = () => {
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [filterStatus, setFilterStatus] = useState("all");
   const [sortBy, setSortBy] = useState("score-desc");
   const [photos, setPhotos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [lightboxPhoto, setLightboxPhoto] = useState<any | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -122,23 +123,6 @@ const PhotoGallery = () => {
               </SelectContent>
             </Select>
           </div>
-
-          <div className="flex gap-2">
-            <Button
-              variant={viewMode === "grid" ? "default" : "outline"}
-              size="icon"
-              onClick={() => setViewMode("grid")}
-            >
-              <Grid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "list" ? "default" : "outline"}
-              size="icon"
-              onClick={() => setViewMode("list")}
-            >
-              <List className="h-4 w-4" />
-            </Button>
-          </div>
         </div>
       </Card>
 
@@ -170,17 +154,32 @@ const PhotoGallery = () => {
           </p>
         </Card>
       ) : (
-        <div
-          className={
-            viewMode === "grid"
-              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              : "space-y-4"
-          }
-        >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {photos.map((photo) => (
-            <PhotoCard key={photo.id} photo={photo} viewMode={viewMode} />
+            <PhotoCard 
+              key={photo.id} 
+              photo={photo}
+              onClick={() => setLightboxPhoto(photo)}
+            />
           ))}
         </div>
+      )}
+
+      {/* Lightbox */}
+      {lightboxPhoto && (
+        <Lightbox
+          photo={lightboxPhoto}
+          photos={photos}
+          onClose={() => setLightboxPhoto(null)}
+          onNavigate={(direction) => {
+            const currentIndex = photos.findIndex(p => p.id === lightboxPhoto.id);
+            if (direction === "prev" && currentIndex > 0) {
+              setLightboxPhoto(photos[currentIndex - 1]);
+            } else if (direction === "next" && currentIndex < photos.length - 1) {
+              setLightboxPhoto(photos[currentIndex + 1]);
+            }
+          }}
+        />
       )}
     </div>
   );
