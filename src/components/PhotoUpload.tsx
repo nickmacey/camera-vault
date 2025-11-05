@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Upload, Image as ImageIcon } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -8,10 +9,24 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 const PhotoUpload = () => {
+  const navigate = useNavigate();
   const [isDragging, setIsDragging] = useState(false);
   const [useAI, setUseAI] = useState(true);
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -45,6 +60,17 @@ const PhotoUpload = () => {
 
   const handleUpload = async () => {
     if (files.length === 0) return;
+    
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      toast.error("Please sign in to upload photos", {
+        action: {
+          label: "Sign In",
+          onClick: () => navigate("/auth")
+        }
+      });
+      return;
+    }
     
     setUploading(true);
     const toastId = toast.loading(`Uploading ${files.length} photo(s)...`);

@@ -19,10 +19,36 @@ const PhotoGallery = () => {
   const [sortBy, setSortBy] = useState("score-desc");
   const [photos, setPhotos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    fetchPhotos();
-  }, [filterStatus, sortBy]);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
+      if (session) {
+        fetchPhotos();
+      } else {
+        setLoading(false);
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+      if (session) {
+        fetchPhotos();
+      } else {
+        setPhotos([]);
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchPhotos();
+    }
+  }, [filterStatus, sortBy, isAuthenticated]);
 
   const fetchPhotos = async () => {
     try {
@@ -119,6 +145,19 @@ const PhotoGallery = () => {
       {loading ? (
         <Card className="p-12 text-center">
           <div className="animate-pulse text-muted-foreground">Loading photos...</div>
+        </Card>
+      ) : !isAuthenticated ? (
+        <Card className="p-12 text-center">
+          <div className="inline-flex p-4 rounded-full bg-muted mb-4">
+            <Grid className="h-12 w-12 text-muted-foreground" />
+          </div>
+          <h3 className="text-xl font-semibold mb-2">Sign in to View Your Photos</h3>
+          <p className="text-muted-foreground mb-4">
+            Create an account or log in to upload and manage your photo collection
+          </p>
+          <Button onClick={() => window.location.href = '/auth'}>
+            Sign In / Sign Up
+          </Button>
         </Card>
       ) : photos.length === 0 ? (
         <Card className="p-12 text-center">
