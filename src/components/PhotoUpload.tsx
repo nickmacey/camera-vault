@@ -128,6 +128,9 @@ const PhotoUpload = () => {
 
       toast.success(`Successfully uploaded ${successCount} photo(s)!`, { id: toastId });
       setFiles([]);
+      
+      // Trigger a page refresh to update gallery
+      window.location.reload();
     } catch (error: any) {
       toast.error(error.message || "Upload failed", { id: toastId });
     } finally {
