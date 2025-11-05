@@ -14,7 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      photos: {
+        Row: {
+          capture_date: string | null
+          created_at: string
+          description: string | null
+          filename: string
+          height: number | null
+          id: string
+          is_top_10: boolean | null
+          score: number | null
+          status: string | null
+          storage_path: string
+          updated_at: string
+          user_id: string
+          width: number | null
+        }
+        Insert: {
+          capture_date?: string | null
+          created_at?: string
+          description?: string | null
+          filename: string
+          height?: number | null
+          id?: string
+          is_top_10?: boolean | null
+          score?: number | null
+          status?: string | null
+          storage_path: string
+          updated_at?: string
+          user_id: string
+          width?: number | null
+        }
+        Update: {
+          capture_date?: string | null
+          created_at?: string
+          description?: string | null
+          filename?: string
+          height?: number | null
+          id?: string
+          is_top_10?: boolean | null
+          score?: number | null
+          status?: string | null
+          storage_path?: string
+          updated_at?: string
+          user_id?: string
+          width?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

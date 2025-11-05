@@ -1,71 +1,138 @@
-import { useCallback, useState } from "react";
-import { Upload, ImageIcon, Sparkles } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { useState } from "react";
+import { Upload, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const PhotoUpload = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [useAI, setUseAI] = useState(true);
   const [files, setFiles] = useState<File[]>([]);
-  const { toast } = useToast();
+  const [uploading, setUploading] = useState(false);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
-  }, []);
+  };
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
+  const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-  }, []);
+  };
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
 
-    const droppedFiles = Array.from(e.dataTransfer.files).filter(file =>
+    const droppedFiles = Array.from(e.dataTransfer.files).filter((file) =>
       file.type.startsWith("image/")
     );
 
     if (droppedFiles.length > 0) {
       setFiles(droppedFiles);
-      toast({
-        title: "Files ready",
-        description: `${droppedFiles.length} photo(s) selected`,
-      });
     }
-  }, [toast]);
+  };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const selectedFiles = Array.from(e.target.files);
       setFiles(selectedFiles);
-      toast({
-        title: "Files ready",
-        description: `${selectedFiles.length} photo(s) selected`,
-      });
     }
   };
 
   const handleUpload = async () => {
     if (files.length === 0) return;
+    
+    setUploading(true);
+    const toastId = toast.loading(`Uploading ${files.length} photo(s)...`);
 
-    toast({
-      title: "Upload started",
-      description: `Processing ${files.length} photo(s)...`,
-    });
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
 
-    // TODO: Implement actual upload with Lovable Cloud
-    setTimeout(() => {
-      toast({
-        title: "Success!",
-        description: `${files.length} photo(s) analyzed and scored`,
-      });
+      let successCount = 0;
+      
+      for (const file of files) {
+        try {
+          // Upload to storage
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${user.id}/${crypto.randomUUID()}.${fileExt}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from('photos')
+            .upload(fileName, file);
+
+          if (uploadError) throw uploadError;
+
+          // Get image dimensions
+          const img = new Image();
+          const imageUrl = URL.createObjectURL(file);
+          await new Promise((resolve) => {
+            img.onload = resolve;
+            img.src = imageUrl;
+          });
+
+          let score = null;
+          let description = null;
+
+          // AI Analysis if enabled
+          if (useAI) {
+            try {
+              const reader = new FileReader();
+              const base64 = await new Promise<string>((resolve) => {
+                reader.onloadend = () => {
+                  const result = reader.result as string;
+                  resolve(result.split(',')[1]);
+                };
+                reader.readAsDataURL(file);
+              });
+
+              const { data: analysisData, error: analysisError } = await supabase.functions.invoke('analyze-photo', {
+                body: { imageBase64: base64, filename: file.name }
+              });
+
+              if (!analysisError && analysisData) {
+                score = analysisData.score;
+                description = analysisData.description;
+              }
+            } catch (error) {
+              console.error('AI analysis failed:', error);
+            }
+          }
+
+          // Save to database
+          const { error: dbError } = await supabase
+            .from('photos')
+            .insert({
+              user_id: user.id,
+              filename: file.name,
+              storage_path: fileName,
+              description: description,
+              score: score,
+              width: img.width,
+              height: img.height,
+              status: 'new'
+            });
+
+          if (dbError) throw dbError;
+          
+          URL.revokeObjectURL(imageUrl);
+          successCount++;
+        } catch (error) {
+          console.error(`Failed to upload ${file.name}:`, error);
+        }
+      }
+
+      toast.success(`Successfully uploaded ${successCount} photo(s)!`, { id: toastId });
       setFiles([]);
-    }, 2000);
+    } catch (error: any) {
+      toast.error(error.message || "Upload failed", { id: toastId });
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -114,8 +181,7 @@ const PhotoUpload = () => {
               checked={useAI}
               onCheckedChange={setUseAI}
             />
-            <Label htmlFor="ai-analysis" className="flex items-center gap-2 cursor-pointer">
-              <Sparkles className="h-4 w-4 text-secondary" />
+            <Label htmlFor="ai-analysis" className="cursor-pointer">
               Enable AI Analysis
             </Label>
           </div>
@@ -123,7 +189,7 @@ const PhotoUpload = () => {
       </Card>
 
       {files.length > 0 && (
-        <Card className="p-6 animate-scale-in">
+        <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h4 className="font-semibold">Selected Photos</h4>
@@ -131,9 +197,14 @@ const PhotoUpload = () => {
                 {files.length} file(s) ready to upload
               </p>
             </div>
-            <Button onClick={handleUpload} className="gap-2">
-              <Upload className="h-4 w-4" />
-              Upload & Analyze
+            <Button
+              onClick={handleUpload}
+              className="w-full sm:w-auto"
+              size="lg"
+              disabled={uploading}
+            >
+              <Upload className="mr-2 h-5 w-5" />
+              {uploading ? "Uploading..." : `Upload & Analyze ${files.length} Photo${files.length !== 1 ? "s" : ""}`}
             </Button>
           </div>
 
