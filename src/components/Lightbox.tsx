@@ -106,11 +106,11 @@ export const Lightbox = ({ photo, photos, onClose, onNavigate }: LightboxProps) 
         {/* Photo info */}
         <div className="mt-4 text-center max-w-2xl">
           <h3 className="text-xl font-semibold text-white mb-2">
-            {photo.filename}
+            {photo.filename.replace(/\.(jpg|jpeg|png|gif|webp)$/i, '')}
           </h3>
           {photo.description && (
             <p className="text-gray-300 text-sm leading-relaxed">
-              {photo.description}
+              {photo.description.replace(/```json\s*/gi, '').replace(/```\s*/g, '').replace(/^\{.*?"description"\s*:\s*"/i, '').replace(/"[,\}].*$/g, '')}
             </p>
           )}
           {photo.width && photo.height && (

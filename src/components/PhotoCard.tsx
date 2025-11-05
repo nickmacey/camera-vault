@@ -35,10 +35,12 @@ const PhotoCard = ({ photo, onClick }: PhotoCardProps) => {
       </div>
 
       <div className="p-4">
-        <h3 className="font-semibold text-sm mb-1 truncate">{photo.filename}</h3>
+        <h3 className="font-semibold text-sm mb-1 truncate">
+          {photo.filename.replace(/\.(jpg|jpeg|png|gif|webp)$/i, '')}
+        </h3>
         {photo.description && (
           <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
-            {photo.description}
+            {photo.description.replace(/```json\s*/gi, '').replace(/```\s*/g, '').replace(/^\{.*?"description"\s*:\s*"/i, '').replace(/"[,\}].*$/g, '')}
           </p>
         )}
       </div>

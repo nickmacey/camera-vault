@@ -90,41 +90,75 @@ Be specific and descriptive but natural - avoid technical jargon.`
     const data = await response.json();
     let content = data.choices[0]?.message?.content || "{}";
     
-    // Clean up markdown code blocks if present
-    content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    console.log("Raw AI response:", content);
+    
+    // Aggressive cleaning of markdown code blocks and extra formatting
+    content = content
+      .replace(/```json\s*/gi, '')
+      .replace(/```\s*/g, '')
+      .replace(/^[\s\n]+/, '')
+      .replace(/[\s\n]+$/, '')
+      .trim();
     
     let analysis;
     try {
       analysis = JSON.parse(content);
+      console.log("Parsed analysis:", analysis);
     } catch (e) {
       console.error("Failed to parse AI response:", content);
+      console.error("Parse error:", e);
+      
       // If AI didn't return valid JSON, extract info manually
-      const scoreMatch = content.match(/score[:\s]+(\d+(?:\.\d+)?)/i);
+      const scoreMatch = content.match(/["']?score["']?\s*:\s*(\d+(?:\.\d+)?)/i);
       const score = scoreMatch ? parseFloat(scoreMatch[1]) : 5.0;
       
-      // Try to extract description
-      let description = content.substring(0, 200);
-      const descMatch = content.match(/description[:\s]+"([^"]+)"/i);
+      // Try to extract description - look for description field in JSON-like text
+      let description = "A memorable moment captured in time.";
+      const descMatch = content.match(/["']?description["']?\s*:\s*["']([^"']+)["']/i);
       if (descMatch) {
         description = descMatch[1];
+      } else {
+        // If no description field found, just use the first sentence of content
+        const sentences = content.split(/[.!?]+/);
+        if (sentences.length > 0 && sentences[0].length > 10) {
+          description = sentences[0].trim() + '.';
+        }
+      }
+      
+      // Try to extract suggested name
+      let suggestedName = "untitled-photo";
+      const nameMatch = content.match(/["']?suggestedName["']?\s*:\s*["']([^"']+)["']/i);
+      if (nameMatch) {
+        suggestedName = slugify(nameMatch[1]);
       }
       
       analysis = {
         score: Math.min(10, Math.max(0, score)),
         description: description,
-        suggestedName: "Untitled Photo"
+        suggestedName: suggestedName
       };
     }
 
+    // Ensure we have valid data
+    const finalScore = typeof analysis.score === 'number' ? 
+      Math.min(10, Math.max(0, analysis.score)) : 5.0;
+    
+    const finalDescription = (analysis.description || "A memorable moment captured in time.")
+      .replace(/```json\s*/gi, '')
+      .replace(/```\s*/g, '')
+      .trim();
+    
     // Generate filename from suggestedName
     const nameSlug = analysis.suggestedName 
       ? slugify(analysis.suggestedName)
       : `photo-${Date.now()}`;
 
+    console.log("Final output:", { score: finalScore, description: finalDescription, suggestedName: nameSlug });
+
     return new Response(
       JSON.stringify({
-        score: analysis.score || 5.0,
-        description: analysis.description || "A memorable moment captured in time.",
+        score: finalScore,
+        description: finalDescription,
         suggestedName: nameSlug
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
