@@ -2,6 +2,101 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    /* Vault Color System */
+    --vault-black: 10 10 10;        /* #0A0A0A - Main background */
+    --vault-platinum: 232 232 232;   /* #E8E8E8 - Primary text */
+    --vault-gold: 212 175 55;        /* #D4AF37 - Premium accent */
+    --vault-green: 0 255 136;        /* #00FF88 - Success state */
+    --vault-red: 255 59 48;          /* #FF3B30 - Alert */
+    
+    --vault-dark-gray: 26 26 26;     /* #1A1A1A - Card backgrounds */
+    --vault-mid-gray: 64 64 64;      /* #404040 - Borders */
+    --vault-light-gray: 160 160 160; /* #A0A0A0 - Secondary text */
+
+    /* Design Tokens mapped to Vault */
+    --background: var(--vault-black);
+    --foreground: var(--vault-platinum);
+    
+    --card: var(--vault-dark-gray);
+    --card-foreground: var(--vault-platinum);
+    
+    --popover: var(--vault-dark-gray);
+    --popover-foreground: var(--vault-platinum);
+    
+    --primary: var(--vault-gold);
+    --primary-foreground: 10 10 10;
+    
+    --secondary: var(--vault-mid-gray);
+    --secondary-foreground: var(--vault-platinum);
+    
+    --muted: var(--vault-mid-gray);
+    --muted-foreground: var(--vault-light-gray);
+    
+    --accent: var(--vault-green);
+    --accent-foreground: 10 10 10;
+    
+    --destructive: var(--vault-red);
+    --destructive-foreground: var(--vault-platinum);
+    
+    --border: var(--vault-mid-gray);
+    --input: var(--vault-mid-gray);
+    --ring: var(--vault-gold);
+    
+    --radius: 0.5rem;
+
+    /* Score Colors */
+    --score-excellent: var(--vault-gold);
+    --score-good: var(--vault-green);
+    --score-average: var(--vault-light-gray);
+    --score-poor: var(--vault-mid-gray);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+  }
+  
+  .font-mono {
+    font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  }
+}
+
+@layer utilities {
+  .vault-glow-gold {
+    box-shadow: 0 8px 24px rgba(212, 175, 55, 0.3);
+  }
+  
+  .vault-glow-green {
+    box-shadow: 0 8px 24px rgba(0, 255, 136, 0.2);
+  }
+  
+  .vault-transition {
+    transition: all 300ms ease-in-out;
+  }
+  
+  .vault-text-gradient {
+    background: linear-gradient(135deg, hsl(var(--vault-gold)) 0%, hsl(var(--vault-green)) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */

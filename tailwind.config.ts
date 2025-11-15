@@ -47,6 +47,16 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        vault: {
+          black: "hsl(var(--vault-black))",
+          platinum: "hsl(var(--vault-platinum))",
+          gold: "hsl(var(--vault-gold))",
+          green: "hsl(var(--vault-green))",
+          red: "hsl(var(--vault-red))",
+          "dark-gray": "hsl(var(--vault-dark-gray))",
+          "mid-gray": "hsl(var(--vault-mid-gray))",
+          "light-gray": "hsl(var(--vault-light-gray))",
+        },
         score: {
           excellent: "hsl(var(--score-excellent))",
           good: "hsl(var(--score-good))",
@@ -63,6 +73,10 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+      },
+      fontFamily: {
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        mono: ['JetBrains Mono', 'SF Mono', 'monospace'],
       },
       borderRadius: {
         lg: "var(--radius)",
