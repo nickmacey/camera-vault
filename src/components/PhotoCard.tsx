@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Shield } from "lucide-react";
 import { cleanDescription, cleanScore } from "@/lib/utils";
 
 interface PhotoCardProps {
@@ -13,6 +14,7 @@ interface PhotoCardProps {
     score?: number;
     width?: number;
     height?: number;
+    watermarked?: boolean;
   };
   onClick?: () => void;
   selectionMode?: boolean;
@@ -58,7 +60,12 @@ const PhotoCard = ({ photo, onClick, selectionMode, isSelected, onToggleSelect }
           </div>
         )}
         {displayScore !== null && !selectionMode && (
-          <div className="absolute top-2 right-2">
+          <div className="absolute top-2 right-2 flex gap-2">
+            {photo.watermarked && (
+              <div className="bg-blue-500 text-white p-1.5 rounded-full shadow-lg" title="Protected">
+                <Shield className="h-3 w-3" />
+              </div>
+            )}
             <div className="bg-green-500 text-white text-sm font-bold px-3 py-1 rounded-full shadow-lg">
               {displayScore.toFixed(1)}
             </div>

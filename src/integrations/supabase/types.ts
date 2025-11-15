@@ -29,6 +29,9 @@ export type Database = {
           thumbnail_path: string | null
           updated_at: string
           user_id: string
+          watermark_applied_at: string | null
+          watermark_config: Json | null
+          watermarked: boolean | null
           width: number | null
         }
         Insert: {
@@ -45,6 +48,9 @@ export type Database = {
           thumbnail_path?: string | null
           updated_at?: string
           user_id: string
+          watermark_applied_at?: string | null
+          watermark_config?: Json | null
+          watermarked?: boolean | null
           width?: number | null
         }
         Update: {
@@ -61,6 +67,9 @@ export type Database = {
           thumbnail_path?: string | null
           updated_at?: string
           user_id?: string
+          watermark_applied_at?: string | null
+          watermark_config?: Json | null
+          watermarked?: boolean | null
           width?: number | null
         }
         Relationships: []
