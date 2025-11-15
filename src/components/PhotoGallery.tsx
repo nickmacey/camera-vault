@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { Grid, Filter, Search, Trash2, RefreshCw, CheckSquare, Square, Shield, Download } from "lucide-react";
+import { Lock, Grid, Filter, Search, Trash2, RefreshCw, CheckSquare, Square, Shield, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -415,25 +415,25 @@ const PhotoGallery = () => {
 
   return (
     <div className="space-y-6">
-      <Card className="p-4">
+      <Card className="p-6 bg-vault-dark-gray border-vault-mid-gray">
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-4 flex-1">
               <div className="flex-1 min-w-[200px] relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-vault-light-gray" />
                 <Input
-                  placeholder="Search by filename..."
+                  placeholder="SEARCH ASSETS..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
+                  className="pl-9 bg-vault-black border-vault-mid-gray text-vault-platinum placeholder:text-vault-light-gray uppercase text-sm tracking-wide"
                 />
               </div>
               
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-[150px]">
+                <SelectTrigger className="w-[150px] bg-vault-black border-vault-mid-gray text-vault-platinum">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-vault-dark-gray border-vault-mid-gray">
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="new">New</SelectItem>
                   <SelectItem value="approved">Approved</SelectItem>
@@ -442,23 +442,23 @@ const PhotoGallery = () => {
               </Select>
 
               <Select value={scoreFilter} onValueChange={setScoreFilter}>
-                <SelectTrigger className="w-[150px]">
+                <SelectTrigger className="w-[180px] bg-vault-black border-vault-mid-gray text-vault-platinum">
                   <SelectValue placeholder="Score Range" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-vault-dark-gray border-vault-mid-gray">
                   <SelectItem value="all">All Scores</SelectItem>
-                  <SelectItem value="80-100">80-100 (Excellent)</SelectItem>
-                  <SelectItem value="70-79">70-79 (Good)</SelectItem>
-                  <SelectItem value="60-69">60-69 (Average)</SelectItem>
-                  <SelectItem value="0-59">Below 60 (Poor)</SelectItem>
+                  <SelectItem value="80-100">8.5-10 (Vault Worthy)</SelectItem>
+                  <SelectItem value="70-79">7.0-8.5 (High Value)</SelectItem>
+                  <SelectItem value="60-69">6.0-7.0 (Standard)</SelectItem>
+                  <SelectItem value="0-59">Below 6.0 (Archive)</SelectItem>
                 </SelectContent>
               </Select>
 
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px] bg-vault-black border-vault-mid-gray text-vault-platinum">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-vault-dark-gray border-vault-mid-gray">
                   <SelectItem value="score-desc">Score: High to Low</SelectItem>
                   <SelectItem value="score-asc">Score: Low to High</SelectItem>
                   <SelectItem value="created_at-desc">Newest First</SelectItem>
@@ -473,16 +473,20 @@ const PhotoGallery = () => {
                 setSelectionMode(!selectionMode);
                 setSelectedPhotos(new Set());
               }}
+              className={selectionMode 
+                ? "bg-vault-gold hover:bg-vault-gold/90 text-vault-black font-bold uppercase tracking-wide" 
+                : "bg-vault-black border-vault-mid-gray text-vault-platinum hover:border-vault-gold font-bold uppercase tracking-wide"
+              }
             >
               {selectionMode ? <CheckSquare className="h-4 w-4 mr-2" /> : <Square className="h-4 w-4 mr-2" />}
-              {selectionMode ? "Cancel Selection" : "Select Photos"}
+              {selectionMode ? "Cancel" : "Select Assets"}
             </Button>
           </div>
 
           {selectionMode && selectedPhotos.size > 0 && (
-            <div className="flex flex-wrap items-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/20">
-              <span className="text-sm font-medium">
-                {selectedPhotos.size} photo(s) selected
+            <div className="flex flex-wrap items-center gap-2 p-4 bg-vault-gold/10 rounded-lg border-2 border-vault-gold/30 vault-glow-gold">
+              <span className="text-sm font-bold text-vault-gold uppercase tracking-wide">
+                {selectedPhotos.size} ASSET{selectedPhotos.size !== 1 ? 'S' : ''} SELECTED
               </span>
               <div className="flex flex-wrap gap-2 ml-auto">
                 <Button size="sm" variant="outline" onClick={selectAll}>
@@ -546,30 +550,34 @@ const PhotoGallery = () => {
       </Card>
 
       {loading ? (
-        <Card className="p-12 text-center">
-          <div className="animate-pulse text-muted-foreground">Loading photos...</div>
+        <Card className="p-16 text-center bg-vault-dark-gray border-vault-mid-gray">
+          <div className="animate-pulse text-vault-light-gray font-bold uppercase tracking-wide">Accessing Vault...</div>
         </Card>
       ) : !isAuthenticated ? (
-        <Card className="p-12 text-center">
-          <div className="inline-flex p-4 rounded-full bg-muted mb-4">
-            <Grid className="h-12 w-12 text-muted-foreground" />
+        <Card className="p-16 text-center bg-vault-dark-gray border-vault-mid-gray">
+          <div className="inline-flex p-6 rounded-lg bg-vault-gold/10 border border-vault-gold/20 mb-6">
+            <Lock className="h-16 w-16 text-vault-gold" />
           </div>
-          <h3 className="text-xl font-semibold mb-2">Sign in to View Your Photos</h3>
-          <p className="text-muted-foreground mb-4">
-            Create an account or log in to upload and manage your photo collection
+          <h3 className="text-2xl font-black mb-3 text-vault-platinum uppercase tracking-tight">Vault Access Required</h3>
+          <p className="text-vault-light-gray mb-6 max-w-md mx-auto">
+            Create an account or sign in to secure and manage your creative assets
           </p>
-          <Button onClick={() => window.location.href = '/auth'}>
-            Sign In / Sign Up
+          <Button 
+            onClick={() => window.location.href = '/auth'}
+            className="bg-vault-gold hover:bg-vault-gold/90 text-vault-black font-bold uppercase tracking-wide vault-glow-gold"
+          >
+            <Lock className="h-4 w-4 mr-2" />
+            Access Vault
           </Button>
         </Card>
       ) : photos.length === 0 ? (
-        <Card className="p-12 text-center">
-          <div className="inline-flex p-4 rounded-full bg-muted mb-4">
-            <Grid className="h-12 w-12 text-muted-foreground" />
+        <Card className="p-16 text-center bg-vault-dark-gray border-vault-mid-gray">
+          <div className="inline-flex p-6 rounded-lg bg-vault-gold/10 border border-vault-gold/20 mb-6">
+            <Shield className="h-16 w-16 text-vault-gold" />
           </div>
-          <h3 className="text-xl font-semibold mb-2">No Photos Yet</h3>
-          <p className="text-muted-foreground">
-            Upload your first photos to get started with AI-powered analysis
+          <h3 className="text-2xl font-black mb-3 text-vault-platinum uppercase tracking-tight">Vault Empty</h3>
+          <p className="text-vault-light-gray max-w-md mx-auto">
+            Secure your first assets with AI-powered scoring and protection
           </p>
         </Card>
       ) : (
