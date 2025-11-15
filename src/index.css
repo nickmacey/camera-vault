@@ -95,6 +95,10 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+  
+  .bg-gradient-radial {
+    background-image: radial-gradient(circle, var(--tw-gradient-stops));
+  }
 }
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
