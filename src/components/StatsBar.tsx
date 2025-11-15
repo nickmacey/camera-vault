@@ -1,7 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { Lock, TrendingUp, Award, Star } from "lucide-react";
+import { useTop10Photos } from "@/hooks/useTop10Photos";
 
 const StatsBar = () => {
+  const { top10Photos } = useTop10Photos();
+  
   // Mock data - will be replaced with real API calls
   const stats = {
     total_photos: 0,
@@ -9,10 +12,26 @@ const StatsBar = () => {
     top_score: 0,
     over_80: 0,
   };
+  
+  // Get a random top photo for background accent
+  const accentPhoto = top10Photos.length > 0 
+    ? top10Photos[Math.floor(Math.random() * Math.min(5, top10Photos.length))]
+    : null;
 
   return (
-    <div className="border-b border-vault-mid-gray bg-vault-dark-gray/50 backdrop-blur-sm sticky top-0 z-10">
-      <div className="container mx-auto px-4 py-4">
+    <div className="border-b border-vault-mid-gray bg-vault-dark-gray/50 backdrop-blur-sm sticky top-0 z-10 relative overflow-hidden">
+      {/* Subtle background accent from random top photo */}
+      {accentPhoto && (
+        <div className="absolute top-0 right-0 w-96 h-full opacity-5 pointer-events-none">
+          <img 
+            src={accentPhoto.url} 
+            alt=""
+            className="w-full h-full object-cover blur-3xl scale-110" 
+          />
+        </div>
+      )}
+      
+      <div className="container mx-auto px-4 py-4 relative z-10">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-vault-gold/10 border border-vault-gold/20">

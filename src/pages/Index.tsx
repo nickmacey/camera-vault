@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Lock, Shield, Award } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import HeroSection from "@/components/HeroSection";
+import { DynamicHero } from "@/components/DynamicHero";
 import PhotoUpload from "@/components/PhotoUpload";
 import PhotoGallery from "@/components/PhotoGallery";
-import Top10Showcase from "@/components/Top10Showcase";
+import { EditorialGrid } from "@/components/EditorialGrid";
+import { CategoryShowcase } from "@/components/CategoryShowcase";
 import StatsBar from "@/components/StatsBar";
 
 const Index = () => {
@@ -12,8 +13,8 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-vault-black">
-      <HeroSection />
-      
+      <DynamicHero />
+      <CategoryShowcase />
       <StatsBar />
 
       <main className="container mx-auto px-4 py-12">
@@ -34,7 +35,7 @@ const Index = () => {
               Vault
             </TabsTrigger>
             <TabsTrigger 
-              value="top10" 
+              value="elite" 
               className="gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-vault-black font-bold uppercase tracking-wide text-vault-light-gray"
             >
               <Award className="h-4 w-4" />
@@ -50,8 +51,8 @@ const Index = () => {
             <PhotoGallery />
           </TabsContent>
 
-          <TabsContent value="top10" className="animate-fade-in">
-            <Top10Showcase />
+          <TabsContent value="elite" className="animate-fade-in">
+            <EditorialGrid />
           </TabsContent>
         </Tabs>
       </main>
