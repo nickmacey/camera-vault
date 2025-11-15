@@ -20,7 +20,7 @@ const StatsBar = () => {
             </div>
             <div>
               <p className="text-2xl font-mono font-bold text-vault-platinum">{stats.total_photos}</p>
-              <p className="text-xs text-vault-light-gray uppercase tracking-wide">Total Assets</p>
+              <p className="text-xs text-vault-light-gray uppercase tracking-wide font-bold">Assets</p>
             </div>
           </div>
 
@@ -30,7 +30,7 @@ const StatsBar = () => {
             </div>
             <div>
               <p className="text-2xl font-mono font-bold text-vault-platinum">{stats.avg_score.toFixed(1)}</p>
-              <p className="text-xs text-vault-light-gray uppercase tracking-wide">Avg Score</p>
+              <p className="text-xs text-vault-light-gray uppercase tracking-wide font-bold">Avg Score</p>
             </div>
           </div>
 
@@ -40,17 +40,17 @@ const StatsBar = () => {
             </div>
             <div>
               <p className="text-2xl font-mono font-bold text-vault-gold">{stats.top_score.toFixed(1)}</p>
-              <p className="text-xs text-vault-light-gray uppercase tracking-wide">Top Score</p>
+              <p className="text-xs text-vault-light-gray uppercase tracking-wide font-bold">Peak Score</p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-vault-green/10 border border-vault-green/20">
-              <Award className="h-5 w-5 text-vault-green" />
+            <div className="p-2 rounded-lg bg-vault-gold/10 border border-vault-gold/20">
+              <Award className="h-5 w-5 text-vault-gold" />
             </div>
             <div>
-              <p className="text-2xl font-mono font-bold text-vault-green">{stats.over_80}</p>
-              <p className="text-xs text-vault-light-gray uppercase tracking-wide">Vault Worthy</p>
+              <p className="text-2xl font-mono font-bold text-vault-gold">{stats.over_80}</p>
+              <p className="text-xs text-vault-light-gray uppercase tracking-wide font-bold">Vault Worthy</p>
             </div>
           </div>
         </div>
