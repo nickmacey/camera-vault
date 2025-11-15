@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import imageCompression from 'browser-image-compression';
+import { AnalysisLoadingOverlay } from "@/components/AnalysisLoadingOverlay";
 
 const PhotoUpload = () => {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ const PhotoUpload = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -83,6 +85,7 @@ const PhotoUpload = () => {
     }
     
     setUploading(true);
+    setUploadProgress({ current: 0, total: files.length });
     const toastId = toast.loading(`Uploading ${files.length} photo(s)...`);
 
     try {
@@ -95,7 +98,10 @@ const PhotoUpload = () => {
       for (let i = 0; i < files.length; i += batchSize) {
         const batch = files.slice(i, i + batchSize);
         
-        await Promise.all(batch.map(async (file) => {
+        await Promise.all(batch.map(async (file, batchIndex) => {
+          const fileIndex = i + batchIndex;
+          setUploadProgress({ current: fileIndex + 1, total: files.length });
+          
           try {
             // Get image dimensions first
             const img = new Image();
@@ -189,6 +195,7 @@ const PhotoUpload = () => {
 
       toast.success(`Successfully uploaded ${successCount} photo(s)!`, { id: toastId });
       setFiles([]);
+      setUploadProgress({ current: 0, total: 0 });
       
       // Trigger a page refresh to update gallery
       window.location.reload();
@@ -196,6 +203,7 @@ const PhotoUpload = () => {
       toast.error(error.message || "Upload failed", { id: toastId });
     } finally {
       setUploading(false);
+      setUploadProgress({ current: 0, total: 0 });
     }
   };
 
@@ -306,6 +314,13 @@ const PhotoUpload = () => {
           </div>
         </Card>
       )}
+      
+      {/* Analysis loading overlay */}
+      <AnalysisLoadingOverlay
+        currentPhoto={uploadProgress.current}
+        totalPhotos={uploadProgress.total}
+        visible={uploading}
+      />
     </div>
   );
 };
