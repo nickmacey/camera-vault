@@ -43,11 +43,13 @@ export function cleanDescription(description: string | null | undefined): string
 
 // Extract score from potentially JSON-wrapped data
 export function cleanScore(score: number | null | undefined, description: string | null | undefined): number | null {
-  if (score !== null && score !== undefined && score > 0) return score;
-  
-  // Try to extract from description if it contains JSON
+  // First try to extract from description if it contains JSON (priority over DB score)
   if (description && description.includes('"score"')) {
-    const trimmed = description.trim();
+    let trimmed = description.trim();
+    
+    // Remove markdown code blocks
+    trimmed = trimmed.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
+    
     try {
       const parsed = JSON.parse(trimmed);
       if (parsed.score !== undefined && parsed.score !== null) {
@@ -60,6 +62,11 @@ export function cleanScore(score: number | null | undefined, description: string
         return parseFloat(match[1]);
       }
     }
+  }
+  
+  // Fall back to database score if available and reasonable (not default 5)
+  if (score !== null && score !== undefined && score !== 5 && score > 0) {
+    return score;
   }
   
   return null;

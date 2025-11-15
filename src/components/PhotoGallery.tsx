@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { Grid, Filter } from "lucide-react";
+import { Grid, Filter, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
   Select,
@@ -16,7 +17,9 @@ import { Lightbox } from "./Lightbox";
 
 const PhotoGallery = () => {
   const [filterStatus, setFilterStatus] = useState("all");
+  const [scoreFilter, setScoreFilter] = useState("all");
   const [sortBy, setSortBy] = useState("score-desc");
+  const [searchQuery, setSearchQuery] = useState("");
   const [photos, setPhotos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -49,7 +52,7 @@ const PhotoGallery = () => {
     if (isAuthenticated) {
       fetchPhotos();
     }
-  }, [filterStatus, sortBy, isAuthenticated]);
+  }, [filterStatus, scoreFilter, sortBy, searchQuery, isAuthenticated]);
 
   const fetchPhotos = async () => {
     try {
@@ -58,9 +61,24 @@ const PhotoGallery = () => {
         .from('photos')
         .select('*');
 
-      // Apply filters
+      // Apply status filter
       if (filterStatus !== 'all') {
         query = query.eq('status', filterStatus);
+      }
+
+      // Apply score filter
+      if (scoreFilter !== 'all') {
+        const [min, max] = scoreFilter.split('-').map(Number);
+        if (max) {
+          query = query.gte('score', min).lte('score', max);
+        } else {
+          query = query.gte('score', min);
+        }
+      }
+
+      // Apply search filter
+      if (searchQuery.trim()) {
+        query = query.ilike('filename', `%${searchQuery.trim()}%`);
       }
 
       // Apply sorting
@@ -71,16 +89,19 @@ const PhotoGallery = () => {
 
       if (error) throw error;
 
-      // Get signed URLs for photos
+      // Get signed URLs for photos and thumbnails
       const photosWithUrls = await Promise.all(
         (data || []).map(async (photo) => {
-          const { data: urlData } = await supabase.storage
-            .from('photos')
-            .createSignedUrl(photo.storage_path, 3600);
+          const thumbnailPath = photo.thumbnail_path || photo.storage_path;
+          const [urlData, thumbnailData] = await Promise.all([
+            supabase.storage.from('photos').createSignedUrl(photo.storage_path, 3600),
+            supabase.storage.from('photos').createSignedUrl(thumbnailPath, 3600)
+          ]);
 
           return {
             ...photo,
-            url: urlData?.signedUrl
+            url: urlData?.data?.signedUrl,
+            thumbnailUrl: thumbnailData?.data?.signedUrl || urlData?.data?.signedUrl
           };
         })
       );
@@ -96,18 +117,40 @@ const PhotoGallery = () => {
   return (
     <div className="space-y-6">
       <Card className="p-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <Filter className="h-5 w-5 text-muted-foreground" />
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex-1 min-w-[200px] relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by filename..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Photos</SelectItem>
+                <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="new">New</SelectItem>
                 <SelectItem value="approved">Approved</SelectItem>
                 <SelectItem value="rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={scoreFilter} onValueChange={setScoreFilter}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Score Range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Scores</SelectItem>
+                <SelectItem value="80-100">80-100 (Excellent)</SelectItem>
+                <SelectItem value="70-79">70-79 (Good)</SelectItem>
+                <SelectItem value="60-69">60-69 (Average)</SelectItem>
+                <SelectItem value="0-59">Below 60 (Poor)</SelectItem>
               </SelectContent>
             </Select>
 

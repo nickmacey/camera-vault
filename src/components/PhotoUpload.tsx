@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import imageCompression from 'browser-image-compression';
 
 const PhotoUpload = () => {
   const navigate = useNavigate();
@@ -134,17 +135,30 @@ const PhotoUpload = () => {
               }
             }
 
-            // Upload to storage with descriptive name
+            // Generate thumbnail
+            const thumbnailOptions = {
+              maxSizeMB: 0.2,
+              maxWidthOrHeight: 400,
+              useWebWorker: true,
+              fileType: 'image/jpeg'
+            };
+            
+            const thumbnailFile = await imageCompression(file, thumbnailOptions);
+            
+            // Upload original and thumbnail to storage
             const fileExt = file.name.split('.').pop();
             const fileName = `${user.id}/${suggestedName}-${Date.now()}.${fileExt}`;
+            const thumbnailName = `${user.id}/thumbnails/${suggestedName}-${Date.now()}-thumb.jpg`;
             
-            const { error: uploadError } = await supabase.storage
-              .from('photos')
-              .upload(fileName, file);
+            const [uploadResult, thumbnailResult] = await Promise.all([
+              supabase.storage.from('photos').upload(fileName, file),
+              supabase.storage.from('photos').upload(thumbnailName, thumbnailFile)
+            ]);
 
-            if (uploadError) throw uploadError;
+            if (uploadResult.error) throw uploadResult.error;
+            if (thumbnailResult.error) throw thumbnailResult.error;
 
-            // Save to database
+            // Save to database with thumbnail path
             const displayName = suggestedName.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
             const { error: dbError } = await supabase
               .from('photos')
@@ -152,6 +166,7 @@ const PhotoUpload = () => {
                 user_id: user.id,
                 filename: displayName,
                 storage_path: fileName,
+                thumbnail_path: thumbnailName,
                 description: description,
                 score: score,
                 width: img.width,

@@ -26,6 +26,7 @@ export type Database = {
           score: number | null
           status: string | null
           storage_path: string
+          thumbnail_path: string | null
           updated_at: string
           user_id: string
           width: number | null
@@ -41,6 +42,7 @@ export type Database = {
           score?: number | null
           status?: string | null
           storage_path: string
+          thumbnail_path?: string | null
           updated_at?: string
           user_id: string
           width?: number | null
@@ -56,6 +58,7 @@ export type Database = {
           score?: number | null
           status?: string | null
           storage_path?: string
+          thumbnail_path?: string | null
           updated_at?: string
           user_id?: string
           width?: number | null
