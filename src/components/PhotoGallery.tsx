@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { Grid, Filter, Search, Trash2, RefreshCw, CheckSquare, Square } from "lucide-react";
+import { Grid, Filter, Search, Trash2, RefreshCw, CheckSquare, Square, Shield, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -24,6 +24,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import PhotoCard from "./PhotoCard";
 import { Lightbox } from "./Lightbox";
+import { WatermarkStudio, WatermarkConfig } from "./WatermarkStudio";
+import { applyWatermarkToImage, downloadImage } from "@/lib/watermark";
+import JSZip from "jszip";
 
 const PhotoGallery = () => {
   const [filterStatus, setFilterStatus] = useState("all");
@@ -38,6 +41,7 @@ const PhotoGallery = () => {
   const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [batchProcessing, setBatchProcessing] = useState(false);
+  const [watermarkStudioPhoto, setWatermarkStudioPhoto] = useState<any | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -229,6 +233,126 @@ const PhotoGallery = () => {
     }
   };
 
+  const handleApplyWatermark = async (photo: any, config: WatermarkConfig) => {
+    try {
+      // Apply watermark to image
+      const watermarkedBlob = await applyWatermarkToImage(photo.url, config);
+      
+      // Upload watermarked version
+      const fileName = `${photo.storage_path.replace(/\.[^/.]+$/, '')}_watermarked.png`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('photos')
+        .upload(fileName, watermarkedBlob, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Update database
+      const { error: dbError } = await supabase
+        .from('photos')
+        .update({
+          watermarked: true,
+          watermark_config: config as any,
+          watermark_applied_at: new Date().toISOString()
+        })
+        .eq('id', photo.id);
+
+      if (dbError) throw dbError;
+
+      fetchPhotos();
+    } catch (error) {
+      console.error('Failed to apply watermark:', error);
+      throw error;
+    }
+  };
+
+  const handleBatchWatermark = async (preset: 'vault' | 'branded' | 'stealth') => {
+    if (selectedPhotos.size === 0) return;
+
+    try {
+      setBatchProcessing(true);
+      const toastId = toast.loading(`Watermarking ${selectedPhotos.size} photo(s)...`);
+
+      const selectedArray = Array.from(selectedPhotos);
+      const photosToWatermark = photos.filter(p => selectedArray.includes(p.id));
+      
+      const presetConfigs: Record<string, Partial<WatermarkConfig>> = {
+        vault: { mode: 'fortress', text: 'PROTECTED', opacity: 70, position: 'tiled', fontSize: 32, color: '#ff0000' },
+        branded: { mode: 'branded', text: '© PhotoCurator', opacity: 40, position: 'bottom-right', fontSize: 24, color: '#ffffff' },
+        stealth: { mode: 'stealth', text: '© PhotoCurator', opacity: 15, position: 'bottom-right', fontSize: 12, color: '#ffffff' }
+      };
+
+      let successCount = 0;
+
+      for (const photo of photosToWatermark) {
+        try {
+          await handleApplyWatermark(photo, presetConfigs[preset] as WatermarkConfig);
+          successCount++;
+        } catch (error) {
+          console.error(`Failed to watermark ${photo.filename}:`, error);
+        }
+      }
+
+      toast.success(`Watermarked ${successCount} photo(s)`, { id: toastId });
+      setSelectedPhotos(new Set());
+      setSelectionMode(false);
+      fetchPhotos();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to watermark photos");
+    } finally {
+      setBatchProcessing(false);
+    }
+  };
+
+  const handleExportSelected = async (format: 'jpg' | 'png' | 'zip') => {
+    if (selectedPhotos.size === 0) return;
+
+    try {
+      setBatchProcessing(true);
+      const toastId = toast.loading(`Exporting ${selectedPhotos.size} photo(s)...`);
+
+      const selectedArray = Array.from(selectedPhotos);
+      const photosToExport = photos.filter(p => selectedArray.includes(p.id));
+
+      if (format === 'zip') {
+        const zip = new JSZip();
+        const folder = zip.folder('exported-photos');
+
+        await Promise.all(
+          photosToExport.map(async (photo, index) => {
+            try {
+              const response = await fetch(photo.url);
+              const blob = await response.blob();
+              const extension = photo.filename.split('.').pop() || 'jpg';
+              const watermarkSuffix = photo.watermarked ? '-protected' : '';
+              const filename = `${index + 1}-${photo.filename.replace(/\.[^/.]+$/, '')}${watermarkSuffix}.${extension}`;
+              folder?.file(filename, blob);
+            } catch (error) {
+              console.error(`Failed to export ${photo.filename}:`, error);
+            }
+          })
+        );
+
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        downloadImage(zipBlob, `exported-photos-${new Date().toISOString().split('T')[0]}.zip`);
+      } else {
+        // Download individual files
+        for (const photo of photosToExport) {
+          const response = await fetch(photo.url);
+          const blob = await response.blob();
+          const watermarkSuffix = photo.watermarked ? '-protected' : '';
+          downloadImage(blob, `${photo.filename.replace(/\.[^/.]+$/, '')}${watermarkSuffix}.${format}`);
+        }
+      }
+
+      toast.success(`Exported ${selectedPhotos.size} photo(s)`, { id: toastId });
+    } catch (error: any) {
+      toast.error(error.message || "Failed to export photos");
+    } finally {
+      setBatchProcessing(false);
+    }
+  };
+
   const fetchPhotos = async () => {
     try {
       setLoading(true);
@@ -360,7 +484,7 @@ const PhotoGallery = () => {
               <span className="text-sm font-medium">
                 {selectedPhotos.size} photo(s) selected
               </span>
-              <div className="flex gap-2 ml-auto">
+              <div className="flex flex-wrap gap-2 ml-auto">
                 <Button size="sm" variant="outline" onClick={selectAll}>
                   Select All
                 </Button>
@@ -375,6 +499,26 @@ const PhotoGallery = () => {
                     <SelectItem value="new">Mark as New</SelectItem>
                     <SelectItem value="approved">Mark as Approved</SelectItem>
                     <SelectItem value="rejected">Mark as Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select onValueChange={(value) => handleBatchWatermark(value as any)} disabled={batchProcessing}>
+                  <SelectTrigger className="w-[160px] h-9">
+                    <SelectValue placeholder="Add Watermark" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="vault">🔒 Vault Protection</SelectItem>
+                    <SelectItem value="branded">© Branded</SelectItem>
+                    <SelectItem value="stealth">🔹 Stealth</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select onValueChange={(value) => handleExportSelected(value as any)} disabled={batchProcessing}>
+                  <SelectTrigger className="w-[120px] h-9">
+                    <SelectValue placeholder="Export" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="zip">📦 ZIP</SelectItem>
+                    <SelectItem value="png">PNG</SelectItem>
+                    <SelectItem value="jpg">JPG</SelectItem>
                   </SelectContent>
                 </Select>
                 <Button
@@ -457,6 +601,19 @@ const PhotoGallery = () => {
               setLightboxPhoto(photos[currentIndex + 1]);
             }
           }}
+          onWatermark={(photo) => {
+            setWatermarkStudioPhoto(photo);
+            setLightboxPhoto(null);
+          }}
+        />
+      )}
+
+      {watermarkStudioPhoto && (
+        <WatermarkStudio
+          photo={watermarkStudioPhoto}
+          open={!!watermarkStudioPhoto}
+          onClose={() => setWatermarkStudioPhoto(null)}
+          onApply={(config) => handleApplyWatermark(watermarkStudioPhoto, config)}
         />
       )}
 

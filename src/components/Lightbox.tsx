@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cleanDescription, cleanScore } from "@/lib/utils";
 
@@ -18,9 +18,10 @@ interface LightboxProps {
   photos: Photo[];
   onClose: () => void;
   onNavigate: (direction: "prev" | "next") => void;
+  onWatermark?: (photo: Photo) => void;
 }
 
-export const Lightbox = ({ photo, photos, onClose, onNavigate }: LightboxProps) => {
+export const Lightbox = ({ photo, photos, onClose, onNavigate, onWatermark }: LightboxProps) => {
   const currentIndex = photos.findIndex(p => p.id === photo.id);
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < photos.length - 1;
@@ -58,6 +59,22 @@ export const Lightbox = ({ photo, photos, onClose, onNavigate }: LightboxProps) 
       >
         <X className="h-6 w-6" />
       </Button>
+
+      {/* Watermark button */}
+      {onWatermark && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-4 right-16 text-white hover:bg-white/10 z-10"
+          onClick={(e) => {
+            e.stopPropagation();
+            onWatermark(photo);
+          }}
+          title="Add Watermark"
+        >
+          <Shield className="h-6 w-6" />
+        </Button>
+      )}
 
       {/* Previous button */}
       {hasPrev && (
