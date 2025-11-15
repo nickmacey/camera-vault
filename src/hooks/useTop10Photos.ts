@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { cleanDescription, cleanScore } from "@/lib/utils";
+import { extractDominantColor, FALLBACK_ACCENT } from "@/lib/colorExtractor";
 
 export interface AnalyzedPhoto {
   id: string;
@@ -19,6 +20,7 @@ export const useTop10Photos = () => {
   const [top10Photos, setTop10Photos] = useState<AnalyzedPhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [dynamicAccent, setDynamicAccent] = useState<string>(FALLBACK_ACCENT);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -79,6 +81,14 @@ export const useTop10Photos = () => {
       );
 
       setTop10Photos(photosWithUrls);
+      
+      // Extract color from #1 photo
+      if (photosWithUrls.length > 0 && photosWithUrls[0].url) {
+        const color = await extractDominantColor(photosWithUrls[0].url);
+        if (color) {
+          setDynamicAccent(color);
+        }
+      }
     } catch (error) {
       console.error("Failed to load top 10 photos:", error);
     } finally {
@@ -103,6 +113,7 @@ export const useTop10Photos = () => {
     highValue,
     loading,
     isAuthenticated,
+    dynamicAccent,
     refetch: fetchTop10Photos,
   };
 };

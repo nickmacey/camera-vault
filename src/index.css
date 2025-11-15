@@ -14,6 +14,9 @@
     --vault-dark-gray: 26 26 26;     /* #1A1A1A - Card backgrounds */
     --vault-mid-gray: 64 64 64;      /* #404040 - Borders */
     --vault-light-gray: 160 160 160; /* #A0A0A0 - Secondary text */
+    
+    /* Dynamic accent extracted from top photo - defaults to gold */
+    --vault-dynamic-accent: var(--vault-gold);
 
     /* Design Tokens mapped to Vault */
     --background: var(--vault-black);

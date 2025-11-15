@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Lock, Shield, Award } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DynamicHero } from "@/components/DynamicHero";
@@ -7,9 +7,16 @@ import PhotoGallery from "@/components/PhotoGallery";
 import { EditorialGrid } from "@/components/EditorialGrid";
 import { CategoryShowcase } from "@/components/CategoryShowcase";
 import StatsBar from "@/components/StatsBar";
+import { useTop10Photos } from "@/hooks/useTop10Photos";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("gallery");
+  const { dynamicAccent } = useTop10Photos();
+  
+  // Apply dynamic accent color to CSS variable
+  useEffect(() => {
+    document.documentElement.style.setProperty('--vault-dynamic-accent', dynamicAccent);
+  }, [dynamicAccent]);
 
   return (
     <div className="min-h-screen bg-vault-black">
