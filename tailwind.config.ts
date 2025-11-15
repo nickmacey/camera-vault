@@ -56,6 +56,7 @@ export default {
           "dark-gray": "hsl(var(--vault-dark-gray))",
           "mid-gray": "hsl(var(--vault-mid-gray))",
           "light-gray": "hsl(var(--vault-light-gray))",
+          dynamic: "hsl(var(--vault-dynamic-accent))",
         },
         score: {
           excellent: "hsl(var(--score-excellent))",
