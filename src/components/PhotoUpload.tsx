@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Upload, Image as ImageIcon } from "lucide-react";
+import { Lock, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -200,75 +200,90 @@ const PhotoUpload = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <Card
-        className={`p-12 border-2 border-dashed transition-all duration-300 ${
-          isDragging
-            ? "border-primary bg-primary/5 scale-105"
-            : "border-border hover:border-primary/50"
-        }`}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
-        <div className="text-center space-y-4">
-          <div className="inline-flex p-4 rounded-full bg-primary/10 mx-auto">
-            <Upload className="h-12 w-12 text-primary" />
-          </div>
+    <div className="max-w-5xl mx-auto space-y-6">
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="group relative w-full">
+          <Card
+            className={`border-4 rounded-lg p-24 vault-transition ${
+              isDragging
+                ? "border-vault-gold bg-vault-gold/5 vault-glow-gold scale-105"
+                : "border-vault-mid-gray hover:border-vault-gold hover:vault-glow-gold"
+            }`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            <div className="text-center space-y-6">
+              <div className="flex justify-center mb-2">
+                <div className={`vault-transition ${isDragging ? 'rotate-12' : 'group-hover:rotate-12'}`}>
+                  <Lock className="h-20 w-20 text-vault-gold" />
+                </div>
+              </div>
 
-          <div>
-            <h3 className="text-2xl font-bold mb-2">Upload Photos</h3>
-            <p className="text-muted-foreground">
-              Drag and drop your photos here, or click to browse
-            </p>
-          </div>
+              <div>
+                <h2 className="font-black text-4xl text-vault-platinum mb-4 uppercase tracking-tight">
+                  Secure Your Work
+                </h2>
+                <p className="text-lg text-vault-light-gray">
+                  Drag photos here or click to browse
+                </p>
+              </div>
 
-          <input
-            type="file"
-            id="file-upload"
-            className="hidden"
-            accept="image/*"
-            multiple
-            onChange={handleFileSelect}
-          />
+              <input
+                type="file"
+                id="file-upload"
+                className="hidden"
+                accept="image/*"
+                multiple
+                onChange={handleFileSelect}
+              />
 
-          <Button asChild variant="outline" size="lg">
-            <label htmlFor="file-upload" className="cursor-pointer">
-              <ImageIcon className="mr-2 h-5 w-5" />
-              Choose Photos
-            </label>
-          </Button>
+              <Button 
+                asChild 
+                size="lg"
+                className="bg-vault-gold hover:bg-vault-gold/90 text-vault-black font-bold px-8 py-6 text-base vault-glow-gold"
+              >
+                <label htmlFor="file-upload" className="cursor-pointer uppercase tracking-wide">
+                  <Shield className="mr-2 h-5 w-5" />
+                  Select Files
+                </label>
+              </Button>
 
-          <div className="flex items-center justify-center gap-2 pt-4">
-            <Switch
-              id="ai-analysis"
-              checked={useAI}
-              onCheckedChange={setUseAI}
-            />
-            <Label htmlFor="ai-analysis" className="cursor-pointer">
-              Enable AI Analysis
-            </Label>
-          </div>
+              <div className="flex items-center justify-center gap-3 pt-4">
+                <Switch
+                  id="ai-analysis"
+                  checked={useAI}
+                  onCheckedChange={setUseAI}
+                />
+                <Label 
+                  htmlFor="ai-analysis" 
+                  className="cursor-pointer text-vault-light-gray uppercase text-sm font-bold tracking-wide"
+                >
+                  Enable AI Analysis
+                </Label>
+              </div>
+            </div>
+          </Card>
         </div>
-      </Card>
+      </div>
 
       {files.length > 0 && (
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-4">
+        <Card className="p-8 bg-vault-dark-gray border-vault-mid-gray">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <div>
-              <h4 className="font-semibold">Selected Photos</h4>
-              <p className="text-sm text-muted-foreground">
-                {files.length} file(s) ready to upload
+              <h4 className="font-black text-xl text-vault-platinum uppercase tracking-wide">Selected Assets</h4>
+              <p className="text-sm text-vault-light-gray mt-1">
+                {files.length} file(s) ready to secure
               </p>
             </div>
             <Button
               onClick={handleUpload}
-              className="w-full sm:w-auto"
               size="lg"
               disabled={uploading}
+              className="bg-vault-gold hover:bg-vault-gold/90 text-vault-black font-bold uppercase tracking-wide vault-glow-gold"
             >
-              <Upload className="mr-2 h-5 w-5" />
-              {uploading ? "Uploading..." : `Upload & Analyze ${files.length} Photo${files.length !== 1 ? "s" : ""}`}
+              <Lock className="mr-2 h-5 w-5" />
+              {uploading ? "Securing..." : `Secure ${files.length} Asset${files.length !== 1 ? "s" : ""}`}
             </Button>
           </div>
 
@@ -276,7 +291,7 @@ const PhotoUpload = () => {
             {files.map((file, idx) => (
               <div
                 key={idx}
-                className="relative aspect-square rounded-lg overflow-hidden bg-muted"
+                className="relative aspect-square rounded-lg overflow-hidden bg-vault-black border-2 border-vault-mid-gray hover:border-vault-gold vault-transition"
               >
                 <img
                   src={URL.createObjectURL(file)}
