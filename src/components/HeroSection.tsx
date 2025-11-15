@@ -16,24 +16,25 @@ const HeroSection = () => {
           <span className="vault-text-gradient">VAULT</span>
         </h1>
         
-        <p className="text-xl md:text-2xl text-vault-light-gray max-w-2xl mx-auto mb-8 animate-fade-in font-medium">
-          Your most valuable work, identified and protected by AI
+        <p className="text-xl md:text-2xl text-vault-light-gray max-w-2xl mx-auto mb-8 animate-fade-in font-medium leading-relaxed">
+          The difference between a camera roll<br/>and a career.
         </p>
 
-        <div className="flex items-center justify-center gap-4 text-sm text-vault-light-gray animate-fade-in">
-          <div className="flex items-center gap-2">
-            <Lock className="h-4 w-4 text-vault-gold" />
-            <span className="uppercase font-bold">Secure Storage</span>
+        <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-12 text-vault-light-gray animate-fade-in mt-12">
+          <div className="text-center">
+            <Lock className="h-6 w-6 text-vault-gold mx-auto mb-2" />
+            <div className="font-black text-sm uppercase tracking-wide text-vault-platinum mb-1">Identify</div>
+            <p className="text-xs max-w-[180px]">AI scores every photo.<br/>Your top 10% in seconds.</p>
           </div>
-          <div className="h-4 w-px bg-vault-mid-gray" />
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-vault-green" />
-            <span className="uppercase font-bold">AI Scoring</span>
+          <div className="text-center">
+            <Shield className="h-6 w-6 text-vault-gold mx-auto mb-2" />
+            <div className="font-black text-sm uppercase tracking-wide text-vault-platinum mb-1">Protect</div>
+            <p className="text-xs max-w-[180px]">Smart watermarks keep<br/>your best work secure.</p>
           </div>
-          <div className="h-4 w-px bg-vault-mid-gray" />
-          <div className="flex items-center gap-2">
-            <Shield className="h-4 w-4 text-vault-gold" />
-            <span className="uppercase font-bold">Asset Protection</span>
+          <div className="text-center">
+            <Sparkles className="h-6 w-6 text-vault-gold mx-auto mb-2" />
+            <div className="font-black text-sm uppercase tracking-wide text-vault-platinum mb-1">Monetize</div>
+            <p className="text-xs max-w-[180px]">Export directly to Getty,<br/>Adobe Stock, Shutterstock.</p>
           </div>
         </div>
       </div>

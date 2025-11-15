@@ -224,8 +224,11 @@ const PhotoUpload = () => {
                 <h2 className="font-black text-4xl text-vault-platinum mb-4 uppercase tracking-tight">
                   Secure Your Work
                 </h2>
-                <p className="text-lg text-vault-light-gray">
-                  Drag photos here or click to browse
+                <p className="text-base text-vault-light-gray">
+                  Drop files or click to browse
+                </p>
+                <p className="text-xs text-vault-light-gray mt-2">
+                  JPEG, PNG, RAW supported • AI analyzes in real-time
                 </p>
               </div>
 
@@ -245,7 +248,7 @@ const PhotoUpload = () => {
               >
                 <label htmlFor="file-upload" className="cursor-pointer uppercase tracking-wide">
                   <Shield className="mr-2 h-5 w-5" />
-                  Select Files
+                  Upload Photos
                 </label>
               </Button>
 
@@ -259,7 +262,7 @@ const PhotoUpload = () => {
                   htmlFor="ai-analysis" 
                   className="cursor-pointer text-vault-light-gray uppercase text-sm font-bold tracking-wide"
                 >
-                  Enable AI Analysis
+                  AI Analysis
                 </Label>
               </div>
             </div>
@@ -271,9 +274,9 @@ const PhotoUpload = () => {
         <Card className="p-8 bg-vault-dark-gray border-vault-mid-gray">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <div>
-              <h4 className="font-black text-xl text-vault-platinum uppercase tracking-wide">Selected Assets</h4>
+              <h4 className="font-black text-xl text-vault-platinum uppercase tracking-wide">Ready for Analysis</h4>
               <p className="text-sm text-vault-light-gray mt-1">
-                {files.length} file(s) ready to secure
+                {files.length} asset{files.length !== 1 ? "s" : ""} selected
               </p>
             </div>
             <Button
@@ -283,7 +286,7 @@ const PhotoUpload = () => {
               className="bg-vault-gold hover:bg-vault-gold/90 text-vault-black font-bold uppercase tracking-wide vault-glow-gold"
             >
               <Lock className="mr-2 h-5 w-5" />
-              {uploading ? "Securing..." : `Secure ${files.length} Asset${files.length !== 1 ? "s" : ""}`}
+              {uploading ? "Analyzing..." : "Start Analysis"}
             </Button>
           </div>
 

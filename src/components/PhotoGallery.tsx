@@ -447,10 +447,10 @@ const PhotoGallery = () => {
                 </SelectTrigger>
                 <SelectContent className="bg-vault-dark-gray border-vault-mid-gray">
                   <SelectItem value="all">All Scores</SelectItem>
-                  <SelectItem value="80-100">8.5-10 (Vault Worthy)</SelectItem>
-                  <SelectItem value="70-79">7.0-8.5 (High Value)</SelectItem>
-                  <SelectItem value="60-69">6.0-7.0 (Standard)</SelectItem>
-                  <SelectItem value="0-59">Below 6.0 (Archive)</SelectItem>
+                  <SelectItem value="80-100">Vault Worthy (8.5+)</SelectItem>
+                  <SelectItem value="70-79">High Value (7.0-8.5)</SelectItem>
+                  <SelectItem value="60-69">Standard (6.0-7.0)</SelectItem>
+                  <SelectItem value="0-59">Archive (&lt;6.0)</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -558,16 +558,16 @@ const PhotoGallery = () => {
           <div className="inline-flex p-6 rounded-lg bg-vault-gold/10 border border-vault-gold/20 mb-6">
             <Lock className="h-16 w-16 text-vault-gold" />
           </div>
-          <h3 className="text-2xl font-black mb-3 text-vault-platinum uppercase tracking-tight">Vault Access Required</h3>
+          <h3 className="text-2xl font-black mb-3 text-vault-platinum uppercase tracking-tight">Sign In to View Vault</h3>
           <p className="text-vault-light-gray mb-6 max-w-md mx-auto">
-            Create an account or sign in to secure and manage your creative assets
+            Create an account or log in to upload and manage your photo collection
           </p>
           <Button 
             onClick={() => window.location.href = '/auth'}
             className="bg-vault-gold hover:bg-vault-gold/90 text-vault-black font-bold uppercase tracking-wide vault-glow-gold"
           >
             <Lock className="h-4 w-4 mr-2" />
-            Access Vault
+            Sign In / Sign Up
           </Button>
         </Card>
       ) : photos.length === 0 ? (
@@ -575,9 +575,9 @@ const PhotoGallery = () => {
           <div className="inline-flex p-6 rounded-lg bg-vault-gold/10 border border-vault-gold/20 mb-6">
             <Shield className="h-16 w-16 text-vault-gold" />
           </div>
-          <h3 className="text-2xl font-black mb-3 text-vault-platinum uppercase tracking-tight">Vault Empty</h3>
+          <h3 className="text-2xl font-black mb-3 text-vault-platinum uppercase tracking-tight">Your Vault Is Empty</h3>
           <p className="text-vault-light-gray max-w-md mx-auto">
-            Secure your first assets with AI-powered scoring and protection
+            Upload your first photos to discover which ones are worth protecting
           </p>
         </Card>
       ) : (
