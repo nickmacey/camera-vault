@@ -1,7 +1,8 @@
 import { useEffect } from "react";
-import { X, ChevronLeft, ChevronRight, Shield } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Shield, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cleanDescription, cleanScore } from "@/lib/utils";
+import ScoreBadge from "@/components/ScoreBadge";
 
 interface Photo {
   id: string;
@@ -108,42 +109,86 @@ export const Lightbox = ({ photo, photos, onClose, onNavigate, onWatermark }: Li
 
       {/* Image container */}
       <div
-        className="max-w-7xl max-h-[90vh] mx-4 flex flex-col items-center"
+        className="max-w-7xl max-h-[90vh] mx-4 flex flex-col lg:flex-row items-start gap-6"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="relative">
+        {/* Image */}
+        <div className="relative flex-1">
+          {displayScore !== null && displayScore >= 8.5 && (
+            <div className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-gradient-to-r from-vault-gold via-vault-gold-dark to-vault-gold text-vault-dark px-4 py-2 rounded-lg shadow-[0_0_20px_rgba(212,175,55,0.6)] border-2 border-vault-gold font-bold">
+              <Lock className="h-4 w-4" />
+              VAULT WORTHY
+            </div>
+          )}
           {displayScore !== null && (
-            <div className="absolute top-4 right-4 z-10 bg-red-500 text-white text-lg font-bold px-4 py-2 rounded-full shadow-lg">
-              {displayScore.toFixed(1)}
+            <div className="absolute top-4 right-4 z-10">
+              <ScoreBadge score={displayScore} size="lg" />
             </div>
           )}
           <img
             src={photo.url}
             alt={photo.filename}
-            className="max-w-full max-h-[70vh] object-contain rounded-lg"
+            className={`max-w-full max-h-[70vh] object-contain rounded-lg ${
+              displayScore !== null && displayScore >= 8.5 
+                ? 'border-4 border-vault-gold shadow-[0_0_40px_rgba(212,175,55,0.4)]' 
+                : 'border border-white/20'
+            }`}
           />
         </div>
 
-        {/* Photo info */}
-        <div className="mt-4 text-center max-w-2xl">
-          <h3 className="text-xl font-semibold text-white mb-2">
-            {photo.filename.replace(/\.(jpg|jpeg|png|gif|webp)$/i, '')}
-          </h3>
-          {displayDescription && (
-            <p className="text-gray-300 text-sm leading-relaxed">
-              {displayDescription}
-            </p>
-          )}
-          {photo.width && photo.height && (
-            <p className="text-gray-400 text-xs mt-2">
-              {photo.width} × {photo.height}
-            </p>
-          )}
-        </div>
+        {/* Analysis Panel */}
+        <div className="w-full lg:w-96 space-y-4 bg-black/60 backdrop-blur-md p-6 rounded-lg border border-white/10">
+          {/* Overall Score */}
+          <div className="text-center pb-4 border-b border-white/10">
+            <div className="text-xs font-mono text-vault-gold tracking-wider mb-2">OVERALL SCORE</div>
+            {displayScore !== null && (
+              <>
+                <div className="text-5xl font-mono font-bold text-white mb-2">
+                  {displayScore.toFixed(1)}
+                </div>
+                <div className="text-xs text-gray-400">
+                  {displayScore >= 8.5 ? 'Top 10% of your collection' :
+                   displayScore >= 7.0 ? 'High value asset' :
+                   displayScore >= 6.0 ? 'Above average quality' :
+                   'Review for improvements'}
+                </div>
+                {displayScore >= 8.5 && (
+                  <div className="mt-3 text-sm text-vault-gold font-semibold">
+                    This asset will sell.
+                  </div>
+                )}
+              </>
+            )}
+          </div>
 
-        {/* Counter */}
-        <div className="text-gray-400 text-sm mt-4">
-          {currentIndex + 1} / {photos.length}
+          {/* Photo Info */}
+          <div>
+            <h3 className="text-lg font-semibold text-white mb-2 break-words">
+              {photo.filename.replace(/\.(jpg|jpeg|png|gif|webp)$/i, '')}
+            </h3>
+            {photo.width && photo.height && (
+              <div className="text-xs text-gray-400 font-mono">
+                {photo.width} × {photo.height}
+              </div>
+            )}
+          </div>
+
+          {/* AI Analysis */}
+          {displayDescription && (
+            <div className="space-y-2">
+              <div className="text-xs font-mono text-vault-gold tracking-wider">AI ANALYSIS</div>
+              <p className="text-sm text-gray-300 leading-relaxed">
+                {displayDescription}
+              </p>
+            </div>
+          )}
+
+          {/* Counter */}
+          <div className="text-center pt-4 border-t border-white/10">
+            <div className="text-xs text-gray-400 font-mono">
+              {currentIndex + 1} / {photos.length}
+            </div>
+          </div>
         </div>
       </div>
     </div>
