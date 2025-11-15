@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { Upload, Image as ImageIcon, Award, TrendingUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Lock, Shield, Award } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import HeroSection from "@/components/HeroSection";
 import PhotoUpload from "@/components/PhotoUpload";
@@ -13,25 +11,34 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState("gallery");
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-vault-black">
       <HeroSection />
       
       <StatsBar />
 
       <main className="container mx-auto px-4 py-12">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-3 mb-8">
-            <TabsTrigger value="upload" className="gap-2">
-              <Upload className="h-4 w-4" />
-              Upload
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-3 mb-8 bg-vault-dark-gray border border-vault-mid-gray">
+            <TabsTrigger 
+              value="upload" 
+              className="gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-vault-black font-bold uppercase tracking-wide text-vault-light-gray"
+            >
+              <Lock className="h-4 w-4" />
+              Secure
             </TabsTrigger>
-            <TabsTrigger value="gallery" className="gap-2">
-              <ImageIcon className="h-4 w-4" />
-              Gallery
+            <TabsTrigger 
+              value="gallery" 
+              className="gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-vault-black font-bold uppercase tracking-wide text-vault-light-gray"
+            >
+              <Shield className="h-4 w-4" />
+              Vault
             </TabsTrigger>
-            <TabsTrigger value="top10" className="gap-2">
+            <TabsTrigger 
+              value="top10" 
+              className="gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-vault-black font-bold uppercase tracking-wide text-vault-light-gray"
+            >
               <Award className="h-4 w-4" />
-              Top 10
+              Elite
             </TabsTrigger>
           </TabsList>
 
