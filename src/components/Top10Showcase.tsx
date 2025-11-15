@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { Award, Trophy, Medal, Download, Lock } from "lucide-react";
+import { Award, Trophy, Medal, Download, Lock, Share2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import ScoreBadge from "@/components/ScoreBadge";
+import { SocialShareDialog } from "@/components/SocialShareDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import JSZip from "jszip";
@@ -179,15 +180,21 @@ const Top10Showcase = () => {
         <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">
           AI-curated collection of your highest-scoring assets. These are your money shots.
         </p>
-        <Button 
-          onClick={downloadTop10AsZip}
-          disabled={downloading}
-          className="mt-6 bg-gradient-to-r from-vault-gold via-vault-gold-dark to-vault-gold hover:shadow-[0_0_30px_rgba(212,175,55,0.5)] transition-all"
-          size="lg"
-        >
-          <Download className="h-5 w-5 mr-2" />
-          {downloading ? "Preparing Vault Elite..." : "Download Vault Elite"}
-        </Button>
+        <div className="flex gap-3 justify-center mt-6">
+          <SocialShareDialog 
+            photos={top10Photos.map(p => ({ url: p.url, filename: p.filename }))}
+            disabled={downloading}
+          />
+          <Button 
+            onClick={downloadTop10AsZip}
+            disabled={downloading}
+            className="bg-gradient-to-r from-vault-gold via-vault-gold-dark to-vault-gold hover:shadow-[0_0_30px_rgba(212,175,55,0.5)] transition-all"
+            size="lg"
+          >
+            <Download className="h-5 w-5 mr-2" />
+            {downloading ? "Preparing Vault Elite..." : "Download Vault Elite"}
+          </Button>
+        </div>
       </div>
 
       {/* Featured #1 */}

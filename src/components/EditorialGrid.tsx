@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useTop10Photos } from "@/hooks/useTop10Photos";
 import { curateLayout } from "@/lib/photoLayout";
 import ScoreBadge from "@/components/ScoreBadge";
+import { SocialShareDialog } from "@/components/SocialShareDialog";
 import JSZip from "jszip";
 import { toast } from "sonner";
 
@@ -115,15 +116,21 @@ export const EditorialGrid = () => {
             AI-curated collection of your highest-scoring assets
           </p>
         </div>
-        <Button 
-          onClick={downloadTop10AsZip}
-          disabled={downloading}
-          className="bg-vault-gold hover:bg-vault-gold-dark text-vault-dark font-bold"
-          size="lg"
-        >
-          <Download className="h-4 w-4 mr-2" />
-          {downloading ? "Preparing..." : "Download Elite"}
-        </Button>
+        <div className="flex gap-3">
+          <SocialShareDialog 
+            photos={top10Photos.map(p => ({ url: p.url, filename: p.filename }))}
+            disabled={downloading}
+          />
+          <Button 
+            onClick={downloadTop10AsZip}
+            disabled={downloading}
+            className="bg-vault-gold hover:bg-vault-gold-dark text-vault-dark font-bold"
+            size="lg"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            {downloading ? "Preparing..." : "Download Elite"}
+          </Button>
+        </div>
       </div>
       
       {/* Editorial Grid */}
