@@ -1,16 +1,156 @@
-import { Award, Trophy, Medal } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Award, Trophy, Medal, Download } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import ScoreBadge from "@/components/ScoreBadge";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import JSZip from "jszip";
+import { cleanDescription, cleanScore } from "@/lib/utils";
 
 const Top10Showcase = () => {
-  // Mock data - will be replaced with real API data
-  const top10Photos: any[] = [];
+  const [top10Photos, setTop10Photos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
+      if (session) {
+        fetchTop10Photos();
+      } else {
+        setLoading(false);
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+      if (session) {
+        fetchTop10Photos();
+      } else {
+        setTop10Photos([]);
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchTop10Photos = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('photos')
+        .select('*')
+        .order('score', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+
+      // Get signed URLs for photos
+      const photosWithUrls = await Promise.all(
+        (data || []).map(async (photo, index) => {
+          const { data: urlData } = await supabase.storage
+            .from('photos')
+            .createSignedUrl(photo.storage_path, 3600);
+
+          return {
+            ...photo,
+            url: urlData?.signedUrl,
+            top10_rank: index + 1,
+            final_score: cleanScore(photo.score, photo.description) || 0,
+            ai_description: cleanDescription(photo.description)
+          };
+        })
+      );
+
+      setTop10Photos(photosWithUrls);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to load top 10 photos");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const downloadTop10AsZip = async () => {
+    if (top10Photos.length === 0) {
+      toast.error("No photos to download");
+      return;
+    }
+
+    try {
+      setDownloading(true);
+      toast.info("Preparing your top 10 photos for download...");
+
+      const zip = new JSZip();
+      const photoFolder = zip.folder("top-10-photos");
+
+      // Fetch and add each photo to the ZIP
+      await Promise.all(
+        top10Photos.map(async (photo, index) => {
+          try {
+            const response = await fetch(photo.url);
+            const blob = await response.blob();
+            const extension = photo.filename.split('.').pop() || 'jpg';
+            const filename = `${index + 1}-${photo.filename}`;
+            photoFolder?.file(filename, blob);
+          } catch (error) {
+            console.error(`Failed to download ${photo.filename}:`, error);
+          }
+        })
+      );
+
+      // Generate and download the ZIP file
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(zipBlob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `top-10-photos-${new Date().toISOString().split('T')[0]}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success("Top 10 photos downloaded successfully!");
+    } catch (error: any) {
+      console.error("Download error:", error);
+      toast.error("Failed to download photos. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const getRankIcon = (rank: number) => {
     if (rank === 1) return <Trophy className="h-6 w-6 text-secondary" />;
     if (rank === 2 || rank === 3) return <Medal className="h-6 w-6 text-score-good" />;
     return <Award className="h-6 w-6 text-primary" />;
   };
+
+  if (loading) {
+    return (
+      <Card className="p-12 text-center">
+        <div className="inline-flex p-4 rounded-full bg-secondary/10 mb-4">
+          <Trophy className="h-12 w-12 text-secondary animate-pulse" />
+        </div>
+        <h3 className="text-xl font-semibold mb-2">Loading Top 10...</h3>
+      </Card>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <Card className="p-12 text-center">
+        <div className="inline-flex p-4 rounded-full bg-secondary/10 mb-4">
+          <Trophy className="h-12 w-12 text-secondary" />
+        </div>
+        <h3 className="text-xl font-semibold mb-2">Sign In Required</h3>
+        <p className="text-muted-foreground">
+          Please sign in to view your top 10 photos
+        </p>
+      </Card>
+    );
+  }
 
   if (top10Photos.length === 0) {
     return (
@@ -37,6 +177,15 @@ const Top10Showcase = () => {
         <p className="text-muted-foreground mt-2">
           Automatically curated based on AI analysis and scoring
         </p>
+        <Button 
+          onClick={downloadTop10AsZip}
+          disabled={downloading}
+          className="mt-4"
+          size="lg"
+        >
+          <Download className="h-5 w-5 mr-2" />
+          {downloading ? "Preparing Download..." : "Download Top 10 as ZIP"}
+        </Button>
       </div>
 
       {/* Featured #1 */}
@@ -44,7 +193,7 @@ const Top10Showcase = () => {
         <Card className="overflow-hidden border-2 border-secondary shadow-2xl">
           <div className="relative aspect-video">
             <img
-              src={top10Photos[0].thumbnail_path}
+              src={top10Photos[0].url}
               alt={top10Photos[0].filename}
               className="w-full h-full object-cover"
             />
@@ -80,7 +229,7 @@ const Top10Showcase = () => {
           >
             <div className="relative aspect-square">
               <img
-                src={photo.thumbnail_path}
+                src={photo.url}
                 alt={photo.filename}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
