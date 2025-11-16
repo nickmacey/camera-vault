@@ -65,7 +65,7 @@ export const DynamicHero = () => {
   return (
     <section ref={heroRef} className="relative h-screen overflow-hidden film-grain">
       {/* Background: Rotating through top 3 with parallax */}
-      <div className="absolute inset-0" style={{ transform: `translateY(${parallaxOffset}px)` }}>
+      <div className="absolute inset-0 z-0" style={{ transform: `translateY(${parallaxOffset}px)` }}>
         {heroPhotos.map((photo, index) => (
           <div
             key={photo.id}
@@ -84,7 +84,7 @@ export const DynamicHero = () => {
       </div>
       
       {/* Hero content - fixed position, no parallax */}
-      <div className="relative z-10 flex h-full items-center justify-center text-center px-6">
+      <div className="relative z-20 flex h-full items-center justify-center text-center px-6">
         <div className="max-w-4xl">
           <h1 className="font-black text-6xl md:text-8xl text-foreground mb-6 drop-shadow-2xl">
             VAULT
@@ -107,7 +107,7 @@ export const DynamicHero = () => {
       
       {/* Slide indicators */}
       {heroPhotos.length > 1 && (
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-20">
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-30">
           {heroPhotos.map((_, i) => (
             <button
               key={i}
