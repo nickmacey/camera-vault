@@ -102,28 +102,6 @@
   .bg-gradient-radial {
     background-image: radial-gradient(circle, var(--tw-gradient-stops));
   }
-
-  /* Cascade animation for photo river */
-  @keyframes cascade {
-    0% {
-      transform: translateY(-10vh) scale(0.8);
-      opacity: 0;
-    }
-    10% {
-      opacity: 1;
-    }
-    90% {
-      opacity: 1;
-    }
-    100% {
-      transform: translateY(110vh) scale(1.2);
-      opacity: 0;
-    }
-  }
-
-  .animate-cascade {
-    animation: cascade linear forwards;
-  }
 }
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
