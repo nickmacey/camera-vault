@@ -36,7 +36,7 @@ export const DynamicHero = () => {
 
   if (loading || heroPhotos.length === 0) {
     return (
-      <section ref={heroRef} className="relative h-screen overflow-hidden bg-background">
+      <section ref={heroRef} className="relative h-screen overflow-hidden bg-background film-grain">
         <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
         <div className="relative z-10 flex h-full items-center justify-center text-center px-6">
           <div className="max-w-4xl">
@@ -63,7 +63,7 @@ export const DynamicHero = () => {
   const parallaxOffset = scrollY * 0.5;
 
   return (
-    <section ref={heroRef} className="relative h-screen overflow-hidden">
+    <section ref={heroRef} className="relative h-screen overflow-hidden film-grain">
       {/* Background: Rotating through top 3 with parallax */}
       <div className="absolute inset-0" style={{ transform: `translateY(${parallaxOffset}px)` }}>
         {heroPhotos.map((photo, index) => (
