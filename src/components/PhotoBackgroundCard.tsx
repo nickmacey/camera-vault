@@ -26,7 +26,7 @@ export const PhotoBackgroundCard = ({
   variant = 'high-value',
 }: PhotoBackgroundCardProps) => {
   const borderClasses = {
-    'vault-worthy': 'border-2 border-vault-gold shadow-[0_0_40px_rgba(212,175,55,0.3)] hover:shadow-[0_0_60px_rgba(212,175,55,0.5)]',
+    'vault-worthy': 'border-2 border-vault-gold shadow-[0_0_40px_hsla(45,70%,52%,0.3)] hover:shadow-[0_0_60px_hsla(45,70%,52%,0.5)]',
     'high-value': 'border border-vault-gold/30 hover:border-vault-gold/50',
     'archive': 'border border-vault-mid-gray/20 hover:border-vault-mid-gray/40',
   };
@@ -52,7 +52,6 @@ export const PhotoBackgroundCard = ({
         </div>
       )}
       
-      {/* Content */}
       <div className="relative z-10 p-8 h-full flex flex-col justify-between">
         <div>
           <div className="flex items-center gap-3 mb-4">
@@ -61,7 +60,7 @@ export const PhotoBackgroundCard = ({
               variant === 'high-value' ? 'text-vault-gold/70' : 
               'text-vault-light-gray'
             }`} />
-            <h3 className="font-black text-xl text-white">
+            <h3 className="font-black text-xl text-foreground">
               {title}
             </h3>
           </div>
@@ -70,16 +69,16 @@ export const PhotoBackgroundCard = ({
             <span className="font-mono text-5xl font-bold text-vault-gold">
               {count}
             </span>
-            <span className="ml-2 text-vault-light-gray">assets</span>
+            <span className="ml-2 text-muted-foreground">assets</span>
           </div>
           
           {value && (
-            <div className="text-sm text-vault-light-gray mb-3">
+            <div className="text-sm text-muted-foreground mb-3">
               Est. value: <span className="text-vault-gold font-bold">{value}</span>
             </div>
           )}
           
-          <p className="text-sm text-vault-light-gray leading-relaxed">
+          <p className="text-sm text-muted-foreground leading-relaxed">
             {description}
           </p>
         </div>

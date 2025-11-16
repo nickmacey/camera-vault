@@ -19,7 +19,7 @@ const StatsBar = () => {
     : null;
 
   return (
-    <div className="border-b border-vault-mid-gray bg-vault-dark-gray/50 backdrop-blur-sm sticky top-0 z-10 relative overflow-hidden">
+    <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10 relative overflow-hidden">
       {/* Subtle background accent from random top photo */}
       {accentPhoto && (
         <div className="absolute top-0 right-0 w-96 h-full opacity-5 pointer-events-none">
@@ -38,8 +38,8 @@ const StatsBar = () => {
               <Lock className="h-5 w-5 text-vault-gold" />
             </div>
             <div>
-              <p className="text-2xl font-mono font-bold text-vault-platinum">{stats.total_photos}</p>
-              <p className="text-xs text-vault-light-gray uppercase tracking-wide font-bold">Assets</p>
+              <p className="text-2xl font-mono font-bold text-foreground">{stats.total_photos}</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide font-bold">Assets</p>
             </div>
           </div>
 
@@ -48,8 +48,8 @@ const StatsBar = () => {
               <TrendingUp className="h-5 w-5 text-vault-green" />
             </div>
             <div>
-              <p className="text-2xl font-mono font-bold text-vault-platinum">{stats.avg_score.toFixed(1)}</p>
-              <p className="text-xs text-vault-light-gray uppercase tracking-wide font-bold">Avg Score</p>
+              <p className="text-2xl font-mono font-bold text-foreground">{stats.avg_score.toFixed(1)}</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide font-bold">Avg Score</p>
             </div>
           </div>
 
@@ -59,7 +59,7 @@ const StatsBar = () => {
             </div>
             <div>
               <p className="text-2xl font-mono font-bold text-vault-gold">{stats.top_score.toFixed(1)}</p>
-              <p className="text-xs text-vault-light-gray uppercase tracking-wide font-bold">Peak Score</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide font-bold">Peak Score</p>
             </div>
           </div>
 
@@ -69,7 +69,7 @@ const StatsBar = () => {
             </div>
             <div>
               <p className="text-2xl font-mono font-bold text-vault-gold">{stats.over_80}</p>
-              <p className="text-xs text-vault-light-gray uppercase tracking-wide font-bold">Vault Worthy</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide font-bold">Vault Worthy</p>
             </div>
           </div>
         </div>

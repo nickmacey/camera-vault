@@ -65,7 +65,7 @@ export const EditorialGrid = () => {
       <section className="p-6 md:p-12">
         <div className="text-center py-20">
           <div className="inline-block h-12 w-12 border-4 border-vault-gold border-t-transparent rounded-full animate-spin mb-4" />
-          <p className="text-vault-light-gray">Curating your collection...</p>
+          <p className="text-muted-foreground">Curating your collection...</p>
         </div>
       </section>
     );
@@ -75,27 +75,27 @@ export const EditorialGrid = () => {
     return (
       <section className="p-6 md:p-12">
         <div className="text-center py-20 max-w-4xl mx-auto">
-          <h2 className="font-black text-4xl text-white mb-4">
+          <h2 className="font-black text-4xl text-foreground mb-4">
             YOUR VAULT AWAITS
           </h2>
-          <p className="text-vault-light-gray text-lg mb-12 leading-relaxed">
+          <p className="text-muted-foreground text-lg mb-12 leading-relaxed">
             Upload your photos to unlock their hidden value.<br />
             Here's how your best work could look:
           </p>
           
           {/* Example layout with placeholders */}
           <div className="grid grid-cols-12 gap-3 md:gap-4 auto-rows-[150px] opacity-30 mb-12">
-            <div className="col-span-12 md:col-span-8 row-span-3 bg-vault-mid-gray rounded-lg" />
-            <div className="col-span-6 md:col-span-4 row-span-2 bg-vault-mid-gray rounded-lg" />
-            <div className="col-span-6 md:col-span-4 row-span-2 bg-vault-mid-gray rounded-lg" />
-            <div className="col-span-4 row-span-2 bg-vault-mid-gray rounded-lg" />
-            <div className="col-span-4 row-span-2 bg-vault-mid-gray rounded-lg" />
-            <div className="col-span-4 row-span-2 bg-vault-mid-gray rounded-lg" />
+            <div className="col-span-12 md:col-span-8 row-span-3 bg-muted rounded-lg" />
+            <div className="col-span-6 md:col-span-4 row-span-2 bg-muted rounded-lg" />
+            <div className="col-span-6 md:col-span-4 row-span-2 bg-muted rounded-lg" />
+            <div className="col-span-4 row-span-2 bg-muted rounded-lg" />
+            <div className="col-span-4 row-span-2 bg-muted rounded-lg" />
+            <div className="col-span-4 row-span-2 bg-muted rounded-lg" />
           </div>
           
           <Button 
             size="lg"
-            className="bg-vault-gold hover:bg-vault-gold-dark text-vault-dark font-bold px-12 py-6 text-lg"
+            variant="premium"
           >
             Upload Your First Photos
           </Button>
@@ -109,10 +109,10 @@ export const EditorialGrid = () => {
       {/* Header */}
       <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="font-black text-3xl md:text-4xl text-white mb-2">
+          <h2 className="font-black text-3xl md:text-4xl text-foreground mb-2">
             YOUR BEST WORK
           </h2>
-          <p className="text-vault-light-gray">
+          <p className="text-muted-foreground">
             AI-curated collection of your highest-scoring assets
           </p>
         </div>
@@ -124,7 +124,7 @@ export const EditorialGrid = () => {
           <Button 
             onClick={downloadTop10AsZip}
             disabled={downloading}
-            className="bg-vault-gold hover:bg-vault-gold-dark text-vault-dark font-bold"
+            variant="premium"
             size="lg"
           >
             <Download className="h-4 w-4 mr-2" />
@@ -138,16 +138,16 @@ export const EditorialGrid = () => {
         
         {/* Hero Photo (8 cols, 4 rows) */}
         {layout.hero && (
-          <Card className="col-span-12 md:col-span-8 row-span-4 relative group overflow-hidden border-4 border-vault-gold shadow-[0_0_60px_rgba(212,175,55,0.4)] rounded-lg">
+          <Card className="col-span-12 md:col-span-8 row-span-4 relative group overflow-hidden border-4 border-vault-gold shadow-[0_0_60px_hsla(45,70%,52%,0.4)] rounded-lg">
             <img 
               src={layout.hero.url}
               alt={layout.hero.filename}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-vault-black via-vault-black/40 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
             
             {layout.hero.score >= 8.5 && (
-              <div className="absolute top-6 left-6 flex items-center gap-2 bg-gradient-to-r from-vault-gold via-vault-gold-dark to-vault-gold text-vault-dark px-4 py-2 rounded-lg shadow-[0_0_20px_rgba(212,175,55,0.6)] border-2 border-vault-gold font-bold text-sm">
+              <div className="absolute top-6 left-6 flex items-center gap-2 bg-vault-gold text-background px-4 py-2 rounded-lg shadow-[0_0_20px_hsla(45,70%,52%,0.6)] border-2 border-vault-gold font-bold text-sm">
                 <Lock className="h-4 w-4" />
                 VAULT WORTHY
               </div>
@@ -159,11 +159,11 @@ export const EditorialGrid = () => {
                   <div className="text-xs text-vault-gold uppercase mb-2 font-mono tracking-wider">
                     #1 TOP PERFORMER
                   </div>
-                  <h3 className="text-2xl md:text-3xl font-bold text-white mb-2 drop-shadow-lg">
+                  <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-2 drop-shadow-lg">
                     {layout.hero.filename.replace(/\.(jpg|jpeg|png|gif|webp)$/i, '')}
                   </h3>
                   {layout.hero.description && (
-                    <p className="text-white/90 text-sm line-clamp-2 leading-relaxed max-w-2xl">
+                    <p className="text-foreground/90 text-sm line-clamp-2 leading-relaxed max-w-2xl">
                       {layout.hero.description}
                     </p>
                   )}
@@ -180,7 +180,7 @@ export const EditorialGrid = () => {
             key={photo.id}
             className={`col-span-6 md:col-span-4 row-span-2 relative group overflow-hidden rounded-lg ${
               photo.score >= 8.5 
-                ? 'border-2 border-vault-gold shadow-[0_0_30px_rgba(212,175,55,0.3)]' 
+                ? 'border-2 border-vault-gold shadow-[0_0_30px_hsla(45,70%,52%,0.3)]' 
                 : 'border border-vault-mid-gray/20'
             }`}
           >
@@ -189,10 +189,10 @@ export const EditorialGrid = () => {
               alt={photo.filename}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-vault-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             
             {photo.score >= 8.5 && (
-              <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-vault-gold text-vault-dark px-2.5 py-1 rounded text-xs font-bold">
+              <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-vault-gold text-background px-2.5 py-1 rounded text-xs font-bold">
                 <Lock className="h-3 w-3" />
                 VAULT WORTHY
               </div>
@@ -200,9 +200,9 @@ export const EditorialGrid = () => {
             
             <ScoreBadge score={photo.score} className="absolute top-3 right-3" size="sm" />
             
-            <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
               <div className="text-xs text-vault-gold font-mono mb-1">#{idx + 2}</div>
-              <div className="text-white font-semibold text-sm truncate">
+              <div className="text-foreground font-semibold text-sm truncate">
                 {photo.filename.replace(/\.(jpg|jpeg|png|gif|webp)$/i, '')}
               </div>
             </div>
@@ -215,7 +215,7 @@ export const EditorialGrid = () => {
             key={photo.id}
             className={`col-span-4 row-span-2 relative group overflow-hidden rounded-lg ${
               photo.score >= 8.5 
-                ? 'border-2 border-vault-gold shadow-[0_0_20px_rgba(212,175,55,0.2)]' 
+                ? 'border-2 border-vault-gold shadow-[0_0_20px_hsla(45,70%,52%,0.2)]' 
                 : 'border border-vault-mid-gray/20'
             }`}
           >
@@ -224,12 +224,12 @@ export const EditorialGrid = () => {
               alt={photo.filename}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
             />
-            <div className="absolute inset-0 bg-vault-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+            <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-500">
               <div className="text-center">
                 <div className="font-mono text-4xl font-bold text-vault-gold mb-2">
                   {photo.score.toFixed(1)}
                 </div>
-                <div className="text-xs text-white/80">
+                <div className="text-xs text-muted-foreground">
                   #{idx + 2 + layout.secondary.length}
                 </div>
               </div>
@@ -248,10 +248,10 @@ export const EditorialGrid = () => {
               alt={photo.filename}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
             />
-            <div className="absolute bottom-2 right-2 bg-vault-black/80 text-vault-light-gray px-2 py-1 rounded text-xs font-mono">
+            <div className="absolute bottom-2 right-2 bg-background/80 text-muted-foreground px-2 py-1 rounded text-xs font-mono">
               #{idx + 2 + layout.secondary.length + layout.tertiary.length}
             </div>
-            <div className="absolute inset-0 bg-vault-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+            <div className="absolute inset-0 bg-background/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-500">
               <ScoreBadge score={photo.score} size="sm" />
             </div>
           </Card>

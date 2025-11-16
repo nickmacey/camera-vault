@@ -8,10 +8,10 @@ interface ScoreBadgeProps {
 
 const ScoreBadge = ({ score, className, size = "md" }: ScoreBadgeProps) => {
   const getScoreColor = (score: number) => {
-    if (score >= 8.5) return "bg-gradient-to-br from-vault-gold via-vault-gold-dark to-vault-gold text-vault-dark border-2 border-vault-gold shadow-[0_0_20px_rgba(212,175,55,0.5)]";
-    if (score >= 7.0) return "bg-gradient-to-br from-score-good to-score-good/80 text-white border-2 border-score-good/50 shadow-lg";
-    if (score >= 6.0) return "bg-gradient-to-br from-score-average to-score-average/80 text-white border-2 border-score-average/50 shadow-lg";
-    return "bg-gradient-to-br from-score-poor to-score-poor/80 text-white border-2 border-score-poor/50 shadow-lg";
+    if (score >= 8.5) return "bg-gradient-to-br from-vault-gold to-vault-gold/80 text-background border-2 border-vault-gold shadow-[0_0_20px_hsla(45,70%,52%,0.5)]";
+    if (score >= 7.0) return "bg-gradient-to-br from-score-good to-score-good/80 text-background border-2 border-score-good/50 shadow-lg";
+    if (score >= 6.0) return "bg-gradient-to-br from-score-average to-score-average/80 text-background border-2 border-score-average/50 shadow-lg";
+    return "bg-gradient-to-br from-score-poor to-score-poor/80 text-foreground border-2 border-score-poor/50 shadow-lg";
   };
 
   const sizeClasses = {

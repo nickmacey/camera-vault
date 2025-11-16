@@ -29,10 +29,10 @@ export const CategoryShowcase = () => {
   return (
     <section className="p-6 md:p-12">
       <div className="mb-8">
-        <h2 className="font-black text-3xl md:text-4xl text-white mb-2">
+        <h2 className="font-black text-3xl md:text-4xl text-foreground mb-2">
           YOUR COLLECTION
         </h2>
-        <p className="text-vault-light-gray">
+        <p className="text-muted-foreground">
           Assets organized by market value and quality
         </p>
       </div>

@@ -2,203 +2,49 @@
 @tailwind components;
 @tailwind utilities;
 
+
 @layer base {
   :root {
-    /* Vault Color System */
-    --vault-black: 10 10 10;        /* #0A0A0A - Main background */
-    --vault-platinum: 232 232 232;   /* #E8E8E8 - Primary text */
-    --vault-gold: 212 175 55;        /* #D4AF37 - Premium accent */
-    --vault-green: 0 255 136;        /* #00FF88 - Success state */
-    --vault-red: 255 59 48;          /* #FF3B30 - Alert */
-    
-    --vault-dark-gray: 26 26 26;     /* #1A1A1A - Card backgrounds */
-    --vault-mid-gray: 64 64 64;      /* #404040 - Borders */
-    --vault-light-gray: 160 160 160; /* #A0A0A0 - Secondary text */
-    
-    /* Dynamic accent extracted from top photo - defaults to gold */
-    --vault-dynamic-accent: var(--vault-gold);
+    /* Pure Vault Color System (HSL) */
+    --vault-black: 10 10 10;
+    --vault-platinum: 232 232 232;
+    --vault-gold: 45 70% 52%;
+    --vault-green: 158 100% 50%;
+    --vault-red: 4 90% 58%;
+    --vault-dark-gray: 0 0% 10%;
+    --vault-mid-gray: 0 0% 25%;
+    --vault-light-gray: 0 0% 63%;
+    --vault-dynamic-accent: 45 70% 52%;
 
-    /* Design Tokens mapped to Vault */
-    --background: var(--vault-black);
-    --foreground: var(--vault-platinum);
-    
-    --card: var(--vault-dark-gray);
-    --card-foreground: var(--vault-platinum);
-    
-    --popover: var(--vault-dark-gray);
-    --popover-foreground: var(--vault-platinum);
-    
-    --primary: var(--vault-gold);
+    /* Semantic Design Tokens */
+    --background: 210 25% 8%;
+    --foreground: 210 15% 95%;
+    --card: 210 20% 12%;
+    --card-foreground: 210 15% 95%;
+    --popover: 210 20% 12%;
+    --popover-foreground: 210 15% 95%;
+    --primary: 45 70% 52%;
     --primary-foreground: 10 10 10;
-    
-    --secondary: var(--vault-mid-gray);
-    --secondary-foreground: var(--vault-platinum);
-    
-    --muted: var(--vault-mid-gray);
-    --muted-foreground: var(--vault-light-gray);
-    
-    --accent: var(--vault-green);
+    --secondary: 38 92% 50%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 210 20% 18%;
+    --muted-foreground: 210 10% 60%;
+    --accent: 158 100% 50%;
     --accent-foreground: 10 10 10;
-    
-    --destructive: var(--vault-red);
-    --destructive-foreground: var(--vault-platinum);
-    
-    --border: var(--vault-mid-gray);
-    --input: var(--vault-mid-gray);
-    --ring: var(--vault-gold);
-    
+    --destructive: 4 90% 58%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 210 20% 20%;
+    --input: 210 20% 20%;
+    --ring: 45 70% 52%;
     --radius: 0.5rem;
 
     /* Score Colors */
-    --score-excellent: var(--vault-gold);
-    --score-good: var(--vault-green);
-    --score-average: var(--vault-light-gray);
-    --score-poor: var(--vault-mid-gray);
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  
-  body {
-    @apply bg-background text-foreground;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    font-feature-settings: "rlig" 1, "calt" 1;
-  }
-  
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Inter', sans-serif;
-    font-weight: 900;
-    letter-spacing: -0.02em;
-  }
-  
-  .font-mono {
-    font-family: 'JetBrains Mono', 'SF Mono', monospace;
-  }
-}
-
-@layer utilities {
-  .vault-glow-gold {
-    box-shadow: 0 8px 24px rgba(212, 175, 55, 0.3);
-  }
-  
-  .vault-glow-green {
-    box-shadow: 0 8px 24px rgba(0, 255, 136, 0.2);
-  }
-  
-  .vault-transition {
-    transition: all 300ms ease-in-out;
-  }
-  
-  .vault-text-gradient {
-    background: linear-gradient(135deg, hsl(var(--vault-gold)) 0%, hsl(var(--vault-green)) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  
-  .bg-gradient-radial {
-    background-image: radial-gradient(circle, var(--tw-gradient-stops));
-  }
-}
-
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
-@layer base {
-  :root {
-    --background: 210 20% 98%;
-    --foreground: 210 15% 12%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 210 15% 12%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 210 15% 12%;
-
-    --primary: 188 95% 42%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 38 92% 50%;
-    --secondary-foreground: 0 0% 100%;
-
-    --muted: 210 15% 95%;
-    --muted-foreground: 210 10% 45%;
-
-    --accent: 188 95% 42%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 210 15% 88%;
-    --input: 210 15% 88%;
-    --ring: 188 95% 42%;
-
-    --radius: 0.75rem;
-
-    --score-excellent: 142 76% 36%;
-    --score-good: 38 92% 50%;
+    --score-excellent: 45 70% 52%;
+    --score-good: 158 100% 50%;
     --score-average: 45 93% 47%;
-    --score-poor: 0 84% 60%;
+    --score-poor: 4 90% 58%;
 
-    --gradient-hero: linear-gradient(135deg, hsl(210 20% 15%), hsl(210 25% 8%));
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100% / 0.05), hsl(0 0% 100% / 0));
-    --shadow-glow: 0 0 40px hsl(188 95% 42% / 0.15);
-    --shadow-card: 0 4px 24px hsl(210 15% 12% / 0.08);
-
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 210 25% 8%;
-    --foreground: 210 15% 95%;
-
-    --card: 210 20% 12%;
-    --card-foreground: 210 15% 95%;
-
-    --popover: 210 20% 12%;
-    --popover-foreground: 210 15% 95%;
-
-    --primary: 188 95% 42%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 38 92% 50%;
-    --secondary-foreground: 0 0% 100%;
-
-    --muted: 210 20% 18%;
-    --muted-foreground: 210 10% 60%;
-
-    --accent: 188 95% 42%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 210 20% 20%;
-    --input: 210 20% 20%;
-    --ring: 188 95% 42%;
-
-    --score-excellent: 142 76% 40%;
-    --score-good: 38 92% 55%;
-    --score-average: 45 93% 52%;
-    --score-poor: 0 84% 65%;
-
-    --gradient-hero: linear-gradient(135deg, hsl(210 20% 15%), hsl(210 25% 8%));
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100% / 0.05), hsl(0 0% 100% / 0));
-    --shadow-glow: 0 0 40px hsl(188 95% 42% / 0.25);
-    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.3);
-
+    /* Sidebar */
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -210,6 +56,7 @@ All colors MUST be HSL.
   }
 }
 
+
 @layer base {
   * {
     @apply border-border;
@@ -217,5 +64,43 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+  }
+
+  .font-mono {
+    font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  }
+}
+
+
+@layer utilities {
+  .vault-glow-gold {
+    box-shadow: 0 8px 24px hsla(45, 70%, 52%, 0.3);
+  }
+
+  .vault-glow-green {
+    box-shadow: 0 8px 24px hsla(158, 100%, 50%, 0.2);
+  }
+
+  .vault-transition {
+    transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .vault-text-gradient {
+    background: linear-gradient(135deg, hsl(45 70% 52%) 0%, hsl(158 100% 50%) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .bg-gradient-radial {
+    background-image: radial-gradient(circle, var(--tw-gradient-stops));
   }
 }
