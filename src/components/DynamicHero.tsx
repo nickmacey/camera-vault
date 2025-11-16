@@ -20,19 +20,19 @@ export const DynamicHero = () => {
 
   if (loading || heroPhotos.length === 0) {
     return (
-      <section className="relative h-screen overflow-hidden bg-vault-black">
-        <div className="absolute inset-0 bg-gradient-to-b from-vault-black/60 via-vault-black/80 to-vault-black" />
+      <section className="relative h-screen overflow-hidden bg-background">
+        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
         <div className="relative z-10 flex h-full items-center justify-center text-center px-6">
           <div className="max-w-4xl">
-            <h1 className="font-black text-6xl md:text-8xl text-white mb-6">
+            <h1 className="font-black text-6xl md:text-8xl text-foreground mb-6">
               VAULT
             </h1>
-            <p className="text-2xl md:text-3xl text-gray-300 mb-12 font-light leading-relaxed">
+            <p className="text-2xl md:text-3xl text-muted-foreground mb-12 font-light leading-relaxed">
               The difference between a camera roll<br />and a career.
             </p>
             <Button 
               size="lg"
-              className="bg-vault-gold hover:bg-vault-gold-dark text-vault-dark font-bold px-12 py-6 text-lg rounded-lg shadow-[0_0_30px_rgba(212,175,55,0.3)] hover:shadow-[0_0_50px_rgba(212,175,55,0.5)] transition-all"
+              className="bg-vault-gold text-background font-bold px-12 py-6 text-lg rounded-lg shadow-[0_0_30px_hsla(45,70%,52%,0.3)] hover:shadow-[0_0_50px_hsla(45,70%,52%,0.5)] transition-all duration-500"
             >
               Discover Your Best Work
               <ArrowRight className="ml-2 h-5 w-5" />
@@ -61,24 +61,24 @@ export const DynamicHero = () => {
             />
           </div>
         ))}
-        <div className="absolute inset-0 bg-gradient-to-b from-vault-black/60 via-vault-black/80 to-vault-black" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
       </div>
       
       {/* Hero content */}
       <div className="relative z-10 flex h-full items-center justify-center text-center px-6">
         <div className="max-w-4xl">
-          <h1 className="font-black text-6xl md:text-8xl text-white mb-6 drop-shadow-2xl">
+          <h1 className="font-black text-6xl md:text-8xl text-foreground mb-6 drop-shadow-2xl">
             VAULT
           </h1>
-          <p className="text-2xl md:text-3xl text-gray-100 mb-4 font-light leading-relaxed drop-shadow-lg">
+          <p className="text-2xl md:text-3xl text-foreground/90 mb-4 font-light leading-relaxed drop-shadow-lg">
             The difference between a camera roll<br />and a career.
           </p>
-          <p className="text-lg text-gray-300 mb-12 drop-shadow-md">
+          <p className="text-lg text-muted-foreground mb-12 drop-shadow-md">
             AI finds your best work in seconds.
           </p>
           <Button 
             size="lg"
-            className="bg-vault-gold hover:bg-vault-gold-dark text-vault-dark font-bold px-12 py-6 text-lg rounded-lg shadow-[0_0_30px_rgba(212,175,55,0.5)] hover:shadow-[0_0_50px_rgba(212,175,55,0.7)] transition-all"
+            className="bg-vault-gold text-background font-bold px-12 py-6 text-lg rounded-lg shadow-[0_0_30px_hsla(45,70%,52%,0.5)] hover:shadow-[0_0_50px_hsla(45,70%,52%,0.7)] transition-all duration-500"
           >
             Discover Your Best Work
             <ArrowRight className="ml-2 h-5 w-5" />
@@ -93,10 +93,10 @@ export const DynamicHero = () => {
             <button
               key={i}
               onClick={() => setCurrentSlide(i)}
-              className={`h-1 rounded-full transition-all ${
+              className={`h-1 rounded-full transition-all duration-500 ${
                 i === currentSlide 
-                  ? 'w-12 bg-vault-gold shadow-[0_0_10px_rgba(212,175,55,0.8)]' 
-                  : 'w-6 bg-white/30 hover:bg-white/50'
+                  ? 'w-12 bg-vault-gold shadow-[0_0_10px_hsla(45,70%,52%,0.8)]' 
+                  : 'w-6 bg-foreground/30 hover:bg-foreground/50'
               }`}
               aria-label={`Go to slide ${i + 1}`}
             />

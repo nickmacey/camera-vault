@@ -19,31 +19,31 @@ const Index = () => {
   }, [dynamicAccent]);
 
   return (
-    <div className="min-h-screen bg-vault-black">
+    <div className="min-h-screen bg-background">
       <DynamicHero />
       <CategoryShowcase />
       <StatsBar />
 
       <main className="container mx-auto px-4 py-12">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-3 mb-8 bg-vault-dark-gray border border-vault-mid-gray">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-3 mb-8 bg-card border border-border">
             <TabsTrigger 
               value="upload" 
-              className="gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-vault-black font-bold uppercase tracking-wide text-vault-light-gray"
+              className="gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-background font-bold uppercase tracking-wide text-muted-foreground"
             >
               <Lock className="h-4 w-4" />
               Secure
             </TabsTrigger>
             <TabsTrigger 
               value="gallery" 
-              className="gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-vault-black font-bold uppercase tracking-wide text-vault-light-gray"
+              className="gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-background font-bold uppercase tracking-wide text-muted-foreground"
             >
               <Shield className="h-4 w-4" />
               Vault
             </TabsTrigger>
             <TabsTrigger 
               value="elite" 
-              className="gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-vault-black font-bold uppercase tracking-wide text-vault-light-gray"
+              className="gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-background font-bold uppercase tracking-wide text-muted-foreground"
             >
               <Award className="h-4 w-4" />
               Elite
