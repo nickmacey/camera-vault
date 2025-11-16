@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useTop10Photos } from "@/hooks/useTop10Photos";
 import { ArrowRight } from "lucide-react";
@@ -6,6 +6,8 @@ import { ArrowRight } from "lucide-react";
 export const DynamicHero = () => {
   const { vaultWorthy, loading } = useTop10Photos();
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [scrollY, setScrollY] = useState(0);
+  const heroRef = useRef<HTMLElement>(null);
   const heroPhotos = vaultWorthy.slice(0, 3);
 
   useEffect(() => {
@@ -18,9 +20,23 @@ export const DynamicHero = () => {
     return () => clearInterval(interval);
   }, [heroPhotos.length]);
 
+  // Parallax scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      if (heroRef.current) {
+        const rect = heroRef.current.getBoundingClientRect();
+        const scrollProgress = Math.max(0, -rect.top);
+        setScrollY(scrollProgress);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   if (loading || heroPhotos.length === 0) {
     return (
-      <section className="relative h-screen overflow-hidden bg-background">
+      <section ref={heroRef} className="relative h-screen overflow-hidden bg-background">
         <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
         <div className="relative z-10 flex h-full items-center justify-center text-center px-6">
           <div className="max-w-4xl">
@@ -43,10 +59,13 @@ export const DynamicHero = () => {
     );
   }
 
+  // Parallax speed multiplier (0.5 = half speed of scroll)
+  const parallaxOffset = scrollY * 0.5;
+
   return (
-    <section className="relative h-screen overflow-hidden">
-      {/* Background: Rotating through top 3 */}
-      <div className="absolute inset-0">
+    <section ref={heroRef} className="relative h-screen overflow-hidden">
+      {/* Background: Rotating through top 3 with parallax */}
+      <div className="absolute inset-0" style={{ transform: `translateY(${parallaxOffset}px)` }}>
         {heroPhotos.map((photo, index) => (
           <div
             key={photo.id}
@@ -57,14 +76,14 @@ export const DynamicHero = () => {
             <img 
               src={photo.url}
               alt={photo.filename}
-              className="w-full h-full object-cover blur-sm scale-105"
+              className="w-full h-full object-cover blur-[2px] scale-110"
             />
           </div>
         ))}
         <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
       </div>
       
-      {/* Hero content */}
+      {/* Hero content - fixed position, no parallax */}
       <div className="relative z-10 flex h-full items-center justify-center text-center px-6">
         <div className="max-w-4xl">
           <h1 className="font-black text-6xl md:text-8xl text-foreground mb-6 drop-shadow-2xl">
