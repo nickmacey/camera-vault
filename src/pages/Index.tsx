@@ -1,70 +1,61 @@
 import { useState, useEffect } from "react";
-import { Lock, Shield, Award } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DynamicHero } from "@/components/DynamicHero";
-import PhotoUpload from "@/components/PhotoUpload";
-import PhotoGallery from "@/components/PhotoGallery";
-import { EditorialGrid } from "@/components/EditorialGrid";
-import { CategoryShowcase } from "@/components/CategoryShowcase";
-import StatsBar from "@/components/StatsBar";
-import { useTop10Photos } from "@/hooks/useTop10Photos";
+import { VaultEntrance } from "@/components/VaultEntrance";
+import { VaultSanctuary } from "@/components/VaultSanctuary";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+
+type ExperienceMode = "entrance" | "sanctuary";
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState("gallery");
-  const { dynamicAccent } = useTop10Photos();
-  
-  // Apply dynamic accent color to CSS variable
+  const [mode, setMode] = useState<ExperienceMode>("entrance");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const navigate = useNavigate();
+
   useEffect(() => {
-    document.documentElement.style.setProperty('--vault-dynamic-accent', dynamicAccent);
-  }, [dynamicAccent]);
+    // Check authentication
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
+      // If authenticated and has photos, skip entrance
+      if (session) {
+        checkUserPhotos(session.user.id);
+      }
+    });
 
-  return (
-    <div className="min-h-screen bg-vault-black">
-      <DynamicHero />
-      <CategoryShowcase />
-      <StatsBar />
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+      if (!session) {
+        navigate("/auth");
+      }
+    });
 
-      <main className="container mx-auto px-4 py-12">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-3 mb-8 bg-vault-dark-gray border border-vault-mid-gray">
-            <TabsTrigger 
-              value="upload" 
-              className="gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-vault-black font-bold uppercase tracking-wide text-vault-light-gray"
-            >
-              <Lock className="h-4 w-4" />
-              Secure
-            </TabsTrigger>
-            <TabsTrigger 
-              value="gallery" 
-              className="gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-vault-black font-bold uppercase tracking-wide text-vault-light-gray"
-            >
-              <Shield className="h-4 w-4" />
-              Vault
-            </TabsTrigger>
-            <TabsTrigger 
-              value="elite" 
-              className="gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-vault-black font-bold uppercase tracking-wide text-vault-light-gray"
-            >
-              <Award className="h-4 w-4" />
-              Elite
-            </TabsTrigger>
-          </TabsList>
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
-          <TabsContent value="upload" className="animate-fade-in">
-            <PhotoUpload />
-          </TabsContent>
+  const checkUserPhotos = async (userId: string) => {
+    const { data: photos } = await supabase
+      .from("photos")
+      .select("id")
+      .eq("user_id", userId)
+      .limit(1);
 
-          <TabsContent value="gallery" className="animate-fade-in">
-            <PhotoGallery />
-          </TabsContent>
+    if (photos && photos.length > 0) {
+      setMode("sanctuary");
+    }
+  };
 
-          <TabsContent value="elite" className="animate-fade-in">
-            <EditorialGrid />
-          </TabsContent>
-        </Tabs>
-      </main>
-    </div>
-  );
+  const handleEnterVault = () => {
+    if (!isAuthenticated) {
+      navigate("/auth");
+    } else {
+      setMode("sanctuary");
+    }
+  };
+
+  if (mode === "entrance") {
+    return <VaultEntrance onEnter={handleEnterVault} />;
+  }
+
+  return <VaultSanctuary />;
 };
 
 export default Index;
