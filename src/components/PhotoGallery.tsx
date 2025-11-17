@@ -27,13 +27,16 @@ import { Lightbox } from "./Lightbox";
 import { WatermarkStudio, WatermarkConfig } from "./WatermarkStudio";
 import { applyWatermarkToImage, downloadImage } from "@/lib/watermark";
 import JSZip from "jszip";
+import { PhotoFilterBar } from "./PhotoFilterBar";
 
 const PhotoGallery = () => {
   const [filterStatus, setFilterStatus] = useState("all");
+  const [tierFilter, setTierFilter] = useState("all");
   const [scoreFilter, setScoreFilter] = useState("all");
   const [sortBy, setSortBy] = useState("score-desc");
   const [searchQuery, setSearchQuery] = useState("");
   const [photos, setPhotos] = useState<any[]>([]);
+  const [totalPhotos, setTotalPhotos] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [lightboxPhoto, setLightboxPhoto] = useState<any | null>(null);
@@ -70,7 +73,7 @@ const PhotoGallery = () => {
     if (isAuthenticated) {
       fetchPhotos();
     }
-  }, [filterStatus, scoreFilter, sortBy, searchQuery, isAuthenticated]);
+  }, [filterStatus, scoreFilter, sortBy, searchQuery, tierFilter, isAuthenticated]);
 
   const toggleSelection = (photoId: string) => {
     setSelectedPhotos(prev => {
@@ -356,9 +359,27 @@ const PhotoGallery = () => {
   const fetchPhotos = async () => {
     try {
       setLoading(true);
+      
+      // First get total count
+      const { count: total } = await supabase
+        .from('photos')
+        .select('*', { count: 'exact', head: true });
+      
+      setTotalPhotos(total || 0);
+
       let query = supabase
         .from('photos')
         .select('*');
+
+      // Apply tier filter
+      if (tierFilter !== 'all') {
+        if (tierFilter === 'archive') {
+          // Archive photos don't have a tier or have a tier that's not vault-worthy or high-value
+          query = query.or('tier.is.null,and(tier.neq.vault-worthy,tier.neq.high-value)');
+        } else {
+          query = query.eq('tier', tierFilter);
+        }
+      }
 
       // Apply status filter
       if (filterStatus !== 'all') {
@@ -369,9 +390,9 @@ const PhotoGallery = () => {
       if (scoreFilter !== 'all') {
         const [min, max] = scoreFilter.split('-').map(Number);
         if (max) {
-          query = query.gte('score', min).lte('score', max);
+          query = query.gte('overall_score', min).lte('overall_score', max);
         } else {
-          query = query.gte('score', min);
+          query = query.gte('overall_score', min);
         }
       }
 
@@ -381,8 +402,19 @@ const PhotoGallery = () => {
       }
 
       // Apply sorting
-      const [field, direction] = sortBy.split('-');
-      query = query.order(field, { ascending: direction === 'asc' });
+      if (sortBy === 'score-desc') {
+        query = query.order('overall_score', { ascending: false, nullsFirst: false });
+      } else if (sortBy === 'score-asc') {
+        query = query.order('overall_score', { ascending: true, nullsFirst: false });
+      } else if (sortBy === 'date-desc') {
+        query = query.order('created_at', { ascending: false });
+      } else if (sortBy === 'date-asc') {
+        query = query.order('created_at', { ascending: true });
+      } else if (sortBy === 'name-asc') {
+        query = query.order('filename', { ascending: true });
+      } else if (sortBy === 'name-desc') {
+        query = query.order('filename', { ascending: false });
+      }
 
       const { data, error } = await query;
 
@@ -415,6 +447,16 @@ const PhotoGallery = () => {
 
   return (
     <div className="space-y-6">
+      {/* New Filter Bar */}
+      <PhotoFilterBar
+        tierFilter={tierFilter}
+        onTierFilterChange={setTierFilter}
+        sortBy={sortBy}
+        onSortByChange={setSortBy}
+        totalCount={totalPhotos}
+        filteredCount={photos.length}
+      />
+
       <Card className="p-6 bg-vault-dark-gray border-vault-mid-gray">
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
@@ -433,36 +475,11 @@ const PhotoGallery = () => {
                 <SelectTrigger className="w-[150px] bg-vault-black border-vault-mid-gray text-vault-platinum">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
-                <SelectContent className="bg-vault-dark-gray border-vault-mid-gray">
+                <SelectContent className="bg-vault-dark-gray border-vault-mid-gray z-50">
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="new">New</SelectItem>
                   <SelectItem value="approved">Approved</SelectItem>
                   <SelectItem value="rejected">Rejected</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={scoreFilter} onValueChange={setScoreFilter}>
-                <SelectTrigger className="w-[180px] bg-vault-black border-vault-mid-gray text-vault-platinum">
-                  <SelectValue placeholder="Score Range" />
-                </SelectTrigger>
-                <SelectContent className="bg-vault-dark-gray border-vault-mid-gray">
-                  <SelectItem value="all">All Scores</SelectItem>
-                  <SelectItem value="80-100">Vault Worthy (8.5+)</SelectItem>
-                  <SelectItem value="70-79">High Value (7.0-8.5)</SelectItem>
-                  <SelectItem value="60-69">Standard (6.0-7.0)</SelectItem>
-                  <SelectItem value="0-59">Archive (&lt;6.0)</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-[180px] bg-vault-black border-vault-mid-gray text-vault-platinum">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent className="bg-vault-dark-gray border-vault-mid-gray">
-                  <SelectItem value="score-desc">Score: High to Low</SelectItem>
-                  <SelectItem value="score-asc">Score: Low to High</SelectItem>
-                  <SelectItem value="created_at-desc">Newest First</SelectItem>
-                  <SelectItem value="created_at-asc">Oldest First</SelectItem>
                 </SelectContent>
               </Select>
             </div>
