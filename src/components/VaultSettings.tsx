@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Settings } from "lucide-react";
+import { Lock } from "lucide-react";
 
 interface VaultSettingsProps {
   open: boolean;
@@ -392,10 +392,10 @@ export const SettingsButton = () => {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed top-6 right-6 z-50 p-3 rounded-full bg-background/80 backdrop-blur-sm border-2 border-vault-gold text-vault-gold hover:bg-vault-gold hover:text-background transition-all duration-300"
-        aria-label="Open settings"
+        className="fixed top-4 right-4 md:top-6 md:right-6 z-50 p-3 md:p-3.5 rounded-full bg-background/80 backdrop-blur-sm border-2 border-vault-gold text-vault-gold hover:bg-vault-gold hover:text-background transition-all duration-300 shadow-[0_0_20px_hsla(45,70%,52%,0.3)] hover:shadow-[0_0_30px_hsla(45,70%,52%,0.6)] active:scale-95"
+        aria-label="Open vault settings"
       >
-        <Settings className="h-6 w-6" />
+        <Lock className="h-5 w-5 md:h-6 md:w-6" />
       </button>
       <VaultSettings open={open} onOpenChange={setOpen} />
     </>
