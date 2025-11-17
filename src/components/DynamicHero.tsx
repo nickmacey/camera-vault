@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useTop10Photos } from "@/hooks/useTop10Photos";
-import { ArrowRight } from "lucide-react";
+import { Lock } from "lucide-react";
 
 export const DynamicHero = () => {
   const { vaultWorthy, loading } = useTop10Photos();
@@ -44,14 +44,15 @@ export const DynamicHero = () => {
               VAULT
             </h1>
             <p className="text-2xl md:text-3xl text-muted-foreground mb-12 font-light leading-relaxed">
-              The difference between a camera roll<br />and a career.
+              Share the best of your camera roll with the world.
             </p>
             <Button 
               size="lg"
-              className="bg-vault-gold text-background font-bold px-12 py-6 text-lg rounded-lg shadow-[0_0_30px_hsla(45,70%,52%,0.3)] hover:shadow-[0_0_50px_hsla(45,70%,52%,0.5)] transition-all duration-500"
+              className="group relative bg-gradient-to-r from-vault-gold via-vault-gold to-vault-gold/90 text-background font-black px-14 py-7 text-lg rounded-full overflow-hidden shadow-[0_0_40px_hsla(45,70%,52%,0.4),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_hsla(45,70%,52%,0.7),inset_0_1px_0_rgba(255,255,255,0.5)] hover:scale-105 transition-all duration-500 border-2 border-vault-gold/50"
             >
-              Discover Your Best Work
-              <ArrowRight className="ml-2 h-5 w-5" />
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+              <Lock className="mr-2 h-5 w-5 relative z-10" />
+              <span className="relative z-10">UNLOCK THE VAULT</span>
             </Button>
           </div>
         </div>
@@ -90,17 +91,18 @@ export const DynamicHero = () => {
             VAULT
           </h1>
           <p className="text-2xl md:text-3xl text-foreground/90 mb-4 font-light leading-relaxed drop-shadow-lg">
-            The difference between a camera roll<br />and a career.
+            Share the best of your camera roll with the world.
           </p>
           <p className="text-lg text-muted-foreground mb-12 drop-shadow-md">
             AI finds your best work in seconds.
           </p>
           <Button 
             size="lg"
-            className="bg-vault-gold text-background font-bold px-12 py-6 text-lg rounded-lg shadow-[0_0_30px_hsla(45,70%,52%,0.5)] hover:shadow-[0_0_50px_hsla(45,70%,52%,0.7)] transition-all duration-500"
+            className="group relative bg-gradient-to-r from-vault-gold via-vault-gold to-vault-gold/90 text-background font-black px-14 py-7 text-lg rounded-full overflow-hidden shadow-[0_0_40px_hsla(45,70%,52%,0.6),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_hsla(45,70%,52%,0.9),inset_0_1px_0_rgba(255,255,255,0.5)] hover:scale-105 transition-all duration-500 border-2 border-vault-gold/50"
           >
-            Discover Your Best Work
-            <ArrowRight className="ml-2 h-5 w-5" />
+            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+            <Lock className="mr-2 h-5 w-5 relative z-10" />
+            <span className="relative z-10">UNLOCK THE VAULT</span>
           </Button>
         </div>
       </div>
