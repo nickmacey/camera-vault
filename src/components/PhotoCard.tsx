@@ -3,18 +3,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Lock, Shield } from "lucide-react";
 import { cleanDescription, cleanScore } from "@/lib/utils";
 
+import { Tables } from "@/integrations/supabase/types";
+
 interface PhotoCardProps {
-  photo: {
-    id: string;
+  photo: Tables<"photos"> & {
     url: string;
     thumbnailUrl?: string;
-    filename: string;
     name?: string;
     description?: string;
     score?: number;
-    width?: number;
-    height?: number;
-    watermarked?: boolean;
   };
   onClick?: () => void;
   selectionMode?: boolean;

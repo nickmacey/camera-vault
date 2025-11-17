@@ -28,6 +28,13 @@ import { WatermarkStudio, WatermarkConfig } from "./WatermarkStudio";
 import { applyWatermarkToImage, downloadImage } from "@/lib/watermark";
 import JSZip from "jszip";
 import { PhotoFilterBar } from "./PhotoFilterBar";
+import { PhotoDetailModal } from "./PhotoDetailModal";
+import { Tables } from "@/integrations/supabase/types";
+
+type Photo = Tables<"photos"> & {
+  url: string;
+  thumbnailUrl?: string;
+};
 
 const PhotoGallery = () => {
   const [filterStatus, setFilterStatus] = useState("all");
@@ -35,7 +42,7 @@ const PhotoGallery = () => {
   const [scoreFilter, setScoreFilter] = useState("all");
   const [sortBy, setSortBy] = useState("score-desc");
   const [searchQuery, setSearchQuery] = useState("");
-  const [photos, setPhotos] = useState<any[]>([]);
+  const [photos, setPhotos] = useState<Photo[]>([]);
   const [totalPhotos, setTotalPhotos] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -45,6 +52,8 @@ const PhotoGallery = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [batchProcessing, setBatchProcessing] = useState(false);
   const [watermarkStudioPhoto, setWatermarkStudioPhoto] = useState<any | null>(null);
+  const [detailModalPhoto, setDetailModalPhoto] = useState<Photo | null>(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -603,7 +612,12 @@ const PhotoGallery = () => {
           <PhotoCard
             key={photo.id}
             photo={photo}
-            onClick={() => !selectionMode && setLightboxPhoto(photo)}
+            onClick={() => {
+              if (!selectionMode) {
+                setDetailModalPhoto(photo);
+                setDetailModalOpen(true);
+              }
+            }}
             selectionMode={selectionMode}
             isSelected={selectedPhotos.has(photo.id)}
             onToggleSelect={() => toggleSelection(photo.id)}
@@ -632,6 +646,19 @@ const PhotoGallery = () => {
           }}
         />
       )}
+
+      {/* Photo Detail Modal */}
+      <PhotoDetailModal
+        photo={detailModalPhoto}
+        open={detailModalOpen}
+        onOpenChange={(open) => {
+          setDetailModalOpen(open);
+          if (!open) {
+            setDetailModalPhoto(null);
+            fetchPhotos(); // Refresh photos after modal closes (in case social content was generated)
+          }
+        }}
+      />
 
       {watermarkStudioPhoto && (
         <WatermarkStudio
