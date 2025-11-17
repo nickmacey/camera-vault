@@ -8,6 +8,7 @@ import { EditorialGrid } from "@/components/EditorialGrid";
 import { CategoryShowcase } from "@/components/CategoryShowcase";
 import StatsBar from "@/components/StatsBar";
 import { useTop10Photos } from "@/hooks/useTop10Photos";
+import { SettingsButton } from "@/components/VaultSettings";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("gallery");
@@ -20,6 +21,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SettingsButton />
       <DynamicHero />
       <CategoryShowcase />
       <StatsBar />
