@@ -26,28 +26,30 @@ const Index = () => {
       <CategoryShowcase />
       <StatsBar />
 
-      <main className="container mx-auto px-4 py-12">
+      <main className="container mx-auto px-4 py-6 md:py-12">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-3 mb-8 bg-card border border-border">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-3 mb-6 md:mb-8 bg-card border border-border h-12 md:h-11">
             <TabsTrigger 
               value="upload" 
-              className="gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-background font-bold uppercase tracking-wide text-muted-foreground"
+              className="gap-1 md:gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-background font-bold uppercase tracking-wide text-muted-foreground text-xs md:text-sm"
             >
-              <Lock className="h-4 w-4" />
-              Secure
+              <Lock className="h-3 w-3 md:h-4 md:w-4" />
+              <span className="hidden sm:inline">Secure</span>
+              <span className="sm:hidden">Upload</span>
             </TabsTrigger>
             <TabsTrigger 
               value="gallery" 
-              className="gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-background font-bold uppercase tracking-wide text-muted-foreground"
+              className="gap-1 md:gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-background font-bold uppercase tracking-wide text-muted-foreground text-xs md:text-sm"
             >
-              <Shield className="h-4 w-4" />
-              Vault
+              <Shield className="h-3 w-3 md:h-4 md:w-4" />
+              <span className="hidden sm:inline">Vault</span>
+              <span className="sm:hidden">Gallery</span>
             </TabsTrigger>
             <TabsTrigger 
               value="elite" 
-              className="gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-background font-bold uppercase tracking-wide text-muted-foreground"
+              className="gap-1 md:gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-background font-bold uppercase tracking-wide text-muted-foreground text-xs md:text-sm"
             >
-              <Award className="h-4 w-4" />
+              <Award className="h-3 w-3 md:h-4 md:w-4" />
               Elite
             </TabsTrigger>
           </TabsList>

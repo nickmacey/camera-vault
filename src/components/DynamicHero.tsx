@@ -85,23 +85,23 @@ export const DynamicHero = () => {
       </div>
       
       {/* Hero content - fixed position, no parallax */}
-      <div className="relative z-20 flex h-full items-center justify-center text-center px-6">
+      <div className="relative z-20 flex h-full items-center justify-center text-center px-4 md:px-6">
         <div className="max-w-4xl">
-          <h1 className="font-black text-6xl md:text-8xl text-foreground mb-6 drop-shadow-2xl">
+          <h1 className="font-black text-5xl sm:text-6xl md:text-8xl text-foreground mb-4 md:mb-6 drop-shadow-2xl">
             VAULT
           </h1>
-          <p className="text-2xl md:text-3xl text-foreground/90 mb-4 font-light leading-relaxed drop-shadow-lg">
+          <p className="text-lg sm:text-xl md:text-2xl text-foreground/90 mb-2 md:mb-4 font-light leading-relaxed drop-shadow-lg px-4">
             Share the best of your camera roll with the world.
           </p>
-          <p className="text-lg text-muted-foreground mb-12 drop-shadow-md">
+          <p className="text-sm sm:text-base md:text-lg text-muted-foreground mb-8 md:mb-12 drop-shadow-md">
             AI finds your best work in seconds.
           </p>
           <Button 
             size="lg"
-            className="group relative bg-foreground/5 backdrop-blur-sm text-foreground font-black px-14 py-7 text-lg rounded-full overflow-hidden shadow-[0_0_40px_hsla(45,70%,52%,0.3),0_4px_20px_rgba(0,0,0,0.3)] hover:shadow-[0_0_60px_hsla(45,70%,52%,0.6),0_8px_30px_rgba(0,0,0,0.4)] hover:scale-105 hover:bg-foreground/10 transition-all duration-500 border-2 border-vault-gold"
+            className="group relative bg-foreground/5 backdrop-blur-sm text-foreground font-black px-8 sm:px-10 md:px-14 py-5 md:py-7 text-sm sm:text-base md:text-lg rounded-full overflow-hidden shadow-[0_0_40px_hsla(45,70%,52%,0.3),0_4px_20px_rgba(0,0,0,0.3)] hover:shadow-[0_0_60px_hsla(45,70%,52%,0.6),0_8px_30px_rgba(0,0,0,0.4)] hover:scale-105 hover:bg-foreground/10 transition-all duration-500 border-2 border-vault-gold"
           >
             <span className="absolute inset-0 bg-gradient-to-r from-transparent via-vault-gold/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
-            <Lock className="mr-2 h-5 w-5 relative z-10 text-vault-gold" />
+            <Lock className="mr-2 h-4 w-4 md:h-5 md:w-5 relative z-10 text-vault-gold" />
             <span className="relative z-10">UNLOCK YOUR VAULT</span>
           </Button>
         </div>
