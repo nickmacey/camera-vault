@@ -118,38 +118,38 @@ export const PhotoDetailModal = ({ photo, open, onOpenChange }: PhotoDetailModal
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-7xl max-h-[95vh] p-0 bg-background border-2 border-vault-gold overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr,400px] h-full">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr,400px] h-full max-h-[95vh]">
             {/* Left: Photo Display */}
-            <div className="relative bg-vault-black flex items-center justify-center p-8">
+            <div className="relative bg-vault-black flex items-center justify-center p-4 md:p-8 min-h-[40vh] lg:min-h-full">
               <img
                 src={photo.storage_path}
                 alt={photo.filename}
-                className="max-w-full max-h-[85vh] object-contain"
+                className="max-w-full max-h-[50vh] lg:max-h-[85vh] object-contain"
               />
               
               {/* Provider Badge */}
-              <Badge className="absolute top-4 left-4 bg-vault-dark-gray text-vault-platinum border border-vault-mid-gray">
+              <Badge className="absolute top-2 left-2 md:top-4 md:left-4 bg-vault-dark-gray text-vault-platinum border border-vault-mid-gray text-xs">
                 {photo.provider === 'manual_upload' ? '📤 Manual Upload' : photo.provider}
               </Badge>
 
-              {/* Close Button */}
+              {/* Close Button - Larger touch target on mobile */}
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute top-4 right-4 text-vault-platinum hover:text-vault-gold"
+                className="absolute top-2 right-2 md:top-4 md:right-4 text-vault-platinum hover:text-vault-gold h-10 w-10 md:h-9 md:w-9"
                 onClick={() => onOpenChange(false)}
               >
-                <X className="h-5 w-5" />
+                <X className="h-6 w-6 md:h-5 md:w-5" />
               </Button>
             </div>
 
             {/* Right: Details Sidebar */}
-            <div className="bg-card border-l border-vault-mid-gray overflow-y-auto">
-              <div className="p-6 space-y-6">
+            <div className="bg-card border-t lg:border-t-0 lg:border-l border-vault-mid-gray overflow-y-auto max-h-[50vh] lg:max-h-full">
+              <div className="p-4 md:p-6 space-y-4 md:space-y-6">
                 {/* Overall Score */}
                 <div className="text-center space-y-2">
                   <ScoreBadge score={photo.overall_score || 0} size="lg" />
-                  <p className={`text-sm font-bold uppercase tracking-wide ${tierColor}`}>
+                  <p className={`text-xs md:text-sm font-bold uppercase tracking-wide ${tierColor}`}>
                     {tierLabel}
                   </p>
                 </div>
@@ -157,8 +157,8 @@ export const PhotoDetailModal = ({ photo, open, onOpenChange }: PhotoDetailModal
                 <Separator className="bg-vault-mid-gray" />
 
                 {/* Score Breakdown */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-bold uppercase tracking-wide text-vault-gold flex items-center gap-2">
+                <div className="space-y-3 md:space-y-4">
+                  <h3 className="text-xs md:text-sm font-bold uppercase tracking-wide text-vault-gold flex items-center gap-2">
                     <Gauge className="h-4 w-4" />
                     Score Analysis
                   </h3>
@@ -202,12 +202,12 @@ export const PhotoDetailModal = ({ photo, open, onOpenChange }: PhotoDetailModal
                 {photo.ai_analysis && (
                   <>
                     <Separator className="bg-vault-mid-gray" />
-                    <div className="space-y-2">
-                      <h3 className="text-sm font-bold uppercase tracking-wide text-vault-gold flex items-center gap-2">
+                    <div className="space-y-2 md:space-y-3">
+                      <h3 className="text-xs md:text-sm font-bold uppercase tracking-wide text-vault-gold flex items-center gap-2">
                         <Sparkles className="h-4 w-4" />
                         AI Analysis
                       </h3>
-                      <p className="text-sm text-muted-foreground leading-relaxed">
+                      <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
                         {photo.ai_analysis}
                       </p>
                     </div>
@@ -218,10 +218,10 @@ export const PhotoDetailModal = ({ photo, open, onOpenChange }: PhotoDetailModal
 
                 {/* Metadata Tabs */}
                 <Tabs defaultValue="details" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="details">Details</TabsTrigger>
-                    <TabsTrigger value="camera">Camera</TabsTrigger>
-                    <TabsTrigger value="location">Location</TabsTrigger>
+                  <TabsList className="grid w-full grid-cols-3 h-10 bg-vault-dark-gray">
+                    <TabsTrigger value="details" className="text-xs data-[state=active]:bg-vault-gold data-[state=active]:text-vault-black">Details</TabsTrigger>
+                    <TabsTrigger value="camera" className="text-xs data-[state=active]:bg-vault-gold data-[state=active]:text-vault-black">Camera</TabsTrigger>
+                    <TabsTrigger value="location" className="text-xs data-[state=active]:bg-vault-gold data-[state=active]:text-vault-black">Location</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="details" className="space-y-3 mt-4">
@@ -416,11 +416,11 @@ export const PhotoDetailModal = ({ photo, open, onOpenChange }: PhotoDetailModal
                 <Separator className="bg-vault-mid-gray" />
 
                 {/* Actions */}
-                <div className="space-y-2">
+                <div className="space-y-2 md:space-y-3">
                   {hasSocialContent ? (
                     <Button
                       onClick={handleViewSocial}
-                      className="w-full bg-vault-gold text-vault-black hover:bg-vault-gold/90"
+                      className="w-full bg-vault-gold text-vault-black hover:bg-vault-gold/90 h-11 text-sm"
                     >
                       <Sparkles className="mr-2 h-4 w-4" />
                       View Captions
@@ -429,7 +429,7 @@ export const PhotoDetailModal = ({ photo, open, onOpenChange }: PhotoDetailModal
                     <Button
                       onClick={handleGenerateSocial}
                       disabled={generatingSocial}
-                      className="w-full bg-vault-gold text-vault-black hover:bg-vault-gold/90"
+                      className="w-full bg-vault-gold text-vault-black hover:bg-vault-gold/90 h-11 text-sm"
                     >
                       <Sparkles className="mr-2 h-4 w-4" />
                       {generatingSocial ? 'Generating...' : 'Generate Captions'}
@@ -439,7 +439,7 @@ export const PhotoDetailModal = ({ photo, open, onOpenChange }: PhotoDetailModal
                   <Button
                     onClick={handleDownload}
                     variant="outline"
-                    className="w-full border-vault-gold text-vault-gold hover:bg-vault-gold/10"
+                    className="w-full border-vault-gold text-vault-gold hover:bg-vault-gold/10 h-11 text-sm"
                   >
                     <Download className="mr-2 h-4 w-4" />
                     Download Original
