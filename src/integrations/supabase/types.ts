@@ -14,26 +14,100 @@ export type Database = {
   }
   public: {
     Tables: {
+      connected_providers: {
+        Row: {
+          access_token: string | null
+          analyzed_count: number | null
+          auto_sync_frequency: string | null
+          connected_at: string | null
+          created_at: string | null
+          display_name: string | null
+          id: string
+          last_sync: string | null
+          photo_count: number | null
+          provider: string
+          refresh_token: string | null
+          settings: Json | null
+          sync_enabled: boolean | null
+          token_expiry: string | null
+          updated_at: string | null
+          user_id: string
+          vault_worthy_count: number | null
+        }
+        Insert: {
+          access_token?: string | null
+          analyzed_count?: number | null
+          auto_sync_frequency?: string | null
+          connected_at?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          last_sync?: string | null
+          photo_count?: number | null
+          provider: string
+          refresh_token?: string | null
+          settings?: Json | null
+          sync_enabled?: boolean | null
+          token_expiry?: string | null
+          updated_at?: string | null
+          user_id: string
+          vault_worthy_count?: number | null
+        }
+        Update: {
+          access_token?: string | null
+          analyzed_count?: number | null
+          auto_sync_frequency?: string | null
+          connected_at?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          last_sync?: string | null
+          photo_count?: number | null
+          provider?: string
+          refresh_token?: string | null
+          settings?: Json | null
+          sync_enabled?: boolean | null
+          token_expiry?: string | null
+          updated_at?: string | null
+          user_id?: string
+          vault_worthy_count?: number | null
+        }
+        Relationships: []
+      }
       photos: {
         Row: {
           ai_analysis: string | null
           alt_text: string | null
+          analyzed_at: string | null
           artistic_score: number | null
+          camera_data: Json | null
           capture_date: string | null
           commercial_score: number | null
           created_at: string
+          custom_tags: string[] | null
+          date_taken: string | null
           description: string | null
           emotional_score: number | null
+          external_id: string | null
+          file_size: number | null
           filename: string
           hashtags: Json | null
           height: number | null
           id: string
           instagram_caption: string | null
+          is_favorite: boolean | null
           is_top_10: boolean | null
           linkedin_caption: string | null
+          location_data: Json | null
+          mime_type: string | null
+          orientation: string | null
           overall_score: number | null
+          provider: string | null
+          provider_id: string | null
+          provider_metadata: Json | null
           score: number | null
           social_title: string | null
+          source_url: string | null
           status: string | null
           storage_path: string
           technical_score: number | null
@@ -42,6 +116,7 @@ export type Database = {
           twitter_caption: string | null
           updated_at: string
           user_id: string
+          user_notes: string | null
           watermark_applied_at: string | null
           watermark_config: Json | null
           watermarked: boolean | null
@@ -50,22 +125,36 @@ export type Database = {
         Insert: {
           ai_analysis?: string | null
           alt_text?: string | null
+          analyzed_at?: string | null
           artistic_score?: number | null
+          camera_data?: Json | null
           capture_date?: string | null
           commercial_score?: number | null
           created_at?: string
+          custom_tags?: string[] | null
+          date_taken?: string | null
           description?: string | null
           emotional_score?: number | null
+          external_id?: string | null
+          file_size?: number | null
           filename: string
           hashtags?: Json | null
           height?: number | null
           id?: string
           instagram_caption?: string | null
+          is_favorite?: boolean | null
           is_top_10?: boolean | null
           linkedin_caption?: string | null
+          location_data?: Json | null
+          mime_type?: string | null
+          orientation?: string | null
           overall_score?: number | null
+          provider?: string | null
+          provider_id?: string | null
+          provider_metadata?: Json | null
           score?: number | null
           social_title?: string | null
+          source_url?: string | null
           status?: string | null
           storage_path: string
           technical_score?: number | null
@@ -74,6 +163,7 @@ export type Database = {
           twitter_caption?: string | null
           updated_at?: string
           user_id: string
+          user_notes?: string | null
           watermark_applied_at?: string | null
           watermark_config?: Json | null
           watermarked?: boolean | null
@@ -82,22 +172,36 @@ export type Database = {
         Update: {
           ai_analysis?: string | null
           alt_text?: string | null
+          analyzed_at?: string | null
           artistic_score?: number | null
+          camera_data?: Json | null
           capture_date?: string | null
           commercial_score?: number | null
           created_at?: string
+          custom_tags?: string[] | null
+          date_taken?: string | null
           description?: string | null
           emotional_score?: number | null
+          external_id?: string | null
+          file_size?: number | null
           filename?: string
           hashtags?: Json | null
           height?: number | null
           id?: string
           instagram_caption?: string | null
+          is_favorite?: boolean | null
           is_top_10?: boolean | null
           linkedin_caption?: string | null
+          location_data?: Json | null
+          mime_type?: string | null
+          orientation?: string | null
           overall_score?: number | null
+          provider?: string | null
+          provider_id?: string | null
+          provider_metadata?: Json | null
           score?: number | null
           social_title?: string | null
+          source_url?: string | null
           status?: string | null
           storage_path?: string
           technical_score?: number | null
@@ -106,21 +210,104 @@ export type Database = {
           twitter_caption?: string | null
           updated_at?: string
           user_id?: string
+          user_notes?: string | null
           watermark_applied_at?: string | null
           watermark_config?: Json | null
           watermarked?: boolean | null
           width?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "photos_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "connected_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sync_jobs: {
+        Row: {
+          archived_found: number | null
+          completed_at: string | null
+          created_at: string | null
+          error_message: string | null
+          estimated_completion: string | null
+          filters: Json | null
+          high_value_found: number | null
+          id: string
+          last_error_at: string | null
+          processed_photos: number | null
+          provider_id: string
+          retry_count: number | null
+          started_at: string | null
+          status: string | null
+          total_photos: number | null
+          updated_at: string | null
+          user_id: string
+          vault_worthy_found: number | null
+        }
+        Insert: {
+          archived_found?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          estimated_completion?: string | null
+          filters?: Json | null
+          high_value_found?: number | null
+          id?: string
+          last_error_at?: string | null
+          processed_photos?: number | null
+          provider_id: string
+          retry_count?: number | null
+          started_at?: string | null
+          status?: string | null
+          total_photos?: number | null
+          updated_at?: string | null
+          user_id: string
+          vault_worthy_found?: number | null
+        }
+        Update: {
+          archived_found?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          estimated_completion?: string | null
+          filters?: Json | null
+          high_value_found?: number | null
+          id?: string
+          last_error_at?: string | null
+          processed_photos?: number | null
+          provider_id?: string
+          retry_count?: number | null
+          started_at?: string | null
+          status?: string | null
+          total_photos?: number | null
+          updated_at?: string | null
+          user_id?: string
+          vault_worthy_found?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sync_jobs_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "connected_providers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_settings: {
         Row: {
           artistic_weight: number
+          auto_analyze_uploads: boolean | null
+          auto_generate_captions: boolean | null
           commercial_weight: number
           created_at: string
           emoji_preference: string
           emotional_weight: number
           id: string
+          notification_preferences: Json | null
           personality: string[]
           style: string
           technical_weight: number
@@ -130,11 +317,14 @@ export type Database = {
         }
         Insert: {
           artistic_weight?: number
+          auto_analyze_uploads?: boolean | null
+          auto_generate_captions?: boolean | null
           commercial_weight?: number
           created_at?: string
           emoji_preference?: string
           emotional_weight?: number
           id?: string
+          notification_preferences?: Json | null
           personality?: string[]
           style?: string
           technical_weight?: number
@@ -144,11 +334,14 @@ export type Database = {
         }
         Update: {
           artistic_weight?: number
+          auto_analyze_uploads?: boolean | null
+          auto_generate_captions?: boolean | null
           commercial_weight?: number
           created_at?: string
           emoji_preference?: string
           emotional_weight?: number
           id?: string
+          notification_preferences?: Json | null
           personality?: string[]
           style?: string
           technical_weight?: number

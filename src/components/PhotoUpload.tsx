@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Lock, Shield } from "lucide-react";
+import { Lock, Shield, Link2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import imageCompression from 'browser-image-compression';
 import { AnalysisLoadingOverlay } from "@/components/AnalysisLoadingOverlay";
+import { ProviderConnectionModal } from "@/components/ProviderConnectionModal";
+import { extractExifData, calculateOrientation, isValidImageFormat, isValidFileSize } from "@/lib/providers/manualUploadProvider";
 
 const PhotoUpload = () => {
   const navigate = useNavigate();
@@ -18,6 +20,7 @@ const PhotoUpload = () => {
   const [uploading, setUploading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
+  const [showProviderModal, setShowProviderModal] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -45,9 +48,17 @@ const PhotoUpload = () => {
     e.preventDefault();
     setIsDragging(false);
 
-    const droppedFiles = Array.from(e.dataTransfer.files).filter((file) =>
-      file.type.startsWith("image/")
-    );
+    const droppedFiles = Array.from(e.dataTransfer.files).filter((file) => {
+      if (!isValidImageFormat(file)) {
+        toast.error(`${file.name}: Unsupported format. Please use JPEG, PNG, HEIC, or WebP`);
+        return false;
+      }
+      if (!isValidFileSize(file)) {
+        toast.error(`${file.name}: File too large. Maximum 50MB per photo`);
+        return false;
+      }
+      return true;
+    });
 
     if (droppedFiles.length > 20) {
       toast.error("Maximum 20 photos per upload. Please select fewer files.");
@@ -61,7 +72,18 @@ const PhotoUpload = () => {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const selectedFiles = Array.from(e.target.files);
+      const selectedFiles = Array.from(e.target.files).filter((file) => {
+        if (!isValidImageFormat(file)) {
+          toast.error(`${file.name}: Unsupported format`);
+          return false;
+        }
+        if (!isValidFileSize(file)) {
+          toast.error(`${file.name}: File too large (max 50MB)`);
+          return false;
+        }
+        return true;
+      });
+      
       if (selectedFiles.length > 20) {
         toast.error("Maximum 20 photos per upload. Please select fewer files.");
         return;
@@ -103,13 +125,21 @@ const PhotoUpload = () => {
           setUploadProgress({ current: fileIndex + 1, total: files.length });
           
           try {
-            // Get image dimensions first
+            // Extract EXIF data
+            const exifData = await extractExifData(file);
+            
+            // Get image dimensions
             const img = new Image();
             const imageUrl = URL.createObjectURL(file);
             await new Promise((resolve) => {
               img.onload = resolve;
               img.src = imageUrl;
             });
+            
+            const width = exifData?.dimensions?.width || img.width;
+            const height = exifData?.dimensions?.height || img.height;
+            const orientation = calculateOrientation(width, height);
+            const dateTaken = exifData?.dateTaken ? new Date(exifData.dateTaken) : new Date();
 
             let technicalScore = null;
             let commercialScore = null;
@@ -188,7 +218,7 @@ const PhotoUpload = () => {
             if (uploadResult.error) throw uploadResult.error;
             if (thumbnailResult.error) throw thumbnailResult.error;
 
-            // Save to database with thumbnail path
+            // Save to database with all metadata
             const displayName = suggestedName.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
             const { error: dbError } = await supabase
               .from('photos')
@@ -197,6 +227,21 @@ const PhotoUpload = () => {
                 filename: displayName,
                 storage_path: fileName,
                 thumbnail_path: thumbnailName,
+                // Provider data
+                provider: 'manual_upload',
+                external_id: fileName, // Use storage path as external ID for manual uploads
+                mime_type: file.type,
+                file_size: file.size,
+                // Dimensions and orientation
+                width,
+                height,
+                orientation,
+                date_taken: dateTaken.toISOString(),
+                // EXIF metadata
+                camera_data: exifData?.camera ? JSON.parse(JSON.stringify(exifData.camera)) : null,
+                location_data: exifData?.location ? JSON.parse(JSON.stringify(exifData.location)) : null,
+                provider_metadata: {},
+                // AI scores
                 technical_score: technicalScore,
                 commercial_score: commercialScore,
                 artistic_score: artisticScore,
@@ -204,10 +249,9 @@ const PhotoUpload = () => {
                 overall_score: overallScore,
                 tier: tier,
                 ai_analysis: aiAnalysis,
-                width: img.width,
-                height: img.height,
+                analyzed_at: technicalScore ? new Date().toISOString() : null,
                 status: 'new'
-              });
+              } as any); // Type assertion needed until types regenerate after migration
 
             if (dbError) throw dbError;
             
@@ -302,10 +346,23 @@ const PhotoUpload = () => {
                   AI Analysis
                 </Label>
               </div>
+              
+              {/* Provider Connection Link */}
+              <div className="pt-6 border-t border-vault-mid-gray/30">
+                <button
+                  onClick={() => setShowProviderModal(true)}
+                  className="text-xs text-vault-light-gray hover:text-vault-gold transition-colors flex items-center gap-2 mx-auto"
+                >
+                  <Link2 className="w-3 h-3" />
+                  Or connect a photo source
+                </button>
+              </div>
             </div>
           </Card>
         </div>
       </div>
+      
+      <ProviderConnectionModal open={showProviderModal} onOpenChange={setShowProviderModal} />
 
       {files.length > 0 && (
         <Card className="p-8 bg-vault-dark-gray border-vault-mid-gray">
