@@ -16,17 +16,30 @@ export type Database = {
     Tables: {
       photos: {
         Row: {
+          ai_analysis: string | null
+          alt_text: string | null
+          artistic_score: number | null
           capture_date: string | null
+          commercial_score: number | null
           created_at: string
           description: string | null
+          emotional_score: number | null
           filename: string
+          hashtags: Json | null
           height: number | null
           id: string
+          instagram_caption: string | null
           is_top_10: boolean | null
+          linkedin_caption: string | null
+          overall_score: number | null
           score: number | null
+          social_title: string | null
           status: string | null
           storage_path: string
+          technical_score: number | null
           thumbnail_path: string | null
+          tier: string | null
+          twitter_caption: string | null
           updated_at: string
           user_id: string
           watermark_applied_at: string | null
@@ -35,17 +48,30 @@ export type Database = {
           width: number | null
         }
         Insert: {
+          ai_analysis?: string | null
+          alt_text?: string | null
+          artistic_score?: number | null
           capture_date?: string | null
+          commercial_score?: number | null
           created_at?: string
           description?: string | null
+          emotional_score?: number | null
           filename: string
+          hashtags?: Json | null
           height?: number | null
           id?: string
+          instagram_caption?: string | null
           is_top_10?: boolean | null
+          linkedin_caption?: string | null
+          overall_score?: number | null
           score?: number | null
+          social_title?: string | null
           status?: string | null
           storage_path: string
+          technical_score?: number | null
           thumbnail_path?: string | null
+          tier?: string | null
+          twitter_caption?: string | null
           updated_at?: string
           user_id: string
           watermark_applied_at?: string | null
@@ -54,23 +80,81 @@ export type Database = {
           width?: number | null
         }
         Update: {
+          ai_analysis?: string | null
+          alt_text?: string | null
+          artistic_score?: number | null
           capture_date?: string | null
+          commercial_score?: number | null
           created_at?: string
           description?: string | null
+          emotional_score?: number | null
           filename?: string
+          hashtags?: Json | null
           height?: number | null
           id?: string
+          instagram_caption?: string | null
           is_top_10?: boolean | null
+          linkedin_caption?: string | null
+          overall_score?: number | null
           score?: number | null
+          social_title?: string | null
           status?: string | null
           storage_path?: string
+          technical_score?: number | null
           thumbnail_path?: string | null
+          tier?: string | null
+          twitter_caption?: string | null
           updated_at?: string
           user_id?: string
           watermark_applied_at?: string | null
           watermark_config?: Json | null
           watermarked?: boolean | null
           width?: number | null
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          artistic_weight: number
+          commercial_weight: number
+          created_at: string
+          emoji_preference: string
+          emotional_weight: number
+          id: string
+          personality: string[]
+          style: string
+          technical_weight: number
+          tone: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          artistic_weight?: number
+          commercial_weight?: number
+          created_at?: string
+          emoji_preference?: string
+          emotional_weight?: number
+          id?: string
+          personality?: string[]
+          style?: string
+          technical_weight?: number
+          tone?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          artistic_weight?: number
+          commercial_weight?: number
+          created_at?: string
+          emoji_preference?: string
+          emotional_weight?: number
+          id?: string
+          personality?: string[]
+          style?: string
+          technical_weight?: number
+          tone?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
