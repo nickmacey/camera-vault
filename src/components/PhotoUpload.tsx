@@ -348,13 +348,13 @@ const PhotoUpload = () => {
 
               <div>
                 <h2 className="font-black text-4xl text-vault-platinum mb-4 uppercase tracking-tight">
-                  {isAuthenticated ? 'Secure Your Work' : 'Try It Free'}
+                  {isAuthenticated ? 'Secure Your Work' : 'Start Here'}
                 </h2>
                 <p className="text-base text-vault-light-gray">
-                  {isAuthenticated ? 'Drop files or click to browse' : 'Upload and analyze instantly—no signup required'}
+                  {isAuthenticated ? 'Drop files or click to browse' : 'Upload photos and see your scores—no signup required'}
                 </p>
                 <p className="text-xs text-vault-light-gray mt-2">
-                  JPEG, PNG, RAW supported • {isAuthenticated ? 'AI analyzes in real-time' : 'See your scores in seconds'}
+                  JPEG, PNG, RAW supported • Instant AI analysis
                 </p>
               </div>
 
