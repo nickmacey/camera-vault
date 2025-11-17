@@ -111,13 +111,25 @@ const PhotoUpload = () => {
               img.src = imageUrl;
             });
 
-            let score = null;
-            let description = null;
+            let technicalScore = null;
+            let commercialScore = null;
+            let artisticScore = null;
+            let emotionalScore = null;
+            let overallScore = null;
+            let tier = null;
+            let aiAnalysis = null;
             let suggestedName = file.name.replace(/\.[^/.]+$/, ""); // Remove extension
 
             // AI Analysis if enabled
             if (useAI) {
               try {
+                // Get user settings for scoring weights
+                const { data: settingsData } = await supabase
+                  .from('user_settings')
+                  .select('*')
+                  .eq('user_id', user.id)
+                  .single();
+
                 const reader = new FileReader();
                 const base64 = await new Promise<string>((resolve) => {
                   reader.onloadend = () => {
@@ -127,14 +139,26 @@ const PhotoUpload = () => {
                   reader.readAsDataURL(file);
                 });
 
-                const { data: analysisData, error: analysisError } = await supabase.functions.invoke('analyze-photo', {
-                  body: { imageBase64: base64, filename: file.name }
+                const { data: analysisData, error: analysisError } = await supabase.functions.invoke('analyze-photo-claude', {
+                  body: { 
+                    imageBase64: base64,
+                    userSettings: settingsData ? {
+                      technical_weight: settingsData.technical_weight,
+                      commercial_weight: settingsData.commercial_weight,
+                      artistic_weight: settingsData.artistic_weight,
+                      emotional_weight: settingsData.emotional_weight
+                    } : undefined
+                  }
                 });
 
                 if (!analysisError && analysisData) {
-                  score = analysisData.score;
-                  description = analysisData.description;
-                  suggestedName = analysisData.suggestedName || suggestedName;
+                  technicalScore = analysisData.technical_score;
+                  commercialScore = analysisData.commercial_score;
+                  artisticScore = analysisData.artistic_score;
+                  emotionalScore = analysisData.emotional_score;
+                  overallScore = analysisData.overall_score;
+                  tier = analysisData.tier;
+                  aiAnalysis = analysisData.ai_analysis;
                 }
               } catch (error) {
                 console.error('AI analysis failed:', error);
@@ -173,8 +197,13 @@ const PhotoUpload = () => {
                 filename: displayName,
                 storage_path: fileName,
                 thumbnail_path: thumbnailName,
-                description: description,
-                score: score,
+                technical_score: technicalScore,
+                commercial_score: commercialScore,
+                artistic_score: artisticScore,
+                emotional_score: emotionalScore,
+                overall_score: overallScore,
+                tier: tier,
+                ai_analysis: aiAnalysis,
                 width: img.width,
                 height: img.height,
                 status: 'new'
