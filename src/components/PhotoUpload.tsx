@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import imageCompression from 'browser-image-compression';
 import { AnalysisLoadingOverlay } from "@/components/AnalysisLoadingOverlay";
 import { ProviderConnectionModal } from "@/components/ProviderConnectionModal";
+import { SignupPromptModal } from "@/components/SignupPromptModal";
 import { extractExifData, calculateOrientation, isValidImageFormat, isValidFileSize } from "@/lib/providers/manualUploadProvider";
 
 const PhotoUpload = () => {
@@ -21,6 +22,8 @@ const PhotoUpload = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
   const [showProviderModal, setShowProviderModal] = useState(false);
+  const [showSignupPrompt, setShowSignupPrompt] = useState(false);
+  const [analysisResults, setAnalysisResults] = useState<{count: number, bestScore: number}>({count: 0, bestScore: 0});
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -95,17 +98,59 @@ const PhotoUpload = () => {
   const handleUpload = async () => {
     if (files.length === 0) return;
     
-    // Check if user is authenticated
-    if (!isAuthenticated) {
-      toast.error("Please sign in to upload photos", {
-        action: {
-          label: "Sign In",
-          onClick: () => navigate("/auth")
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    // Guest flow - just analyze without saving
+    if (!user) {
+      setUploading(true);
+      setUploadProgress({ current: 0, total: files.length });
+      const toastId = toast.loading(`Analyzing ${files.length} photo(s)...`);
+
+      try {
+        let bestScore = 0;
+        let analyzedCount = 0;
+
+        for (const file of files) {
+          setUploadProgress({ current: analyzedCount + 1, total: files.length });
+          
+          if (useAI) {
+            try {
+              const reader = new FileReader();
+              const base64 = await new Promise<string>((resolve) => {
+                reader.onloadend = () => {
+                  const result = reader.result as string;
+                  resolve(result.split(',')[1]);
+                };
+                reader.readAsDataURL(file);
+              });
+
+              const { data: analysisData } = await supabase.functions.invoke('analyze-photo-claude', {
+                body: { imageBase64: base64 }
+              });
+
+              if (analysisData?.overall_score) {
+                bestScore = Math.max(bestScore, analysisData.overall_score);
+                analyzedCount++;
+              }
+            } catch (error) {
+              console.error('Analysis failed:', error);
+            }
+          }
         }
-      });
+
+        toast.success(`Analyzed ${analyzedCount} photo(s)!`, { id: toastId });
+        setAnalysisResults({ count: analyzedCount, bestScore });
+        setShowSignupPrompt(true);
+        setFiles([]);
+      } catch (error: any) {
+        toast.error(error.message || "Analysis failed", { id: toastId });
+      } finally {
+        setUploading(false);
+      }
       return;
     }
-    
+
+    // Authenticated flow - full upload and save
     setUploading(true);
     setUploadProgress({ current: 0, total: files.length });
     const toastId = toast.loading(`Uploading ${files.length} photo(s)...`);
@@ -303,13 +348,13 @@ const PhotoUpload = () => {
 
               <div>
                 <h2 className="font-black text-4xl text-vault-platinum mb-4 uppercase tracking-tight">
-                  Secure Your Work
+                  {isAuthenticated ? 'Secure Your Work' : 'Try It Free'}
                 </h2>
                 <p className="text-base text-vault-light-gray">
-                  Drop files or click to browse
+                  {isAuthenticated ? 'Drop files or click to browse' : 'Upload and analyze instantly—no signup required'}
                 </p>
                 <p className="text-xs text-vault-light-gray mt-2">
-                  JPEG, PNG, RAW supported • AI analyzes in real-time
+                  JPEG, PNG, RAW supported • {isAuthenticated ? 'AI analyzes in real-time' : 'See your scores in seconds'}
                 </p>
               </div>
 
@@ -406,6 +451,14 @@ const PhotoUpload = () => {
         currentPhoto={uploadProgress.current}
         totalPhotos={uploadProgress.total}
         visible={uploading}
+      />
+      
+      {/* Signup prompt for guest users */}
+      <SignupPromptModal 
+        open={showSignupPrompt}
+        onOpenChange={setShowSignupPrompt}
+        photoCount={analysisResults.count}
+        bestScore={analysisResults.bestScore}
       />
     </div>
   );
