@@ -48,11 +48,11 @@ export const DynamicHero = () => {
             </p>
             <Button 
               size="lg"
-              className="group relative bg-gradient-to-r from-vault-gold via-vault-gold to-vault-gold/90 text-background font-black px-14 py-7 text-lg rounded-full overflow-hidden shadow-[0_0_40px_hsla(45,70%,52%,0.4),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_hsla(45,70%,52%,0.7),inset_0_1px_0_rgba(255,255,255,0.5)] hover:scale-105 transition-all duration-500 border-2 border-vault-gold/50"
+              className="group relative bg-foreground/5 backdrop-blur-sm text-foreground font-black px-14 py-7 text-lg rounded-full overflow-hidden shadow-[0_0_40px_hsla(45,70%,52%,0.3),0_4px_20px_rgba(0,0,0,0.3)] hover:shadow-[0_0_60px_hsla(45,70%,52%,0.6),0_8px_30px_rgba(0,0,0,0.4)] hover:scale-105 hover:bg-foreground/10 transition-all duration-500 border-2 border-vault-gold"
             >
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
-              <Lock className="mr-2 h-5 w-5 relative z-10" />
-              <span className="relative z-10">UNLOCK THE VAULT</span>
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-vault-gold/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+              <Lock className="mr-2 h-5 w-5 relative z-10 text-vault-gold" />
+              <span className="relative z-10">UNLOCK YOUR VAULT</span>
             </Button>
           </div>
         </div>
@@ -98,11 +98,11 @@ export const DynamicHero = () => {
           </p>
           <Button 
             size="lg"
-            className="group relative bg-gradient-to-r from-vault-gold via-vault-gold to-vault-gold/90 text-background font-black px-14 py-7 text-lg rounded-full overflow-hidden shadow-[0_0_40px_hsla(45,70%,52%,0.6),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_hsla(45,70%,52%,0.9),inset_0_1px_0_rgba(255,255,255,0.5)] hover:scale-105 transition-all duration-500 border-2 border-vault-gold/50"
+            className="group relative bg-foreground/5 backdrop-blur-sm text-foreground font-black px-14 py-7 text-lg rounded-full overflow-hidden shadow-[0_0_40px_hsla(45,70%,52%,0.3),0_4px_20px_rgba(0,0,0,0.3)] hover:shadow-[0_0_60px_hsla(45,70%,52%,0.6),0_8px_30px_rgba(0,0,0,0.4)] hover:scale-105 hover:bg-foreground/10 transition-all duration-500 border-2 border-vault-gold"
           >
-            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
-            <Lock className="mr-2 h-5 w-5 relative z-10" />
-            <span className="relative z-10">UNLOCK THE VAULT</span>
+            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-vault-gold/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+            <Lock className="mr-2 h-5 w-5 relative z-10 text-vault-gold" />
+            <span className="relative z-10">UNLOCK YOUR VAULT</span>
           </Button>
         </div>
       </div>
