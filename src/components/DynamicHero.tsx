@@ -51,10 +51,10 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
               Share the best of your camera roll with the world.
             </p>
             <p className="text-sm sm:text-base text-muted-foreground/80 mb-2 md:mb-4">
-              AI analyzes your photos in seconds—no signup required.
+              Discover which photos are worth protecting. Which ones could sell.
             </p>
             <p className="text-xs sm:text-sm text-muted-foreground/70 mb-8 md:mb-12">
-              Try it free • See your scores instantly
+              No signup • Instant results • Free forever
             </p>
             <Button 
               size="lg"
@@ -63,7 +63,7 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
             >
               <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
               <Sparkles className="mr-2 h-4 w-4 md:h-5 md:w-5 relative z-10 animate-pulse" />
-              <span className="relative z-10">ANALYZE YOUR FIRST PHOTO</span>
+              <span className="relative z-10">LOAD YOUR VAULT</span>
             </Button>
           </div>
         </div>
@@ -104,11 +104,11 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
           <p className="text-lg sm:text-xl md:text-2xl text-foreground/90 mb-2 md:mb-4 font-light leading-relaxed drop-shadow-lg px-4">
             Share the best of your camera roll with the world.
           </p>
-          <p className="text-sm sm:text-base md:text-lg text-muted-foreground mb-4 md:mb-6 drop-shadow-md">
-            AI analyzes your photos in seconds—no signup required.
+          <p className="text-sm sm:text-base md:text-lg text-muted-foreground/80 mb-2 md:mb-4 drop-shadow-md">
+            Discover which photos are worth protecting. Which ones could sell.
           </p>
-          <p className="text-xs sm:text-sm text-muted-foreground/80 mb-8 md:mb-12 drop-shadow-md">
-            Try it free • See your scores instantly
+          <p className="text-xs sm:text-sm text-muted-foreground/70 mb-8 md:mb-12 drop-shadow-md">
+            No signup • Instant results • Free forever
           </p>
           <Button 
             size="lg"
@@ -117,7 +117,7 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
           >
             <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
             <Sparkles className="mr-2 h-4 w-4 md:h-5 md:w-5 relative z-10 animate-pulse" />
-            <span className="relative z-10">ANALYZE YOUR FIRST PHOTO</span>
+            <span className="relative z-10">LOAD YOUR VAULT</span>
           </Button>
         </div>
       </div>
