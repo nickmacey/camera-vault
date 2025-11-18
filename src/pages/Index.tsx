@@ -90,3 +90,19 @@ const Index = () => {
       </main>
 
       <EditorialGrid />
+      
+      <footer className="border-t border-border mt-12 py-6">
+        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
+          <a 
+            href="/privacy" 
+            className="hover:text-foreground transition-colors underline"
+          >
+            Privacy Policy
+          </a>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default Index;
