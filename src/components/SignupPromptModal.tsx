@@ -20,7 +20,12 @@ export const SignupPromptModal = ({
 
   const handleSignup = () => {
     onOpenChange(false);
-    navigate("/auth");
+    navigate("/auth?mode=signup");
+  };
+
+  const handleLogin = () => {
+    onOpenChange(false);
+    navigate("/auth?mode=login");
   };
 
   return (
@@ -82,6 +87,16 @@ export const SignupPromptModal = ({
               <Lock className="mr-2 h-5 w-5" />
               Create Free Account
             </Button>
+            
+            <div className="flex items-center justify-center gap-2 text-sm">
+              <span className="text-muted-foreground">Already have an account?</span>
+              <button
+                onClick={handleLogin}
+                className="text-vault-gold hover:underline font-semibold"
+              >
+                Sign In
+              </button>
+            </div>
             
             <Button 
               onClick={() => onOpenChange(false)}
