@@ -24,6 +24,7 @@ const PhotoUpload = () => {
   const [showProviderModal, setShowProviderModal] = useState(false);
   const [showSignupPrompt, setShowSignupPrompt] = useState(false);
   const [analysisResults, setAnalysisResults] = useState<{count: number, bestScore: number}>({count: 0, bestScore: 0});
+  const [isCompressing, setIsCompressing] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -113,6 +114,12 @@ const PhotoUpload = () => {
         for (const file of files) {
           setUploadProgress({ current: analyzedCount + 1, total: files.length });
           
+          // Check if file is large (>4MB) and set compression indicator
+          const isLargeFile = file.size > 4 * 1024 * 1024;
+          if (isLargeFile) {
+            setIsCompressing(true);
+          }
+          
           if (useAI) {
             try {
               const reader = new FileReader();
@@ -127,6 +134,8 @@ const PhotoUpload = () => {
               const { data: analysisData } = await supabase.functions.invoke('analyze-photo-claude', {
                 body: { imageBase64: base64 }
               });
+              
+              setIsCompressing(false); // Clear compression indicator after analysis
 
               if (analysisData?.overall_score) {
                 bestScore = Math.max(bestScore, analysisData.overall_score);
@@ -134,6 +143,7 @@ const PhotoUpload = () => {
               }
             } catch (error) {
               console.error('Analysis failed:', error);
+              setIsCompressing(false);
             }
           }
         }
@@ -146,6 +156,7 @@ const PhotoUpload = () => {
         toast.error(error.message || "Analysis failed", { id: toastId });
       } finally {
         setUploading(false);
+        setIsCompressing(false);
       }
       return;
     }
@@ -198,6 +209,12 @@ const PhotoUpload = () => {
             // AI Analysis if enabled
             if (useAI) {
               try {
+                // Check if file is large (>4MB) and set compression indicator
+                const isLargeFile = file.size > 4 * 1024 * 1024;
+                if (isLargeFile) {
+                  setIsCompressing(true);
+                }
+                
                 // Get user settings for scoring weights
                 const { data: settingsData } = await supabase
                   .from('user_settings')
@@ -225,6 +242,8 @@ const PhotoUpload = () => {
                     } : undefined
                   }
                 });
+                
+                setIsCompressing(false); // Clear compression indicator after analysis
 
                 if (!analysisError && analysisData) {
                   technicalScore = analysisData.technical_score;
@@ -237,6 +256,7 @@ const PhotoUpload = () => {
                 }
               } catch (error) {
                 console.error('AI analysis failed:', error);
+                setIsCompressing(false);
               }
             }
 
@@ -321,6 +341,7 @@ const PhotoUpload = () => {
       toast.error(error.message || "Upload failed", { id: toastId });
     } finally {
       setUploading(false);
+      setIsCompressing(false);
       setUploadProgress({ current: 0, total: 0 });
     }
   };
@@ -460,6 +481,7 @@ const PhotoUpload = () => {
         currentPhoto={uploadProgress.current}
         totalPhotos={uploadProgress.total}
         visible={uploading}
+        isCompressing={isCompressing}
       />
       
       {/* Signup prompt for guest users */}
