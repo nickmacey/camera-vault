@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Lock } from "lucide-react";
+import { AutoSyncSettings } from "@/components/AutoSyncSettings";
 
 interface VaultSettingsProps {
   open: boolean;
@@ -145,9 +146,10 @@ export const VaultSettings = ({ open, onOpenChange }: VaultSettingsProps) => {
         </DialogHeader>
 
         <Tabs defaultValue="scoring" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="scoring">Scoring</TabsTrigger>
             <TabsTrigger value="brand">Brand Voice</TabsTrigger>
+            <TabsTrigger value="sync">Auto-Sync</TabsTrigger>
           </TabsList>
 
           <TabsContent value="scoring" className="space-y-6">
@@ -380,6 +382,19 @@ export const VaultSettings = ({ open, onOpenChange }: VaultSettingsProps) => {
             >
               {loading ? "Saving..." : "Save Brand Voice"}
             </Button>
+          </TabsContent>
+
+          <TabsContent value="sync" className="space-y-6">
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-xl font-bold text-vault-gold mb-2">AUTOMATIC SYNC</h3>
+                <p className="text-sm text-muted-foreground mb-6">
+                  Configure automatic photo synchronization from your connected providers
+                </p>
+              </div>
+
+              <AutoSyncSettings />
+            </div>
           </TabsContent>
         </Tabs>
       </DialogContent>
