@@ -348,7 +348,7 @@ const PhotoUpload = () => {
 
               <div>
                 <h2 className="font-black text-4xl text-vault-platinum mb-4 uppercase tracking-tight">
-                  {isAuthenticated ? 'Secure Your Work' : 'Start Here'}
+                  {isAuthenticated ? 'Load your Vault' : 'Start Here'}
                 </h2>
                 <p className="text-base text-vault-light-gray">
                   {isAuthenticated ? 'Drop files or click to browse' : 'Upload photos and see your scores—no signup required'}
