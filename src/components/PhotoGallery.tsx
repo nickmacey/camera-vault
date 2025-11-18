@@ -30,6 +30,7 @@ import JSZip from "jszip";
 import { PhotoFilterBar } from "./PhotoFilterBar";
 import { PhotoDetailModal } from "./PhotoDetailModal";
 import { Tables } from "@/integrations/supabase/types";
+import { AnimatedLockIcon } from "./AnimatedLockIcon";
 
 type Photo = Tables<"photos"> & {
   url: string;
@@ -659,21 +660,32 @@ const PhotoGallery = () => {
           <div className="animate-pulse text-vault-light-gray font-bold uppercase tracking-wide">Accessing Vault...</div>
         </Card>
       ) : !isAuthenticated ? (
-        <Card className="p-16 text-center bg-vault-dark-gray border-vault-mid-gray">
-          <div className="inline-flex p-6 rounded-lg bg-vault-gold/10 border border-vault-gold/20 mb-6">
-            <Lock className="h-16 w-16 text-vault-gold" />
+        <Card className="p-16 text-center bg-vault-dark-gray border-vault-mid-gray relative overflow-hidden">
+          {/* Background gradient effect */}
+          <div className="absolute inset-0 bg-gradient-radial from-vault-gold/5 via-transparent to-transparent" />
+          
+          {/* Animated lock icon */}
+          <div className="relative mb-8 flex justify-center">
+            <AnimatedLockIcon size={48} />
           </div>
-          <h3 className="text-2xl font-black mb-3 text-vault-platinum uppercase tracking-tight">Sign In to View Vault</h3>
-          <p className="text-vault-light-gray mb-6 max-w-md mx-auto">
-            Create an account or log in to upload and manage your photo collection
-          </p>
-          <Button 
-            onClick={() => window.location.href = '/auth'}
-            className="bg-vault-gold hover:bg-vault-gold/90 text-vault-black font-bold uppercase tracking-wide vault-glow-gold"
-          >
-            <Lock className="h-4 w-4 mr-2" />
-            Sign In / Sign Up
-          </Button>
+          
+          <div className="relative">
+            <h3 className="text-3xl font-black mb-3 text-vault-platinum uppercase tracking-tight animate-fade-in">
+              Vault Access Required
+            </h3>
+            <p className="text-vault-light-gray mb-8 max-w-md mx-auto animate-fade-in" style={{ animationDelay: '0.1s' }}>
+              Create an account or log in to upload and manage your premium photo collection
+            </p>
+            <Button 
+              onClick={() => window.location.href = '/auth'}
+              className="bg-vault-gold hover:bg-vault-gold/90 text-vault-black font-bold uppercase tracking-wide vault-glow-gold animate-scale-in group relative overflow-hidden"
+              style={{ animationDelay: '0.2s' }}
+            >
+              <Lock className="h-4 w-4 mr-2 transition-transform group-hover:scale-110" />
+              Access Vault
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+            </Button>
+          </div>
         </Card>
       ) : photos.length === 0 ? (
         <Card className="p-16 text-center bg-vault-dark-gray border-vault-mid-gray">
