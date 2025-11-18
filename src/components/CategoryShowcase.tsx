@@ -51,11 +51,11 @@ export const CategoryShowcase = () => {
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-          {/* Elite Collection (Vault Worthy) */}
+          {/* Elite (Vault Worthy) */}
           <PhotoBackgroundCard
             photoUrl={vaultWorthy[0]?.url}
             icon={Sparkles}
-            title="ELITE COLLECTION"
+            title="ELITE"
             subtitle="Premium Portfolio"
             count={vaultWorthyCount}
             value={`$${vaultWorthyValue.toLocaleString()}`}
@@ -64,11 +64,11 @@ export const CategoryShowcase = () => {
             variant="vault-worthy"
           />
           
-          {/* Rising Stars (High Value) */}
+          {/* Stars (High Value) */}
           <PhotoBackgroundCard
             photoUrl={highValue[0]?.url}
             icon={Star}
-            title="RISING STARS"
+            title="STARS"
             subtitle="Strong Contenders"
             count={highValueCount}
             value={`$${highValueValue.toLocaleString()}`}
@@ -77,14 +77,14 @@ export const CategoryShowcase = () => {
             variant="high-value"
           />
           
-          {/* Hidden Gems (Archive) */}
+          {/* Gems (Archive) */}
           <PhotoBackgroundCard
             photoUrl={archivePhotos[0]?.storage_path ? 
               `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/photos/${archivePhotos[0].storage_path}` : 
               undefined
             }
             icon={Gem}
-            title="HIDDEN GEMS"
+            title="GEMS"
             subtitle="Discovery Zone"
             count={archiveCount}
             description="Explore and uncover diamonds in the rough waiting to shine."
