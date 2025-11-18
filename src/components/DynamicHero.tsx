@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useTop10Photos } from "@/hooks/useTop10Photos";
-import { Sparkles } from "lucide-react";
 import heroBackground from "@/assets/hero-background.jpg";
 
 interface DynamicHeroProps {
@@ -66,11 +65,12 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
             <Button 
               size="lg"
               onClick={onCTAClick}
-              className="group relative bg-gradient-to-r from-primary via-primary/90 to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-black px-8 sm:px-12 md:px-16 py-6 md:py-8 text-sm sm:text-base md:text-xl rounded-full overflow-hidden shadow-[0_0_60px_hsla(var(--primary)/0.8),0_8px_30px_rgba(0,0,0,0.6)] hover:shadow-[0_0_100px_hsla(var(--primary)/1),0_12px_40px_rgba(0,0,0,0.7)] hover:scale-105 transition-all duration-500 border-2 border-primary/50"
+              className="group relative bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 backdrop-blur-sm hover:from-primary/30 hover:to-accent/30 font-black px-8 sm:px-12 md:px-16 py-6 md:py-8 text-sm sm:text-base md:text-xl rounded-full overflow-hidden shadow-[0_0_60px_hsla(var(--primary)/0.6)] hover:shadow-[0_0_100px_hsla(var(--primary)/0.9)] hover:scale-105 transition-all duration-500 border-2 border-primary/50 animate-pulse"
             >
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
-              <Sparkles className="mr-2 h-5 w-5 md:h-6 md:w-6 relative z-10 animate-pulse" />
-              <span className="relative z-10">CONNECT YOUR PHOTOS</span>
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+              <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-primary animate-glow font-black tracking-wider drop-shadow-[0_0_15px_hsla(var(--primary)/0.8)]">
+                CONNECT YOUR PHOTOS
+              </span>
             </Button>
           </div>
         </div>
@@ -141,11 +141,12 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
             <Button
             size="lg"
             onClick={onCTAClick}
-            className="group relative bg-gradient-to-r from-primary via-primary/90 to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-black px-8 sm:px-12 md:px-16 py-6 md:py-8 text-sm sm:text-base md:text-xl rounded-full overflow-hidden shadow-[0_0_60px_hsla(var(--primary)/0.8),0_8px_30px_rgba(0,0,0,0.6)] hover:shadow-[0_0_100px_hsla(var(--primary)/1),0_12px_40px_rgba(0,0,0,0.7)] hover:scale-105 transition-all duration-500 border-2 border-primary/50"
+            className="group relative bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 backdrop-blur-sm hover:from-primary/30 hover:to-accent/30 font-black px-8 sm:px-12 md:px-16 py-6 md:py-8 text-sm sm:text-base md:text-xl rounded-full overflow-hidden shadow-[0_0_60px_hsla(var(--primary)/0.6)] hover:shadow-[0_0_100px_hsla(var(--primary)/0.9)] hover:scale-105 transition-all duration-500 border-2 border-primary/50 animate-pulse"
           >
-            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
-            <Sparkles className="mr-2 h-5 w-5 md:h-6 md:w-6 relative z-10 animate-pulse" />
-            <span className="relative z-10">CONNECT YOUR PHOTOS</span>
+            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+            <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-primary animate-glow font-black tracking-wider drop-shadow-[0_0_15px_hsla(var(--primary)/0.8)]">
+              CONNECT YOUR PHOTOS
+            </span>
           </Button>
           </div>
         </div>
