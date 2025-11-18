@@ -1,1 +1,4 @@
 project_id = "erdsngxlqyhhayzekgid"
+
+[functions.google-oauth-config]
+verify_jwt = false
