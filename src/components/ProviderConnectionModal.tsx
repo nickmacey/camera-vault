@@ -33,20 +33,23 @@ export function ProviderConnectionModal({ open, onOpenChange }: ProviderConnecti
           return;
         }
 
-        // Validate required envs before proceeding
-        const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
-        const redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI || `${window.location.origin}/auth/google/callback`;
-        if (!clientId) {
+        setConnecting(providerId);
+
+        // Fetch OAuth config from backend
+        const { data: config, error: configError } = await supabase.functions.invoke('google-oauth-config');
+        
+        if (configError || !config?.clientId) {
+          console.error('Failed to fetch OAuth config:', configError);
           toast({
-            title: "Missing Google Client ID",
-            description: "Set VITE_GOOGLE_CLIENT_ID and try again.",
+            title: "Configuration Error",
+            description: "Failed to load Google OAuth configuration. Please try again.",
             variant: "destructive"
           });
           setConnecting(null);
           return;
         }
 
-        setConnecting(providerId);
+        const { clientId, redirectUri } = config;
 
         // Store user ID and initiate OAuth
         sessionStorage.setItem('google_oauth_user_id', user.id);
