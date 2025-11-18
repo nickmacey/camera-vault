@@ -6,12 +6,14 @@ interface AnalysisLoadingOverlayProps {
   currentPhoto: number;
   totalPhotos: number;
   visible: boolean;
+  isCompressing?: boolean;
 }
 
 export const AnalysisLoadingOverlay = ({
   currentPhoto,
   totalPhotos,
   visible,
+  isCompressing = false,
 }: AnalysisLoadingOverlayProps) => {
   const { top10Photos, loading: photosLoading } = useTop10Photos();
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
@@ -73,13 +75,13 @@ export const AnalysisLoadingOverlay = ({
         
         {/* Status text */}
         <h3 className="font-black text-3xl md:text-4xl text-white mb-3 animate-fade-in">
-          DISCOVERING VALUE
+          {isCompressing ? 'OPTIMIZING IMAGE' : 'DISCOVERING VALUE'}
         </h3>
         
         <div className="flex items-center justify-center gap-2 mb-6">
           <Sparkles className="h-4 w-4 text-vault-gold animate-pulse" />
           <p className="text-vault-light-gray text-lg">
-            AI analyzing your work
+            {isCompressing ? 'Compressing large image for analysis' : 'AI analyzing your work'}
           </p>
         </div>
         
@@ -102,9 +104,11 @@ export const AnalysisLoadingOverlay = ({
         {/* Tips */}
         <div className="mt-8 p-4 bg-vault-gold/5 border border-vault-gold/20 rounded-lg backdrop-blur-sm">
           <p className="text-xs text-vault-light-gray leading-relaxed">
-            {backgroundPhotos.length > 0 
-              ? "Your previous best work rotates in the background while we discover your next vault-worthy assets."
-              : "AI is evaluating composition, technical quality, commercial appeal, and emotional impact."}
+            {isCompressing 
+              ? "Large images are automatically compressed to ensure fast, reliable analysis while preserving quality."
+              : backgroundPhotos.length > 0 
+                ? "Your previous best work rotates in the background while we discover your next vault-worthy assets."
+                : "AI is evaluating composition, technical quality, commercial appeal, and emotional impact."}
           </p>
         </div>
         
