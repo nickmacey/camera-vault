@@ -70,7 +70,7 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
             >
               <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
               <Sparkles className="mr-2 h-5 w-5 md:h-6 md:w-6 relative z-10 animate-pulse" />
-              <span className="relative z-10">LOAD YOUR VAULT</span>
+              <span className="relative z-10">CONNECT YOUR PHOTOS</span>
             </Button>
           </div>
         </div>
@@ -145,7 +145,7 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
           >
             <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
             <Sparkles className="mr-2 h-5 w-5 md:h-6 md:w-6 relative z-10 animate-pulse" />
-            <span className="relative z-10">LOAD YOUR VAULT</span>
+            <span className="relative z-10">CONNECT YOUR PHOTOS</span>
           </Button>
           </div>
         </div>
