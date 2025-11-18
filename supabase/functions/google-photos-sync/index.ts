@@ -6,15 +6,81 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Generic error messages to avoid information leakage
+const ERROR_MESSAGES = {
+  INVALID_INPUT: 'Invalid request parameters',
+  SYNC_FAILED: 'Photo sync failed',
+  UNAUTHORIZED: 'Authentication required',
+  NOT_FOUND: 'Sync job not found',
+};
+
+// Validate UUID format
+const isValidUUID = (uuid: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const { syncJobId } = await req.json();
-    
+    // Get authenticated user from JWT
     const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('Missing authorization header');
+      return new Response(
+        JSON.stringify({ error: ERROR_MESSAGES.UNAUTHORIZED }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Create authenticated client to verify JWT
+    const supabaseAuth = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: authHeader },
+        },
+      }
+    );
+
+    const { data: { user }, error: userError } = await supabaseAuth.auth.getUser();
+    
+    if (userError || !user) {
+      console.error('Failed to get user from token:', userError);
+      return new Response(
+        JSON.stringify({ error: ERROR_MESSAGES.UNAUTHORIZED }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Parse and validate request body
+    let body;
+    try {
+      body = await req.json();
+    } catch (e) {
+      console.error('Invalid JSON body');
+      return new Response(
+        JSON.stringify({ error: ERROR_MESSAGES.INVALID_INPUT }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { syncJobId } = body;
+
+    // Validate syncJobId
+    if (!syncJobId || typeof syncJobId !== 'string' || !isValidUUID(syncJobId)) {
+      console.error('Invalid syncJobId:', syncJobId);
+      return new Response(
+        JSON.stringify({ error: ERROR_MESSAGES.INVALID_INPUT }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Use service role for database operations
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -22,16 +88,20 @@ serve(async (req) => {
 
     console.log('Starting sync for job:', syncJobId);
 
-    // Get sync job
+    // Get sync job and verify it belongs to the authenticated user
     const { data: syncJob, error: jobError } = await supabase
       .from('sync_jobs')
       .select('*, provider:connected_providers(*)')
       .eq('id', syncJobId)
+      .eq('user_id', user.id)  // Verify ownership
       .single();
 
-    if (jobError) {
-      console.error('Failed to fetch sync job:', jobError);
-      throw jobError;
+    if (jobError || !syncJob) {
+      console.error('Failed to fetch sync job or unauthorized:', jobError);
+      return new Response(
+        JSON.stringify({ error: ERROR_MESSAGES.NOT_FOUND }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Update to running
@@ -312,29 +382,32 @@ Respond ONLY with valid JSON (no markdown):
   } catch (error) {
     console.error('Sync error:', error);
     
-    // Try to update job status to failed
-    if (error instanceof Error) {
+    // Try to update job status to failed (but don't expose detailed error)
+    try {
       const authHeader = req.headers.get('Authorization');
       const supabase = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       );
       
-      const { syncJobId } = await req.json().catch(() => ({}));
-      if (syncJobId) {
+      const body = await req.json().catch(() => ({}));
+      const { syncJobId } = body;
+      if (syncJobId && isValidUUID(syncJobId)) {
         await supabase
           .from('sync_jobs')
           .update({
             status: 'failed',
-            error_message: error.message,
+            error_message: 'Sync operation failed',
             last_error_at: new Date().toISOString()
           })
           .eq('id', syncJobId);
       }
+    } catch (updateError) {
+      console.error('Failed to update job status:', updateError);
     }
 
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ error: ERROR_MESSAGES.SYNC_FAILED }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
