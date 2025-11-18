@@ -1,5 +1,6 @@
 import { PhotoProvider, PhotoProviderInterface } from '@/types/vault';
 import { manualUploadProvider } from './manualUploadProvider';
+import { googlePhotosProvider } from './googlePhotosProvider';
 
 // ═══════════════════════════════════════════════════════════
 // PROVIDER REGISTRY
@@ -7,25 +8,7 @@ import { manualUploadProvider } from './manualUploadProvider';
 
 const providerRegistry: Record<PhotoProvider, PhotoProviderInterface> = {
   manual_upload: manualUploadProvider,
-  // Future providers will be added here
-  google_photos: {
-    name: 'Google Photos',
-    id: 'google_photos',
-    icon: '📷',
-    description: 'Import from your Google Photos library',
-    getCapabilities: () => ({
-      canRead: true,
-      canWrite: false,
-      hasMetadata: true,
-      hasLocation: true,
-      hasCameraData: true,
-      supportsAlbums: true,
-      requiresAuth: true,
-      maxFileSize: 200 * 1024 * 1024,
-      rateLimit: 10000,
-      supportedFormats: ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp']
-    }),
-  },
+  google_photos: googlePhotosProvider,
   instagram: {
     name: 'Instagram',
     id: 'instagram',

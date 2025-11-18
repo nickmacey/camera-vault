@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 
 interface ProviderConnectionModalProps {
   open: boolean;
@@ -12,15 +14,60 @@ interface ProviderConnectionModalProps {
 
 export function ProviderConnectionModal({ open, onOpenChange }: ProviderConnectionModalProps) {
   const { toast } = useToast();
+  const [connecting, setConnecting] = useState<string | null>(null);
   const allProviders = getAllProviders();
   const connectableProviders = getConnectableProviders();
   
-  const handleConnect = (providerId: string) => {
-    toast({
-      title: "Coming Soon",
-      description: `${providerId} integration will be available in Phase 2`,
-      variant: "default"
-    });
+  const handleConnect = async (providerId: string) => {
+    if (providerId === 'google_photos') {
+      try {
+        setConnecting(providerId);
+        
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          toast({
+            title: "Authentication required",
+            description: "Please log in to connect Google Photos",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        // Store user ID and initiate OAuth
+        sessionStorage.setItem('google_oauth_user_id', user.id);
+        const state = crypto.randomUUID();
+        sessionStorage.setItem('google_oauth_state', state);
+
+        const redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI || `${window.location.origin}/auth/google/callback`;
+
+        const params = new URLSearchParams({
+          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
+          redirect_uri: redirectUri,
+          response_type: 'code',
+          scope: 'https://www.googleapis.com/auth/photoslibrary.readonly',
+          access_type: 'offline',
+          prompt: 'consent',
+          state: state
+        });
+
+        window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+      } catch (error) {
+        console.error('Connection error:', error);
+        toast({
+          title: "Connection failed",
+          description: "Failed to connect to Google Photos",
+          variant: "destructive"
+        });
+        setConnecting(null);
+      }
+    } else {
+      toast({
+        title: "Coming Soon",
+        description: `${providerId} integration will be available in Phase 2`,
+        variant: "default"
+      });
+    }
   };
 
   return (
@@ -94,10 +141,11 @@ export function ProviderConnectionModal({ open, onOpenChange }: ProviderConnecti
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleConnect(provider.name)}
+                        onClick={() => handleConnect(provider.id)}
+                        disabled={connecting === provider.id}
                         className="ml-4"
                       >
-                        Connect
+                        {connecting === provider.id ? 'Connecting...' : 'Connect'}
                       </Button>
                     </div>
                   </div>
