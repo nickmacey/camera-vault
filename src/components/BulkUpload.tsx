@@ -251,12 +251,21 @@ export function BulkUpload() {
       });
 
       // Analyze photo
-      const { data: analysisData } = await supabase.functions.invoke('analyze-photo-claude', {
+      const { data: analysisData, error: analysisError } = await supabase.functions.invoke('analyze-photo', {
         body: { 
           imageBase64: base64,
-          weights: userSettings
+          filename: file.name
         }
       });
+
+      if (analysisError) {
+        console.error('Analysis error:', analysisError);
+        throw new Error(`Analysis failed: ${analysisError.message}`);
+      }
+
+      if (!analysisData || typeof analysisData.score !== 'number') {
+        throw new Error('Invalid analysis response');
+      }
 
       // Get image dimensions
       const img = new Image();
@@ -270,11 +279,10 @@ export function BulkUpload() {
                         : dimensions.width < dimensions.height ? 'portrait'
                         : 'square';
 
-      // Determine tier
-      const overallScore = analysisData?.overall_score || 0;
-      let tier = 'archive';
-      if (overallScore >= 8) tier = 'vault-worthy';
-      else if (overallScore >= 6.5) tier = 'high-value';
+      // Get score and description from API
+      const score = analysisData.score;
+      const description = analysisData.description || '';
+      const suggestedName = analysisData.suggestedName || file.name.replace(/\.[^/.]+$/, '');
 
       // Save to database
       const { error: dbError } = await supabase
@@ -283,33 +291,28 @@ export function BulkUpload() {
           user_id: user.id,
           provider: 'manual_upload',
           storage_path: filePath,
-          source_url: publicUrl,
-          filename: file.name,
+          filename: suggestedName,
           mime_type: file.type,
           file_size: file.size,
           width: dimensions.width,
           height: dimensions.height,
           orientation,
-          technical_score: analysisData?.technical_score,
-          commercial_score: analysisData?.commercial_score,
-          artistic_score: analysisData?.artistic_score,
-          emotional_score: analysisData?.emotional_score,
-          overall_score: overallScore,
-          tier,
-          ai_analysis: analysisData?.analysis || '',
+          score: score,
+          description: description,
+          status: 'new',
           analyzed_at: new Date().toISOString()
         });
 
       if (dbError) throw dbError;
 
-      // Update tier stats
-      setStats(prev => ({
-        ...prev,
-        [tier === 'vault-worthy' ? 'vaultWorthy' : 
-         tier === 'high-value' ? 'highValue' : 'archive']: 
-         prev[tier === 'vault-worthy' ? 'vaultWorthy' : 
-              tier === 'high-value' ? 'highValue' : 'archive'] + 1
-      }));
+      // Update tier stats based on score
+      setStats(prev => {
+        const tier = score >= 8 ? 'vaultWorthy' : score >= 6.5 ? 'highValue' : 'archive';
+        return {
+          ...prev,
+          [tier]: prev[tier] + 1
+        };
+      });
 
       return 'success';
 

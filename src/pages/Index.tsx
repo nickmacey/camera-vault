@@ -10,21 +10,11 @@ import { CategoryShowcase } from "@/components/CategoryShowcase";
 import StatsBar from "@/components/StatsBar";
 import { useTop10Photos } from "@/hooks/useTop10Photos";
 import { SettingsButton } from "@/components/VaultSettings";
-import { GooglePhotosImportModal } from "@/components/GooglePhotosImportModal";
-import { ProviderConnectionModal } from "@/components/ProviderConnectionModal";
-import { SyncProgress } from "@/components/SyncProgress";
-import { useSearchParams } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("gallery");
   const { dynamicAccent } = useTop10Photos();
   const uploadSectionRef = useRef<HTMLDivElement>(null);
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [showGoogleImport, setShowGoogleImport] = useState(false);
-  const [showProviderModal, setShowProviderModal] = useState(false);
-  const [currentSyncJobId, setCurrentSyncJobId] = useState<string | null>(null);
-  const { toast } = useToast();
   
   const scrollToUpload = () => {
     setActiveTab("upload");
@@ -37,27 +27,6 @@ const Index = () => {
   useEffect(() => {
     document.documentElement.style.setProperty('--vault-dynamic-accent', dynamicAccent);
   }, [dynamicAccent]);
-
-  // Check for Google Photos connection success
-  useEffect(() => {
-    if (searchParams.get('google_photos_connected') === 'true') {
-      setShowGoogleImport(true);
-      // Remove the param from URL
-      const newParams = new URLSearchParams(searchParams);
-      newParams.delete('google_photos_connected');
-      setSearchParams(newParams, { replace: true });
-    }
-  }, [searchParams, setSearchParams]);
-
-  const handleStartGoogleSync = (jobId: string) => {
-    console.log('Google Photos sync started with job:', jobId);
-    setShowGoogleImport(false);
-    setCurrentSyncJobId(jobId);
-    toast({
-      title: "Sync Started",
-      description: "Your photos are being analyzed in the background",
-    });
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -74,7 +43,7 @@ const Index = () => {
               className="gap-1 md:gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-background font-bold uppercase tracking-wide text-muted-foreground text-xs md:text-sm"
             >
               <Lock className="h-3 w-3 md:h-4 md:w-4" />
-              <span className="hidden sm:inline">Load</span>
+              <span className="hidden sm:inline">Upload</span>
               <span className="sm:hidden">Upload</span>
             </TabsTrigger>
             <TabsTrigger 
@@ -120,46 +89,4 @@ const Index = () => {
         </Tabs>
       </main>
 
-      {/* Sync Progress - Fixed bottom right */}
-      {currentSyncJobId && (
-        <div className="fixed bottom-4 right-4 w-96 z-50 shadow-xl">
-          <SyncProgress 
-            jobId={currentSyncJobId} 
-            onComplete={() => {
-              setCurrentSyncJobId(null);
-              toast({
-                title: "Sync Complete!",
-                description: "Your photos have been analyzed and categorized",
-              });
-            }}
-          />
-        </div>
-      )}
-
-      <ProviderConnectionModal
-        open={showProviderModal}
-        onOpenChange={setShowProviderModal}
-      />
-
-      <GooglePhotosImportModal
-        open={showGoogleImport}
-        onOpenChange={setShowGoogleImport}
-        onSyncStarted={handleStartGoogleSync}
-      />
-
-      {/* Footer with Privacy Policy Link */}
-      <footer className="border-t border-border mt-12 py-6">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <a 
-            href="/privacy" 
-            className="hover:text-foreground transition-colors underline"
-          >
-            Privacy Policy
-          </a>
-        </div>
-      </footer>
-    </div>
-  );
-};
-
-export default Index;
+      <EditorialGrid />
