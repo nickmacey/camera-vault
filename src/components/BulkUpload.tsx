@@ -15,7 +15,9 @@ import {
   AlertCircle,
   Image as ImageIcon,
   Clock,
-  TrendingUp
+  TrendingUp,
+  Search,
+  FileCheck
 } from 'lucide-react';
 
 interface UploadStats {
@@ -39,7 +41,18 @@ interface FilterOptions {
   skipExisting: boolean;
 }
 
-type UploadStatus = 'idle' | 'running' | 'paused' | 'complete' | 'cancelled';
+interface ScanResults {
+  totalFiles: number;
+  totalSize: number;
+  duplicates: number;
+  screenshots: number;
+  smallFiles: number;
+  validFiles: number;
+  estimatedCost: number;
+  estimatedTime: number;
+}
+
+type UploadStatus = 'idle' | 'scanning' | 'scanned' | 'running' | 'paused' | 'complete' | 'cancelled';
 
 export function BulkUpload() {
   const [files, setFiles] = useState<File[]>([]);
@@ -63,6 +76,7 @@ export function BulkUpload() {
     skipScreenshots: true,
     skipExisting: true
   });
+  const [scanResults, setScanResults] = useState<ScanResults | null>(null);
   
   const folderInputRef = useRef<HTMLInputElement>(null);
   const shouldPauseRef = useRef(false);
@@ -82,6 +96,7 @@ export function BulkUpload() {
     }
     
     setFiles(imageFiles);
+    setScanResults(null);
     setStats({
       total: imageFiles.length,
       processed: 0,
@@ -98,9 +113,69 @@ export function BulkUpload() {
     
     toast({
       title: "Folder loaded",
-      description: `${imageFiles.length} images ready to process`
+      description: `${imageFiles.length} images ready to scan`
     });
   }, [toast]);
+
+  const scanFolder = async () => {
+    if (files.length === 0) return;
+
+    setStatus('scanning');
+    
+    let totalSize = 0;
+    let duplicates = 0;
+    let screenshots = 0;
+    let smallFiles = 0;
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    for (const file of files) {
+      totalSize += file.size;
+      
+      if (filters.skipSmallFiles && file.size < filters.minFileSize * 1024) {
+        smallFiles++;
+        continue;
+      }
+      
+      if (filters.skipScreenshots && 
+          (file.name.toLowerCase().includes('screenshot') || 
+           file.name.toLowerCase().includes('screen shot') ||
+           file.name.toLowerCase().includes('screen_shot'))) {
+        screenshots++;
+        continue;
+      }
+      
+      if (filters.skipExisting && user) {
+        const exists = await checkFileExists(file.name, file.size);
+        if (exists) {
+          duplicates++;
+        }
+      }
+    }
+    
+    const validFiles = files.length - duplicates - screenshots - smallFiles;
+    const estimatedCost = validFiles * 0.002;
+    const estimatedTime = Math.ceil((validFiles * 3) / 60); // minutes
+    
+    const results: ScanResults = {
+      totalFiles: files.length,
+      totalSize,
+      duplicates,
+      screenshots,
+      smallFiles,
+      validFiles,
+      estimatedCost,
+      estimatedTime
+    };
+    
+    setScanResults(results);
+    setStatus('scanned');
+    
+    toast({
+      title: "Scan complete",
+      description: `${validFiles} files ready to upload`
+    });
+  };
 
   const checkFileExists = async (filename: string, fileSize: number): Promise<boolean> => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -325,6 +400,7 @@ export function BulkUpload() {
 
   const resetUpload = () => {
     setFiles([]);
+    setScanResults(null);
     setStatus('idle');
     setStats({
       total: 0,
@@ -464,7 +540,7 @@ export function BulkUpload() {
                 {files.length} photos ready
               </h3>
               <p className="text-sm text-vault-light-gray">
-                Review and start processing
+                Scan folder to preview what will be uploaded
               </p>
             </div>
             <Button
@@ -476,48 +552,151 @@ export function BulkUpload() {
             </Button>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="text-center p-4 bg-vault-dark-gray rounded-lg">
-              <ImageIcon className="h-8 w-8 mx-auto mb-2 text-vault-gold" />
-              <p className="text-2xl font-bold text-vault-platinum">
-                {files.length}
-              </p>
-              <p className="text-xs text-vault-light-gray">Total Photos</p>
-            </div>
-            
-            <div className="text-center p-4 bg-vault-dark-gray rounded-lg">
-              <TrendingUp className="h-8 w-8 mx-auto mb-2 text-vault-green" />
-              <p className="text-2xl font-bold text-vault-platinum">
-                ~{Math.ceil(files.length * 0.15)}
-              </p>
-              <p className="text-xs text-vault-light-gray">Est. Vault Worthy</p>
-            </div>
-            
-            <div className="text-center p-4 bg-vault-dark-gray rounded-lg">
-              <Clock className="h-8 w-8 mx-auto mb-2 text-vault-gold" />
-              <p className="text-2xl font-bold text-vault-platinum">
-                ~{Math.ceil((files.length * 3) / 3600)}h
-              </p>
-              <p className="text-xs text-vault-light-gray">Est. Time</p>
-            </div>
-            
-            <div className="text-center p-4 bg-vault-dark-gray rounded-lg">
-              <TrendingUp className="h-8 w-8 mx-auto mb-2 text-vault-gold" />
-              <p className="text-2xl font-bold text-vault-platinum">
-                ${(files.length * 0.002).toFixed(2)}
-              </p>
-              <p className="text-xs text-vault-light-gray">Est. Cost</p>
-            </div>
-          </div>
-
           <Button
-            onClick={startUpload}
+            onClick={scanFolder}
             size="lg"
             className="w-full bg-vault-gold hover:bg-[#C4A037] text-background"
           >
-            <Play className="mr-2 h-5 w-5" />
-            Start Processing
+            <Search className="mr-2 h-5 w-5" />
+            Scan Folder (Dry Run)
           </Button>
+        </Card>
+      )}
+
+      {status === 'scanning' && (
+        <Card className="p-8 border-vault-mid-gray bg-card">
+          <div className="text-center space-y-4">
+            <div className="mx-auto w-16 h-16 rounded-full bg-vault-gold/10 flex items-center justify-center">
+              <Search className="h-8 w-8 text-vault-gold animate-pulse" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-vault-platinum mb-2">
+                Scanning Folder...
+              </h3>
+              <p className="text-vault-light-gray">
+                Checking for duplicates and applying filters
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {status === 'scanned' && scanResults && (
+        <Card className="p-6 border-vault-gold bg-card">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-vault-platinum flex items-center gap-2">
+                  <FileCheck className="h-6 w-6 text-vault-gold" />
+                  Scan Complete
+                </h3>
+                <p className="text-sm text-vault-light-gray mt-1">
+                  Review what will be uploaded
+                </p>
+              </div>
+              <Button
+                onClick={resetUpload}
+                variant="outline"
+                size="sm"
+              >
+                Choose Different Folder
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center p-4 bg-vault-gold/10 border border-vault-gold rounded-lg">
+                <ImageIcon className="h-8 w-8 mx-auto mb-2 text-vault-gold" />
+                <p className="text-2xl font-bold text-vault-gold">
+                  {scanResults.validFiles}
+                </p>
+                <p className="text-xs text-vault-light-gray">Will Upload</p>
+              </div>
+              
+              <div className="text-center p-4 bg-vault-dark-gray rounded-lg">
+                <AlertCircle className="h-8 w-8 mx-auto mb-2 text-vault-light-gray" />
+                <p className="text-2xl font-bold text-vault-platinum">
+                  {scanResults.duplicates}
+                </p>
+                <p className="text-xs text-vault-light-gray">Duplicates</p>
+              </div>
+              
+              <div className="text-center p-4 bg-vault-dark-gray rounded-lg">
+                <AlertCircle className="h-8 w-8 mx-auto mb-2 text-vault-light-gray" />
+                <p className="text-2xl font-bold text-vault-platinum">
+                  {scanResults.screenshots}
+                </p>
+                <p className="text-xs text-vault-light-gray">Screenshots</p>
+              </div>
+              
+              <div className="text-center p-4 bg-vault-dark-gray rounded-lg">
+                <AlertCircle className="h-8 w-8 mx-auto mb-2 text-vault-light-gray" />
+                <p className="text-2xl font-bold text-vault-platinum">
+                  {scanResults.smallFiles}
+                </p>
+                <p className="text-xs text-vault-light-gray">Too Small</p>
+              </div>
+            </div>
+
+            <div className="border-t border-vault-mid-gray pt-4">
+              <h4 className="text-sm font-bold text-vault-platinum uppercase mb-3">
+                Upload Estimates
+              </h4>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center p-4 bg-vault-dark-gray rounded-lg">
+                  <Clock className="h-6 w-6 mx-auto mb-2 text-vault-gold" />
+                  <p className="text-xl font-bold text-vault-platinum">
+                    {scanResults.estimatedTime < 60 
+                      ? `${scanResults.estimatedTime}m`
+                      : `${Math.floor(scanResults.estimatedTime / 60)}h ${scanResults.estimatedTime % 60}m`
+                    }
+                  </p>
+                  <p className="text-xs text-vault-light-gray">Est. Time</p>
+                </div>
+                
+                <div className="text-center p-4 bg-vault-dark-gray rounded-lg">
+                  <TrendingUp className="h-6 w-6 mx-auto mb-2 text-vault-gold" />
+                  <p className="text-xl font-bold text-vault-platinum">
+                    ${scanResults.estimatedCost.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-vault-light-gray">Est. Cost</p>
+                </div>
+                
+                <div className="text-center p-4 bg-vault-dark-gray rounded-lg">
+                  <ImageIcon className="h-6 w-6 mx-auto mb-2 text-vault-gold" />
+                  <p className="text-xl font-bold text-vault-platinum">
+                    {(scanResults.totalSize / (1024 * 1024 * 1024)).toFixed(2)} GB
+                  </p>
+                  <p className="text-xs text-vault-light-gray">Total Size</p>
+                </div>
+              </div>
+            </div>
+
+            {scanResults.validFiles === 0 ? (
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+                <p className="text-yellow-400 text-sm text-center">
+                  No files will be uploaded with current filters. Try adjusting your filter settings.
+                </p>
+              </div>
+            ) : (
+              <div className="flex gap-3">
+                <Button
+                  onClick={scanFolder}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  <Search className="mr-2 h-4 w-4" />
+                  Scan Again
+                </Button>
+                <Button
+                  onClick={startUpload}
+                  className="flex-1 bg-vault-gold hover:bg-[#C4A037] text-background"
+                >
+                  <Play className="mr-2 h-4 w-4" />
+                  Start Upload ({scanResults.validFiles} files)
+                </Button>
+              </div>
+            )}
+          </div>
         </Card>
       )}
 
