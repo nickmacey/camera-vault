@@ -45,6 +45,9 @@ const PhotoGallery = () => {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [totalPhotos, setTotalPhotos] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [lightboxPhoto, setLightboxPhoto] = useState<any | null>(null);
   const [selectionMode, setSelectionMode] = useState(false);
@@ -55,11 +58,13 @@ const PhotoGallery = () => {
   const [detailModalPhoto, setDetailModalPhoto] = useState<Photo | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
 
+  const ITEMS_PER_PAGE = 50;
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsAuthenticated(!!session);
       if (session) {
-        fetchPhotos();
+        fetchPhotos(0, true);
       } else {
         setLoading(false);
       }
@@ -68,7 +73,10 @@ const PhotoGallery = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsAuthenticated(!!session);
       if (session) {
-        fetchPhotos();
+        setPage(0);
+        setPhotos([]);
+        setHasMore(true);
+        fetchPhotos(0, true);
       } else {
         setPhotos([]);
         setLoading(false);
@@ -80,9 +88,30 @@ const PhotoGallery = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      fetchPhotos();
+      // Reset to page 0 when filters change
+      setPage(0);
+      setPhotos([]);
+      setHasMore(true);
+      fetchPhotos(0, true);
     }
   }, [filterStatus, scoreFilter, sortBy, searchQuery, tierFilter, isAuthenticated]);
+
+  // Infinite scroll listener
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const scrollHeight = document.documentElement.scrollHeight;
+      const clientHeight = document.documentElement.clientHeight;
+      
+      // Trigger load more when user is 300px from bottom
+      if (scrollHeight - scrollTop - clientHeight < 300 && !loadingMore && hasMore && isAuthenticated) {
+        loadMorePhotos();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [loadingMore, hasMore, page, isAuthenticated]);
 
   const toggleSelection = (photoId: string) => {
     setSelectedPhotos(prev => {
@@ -138,7 +167,12 @@ const PhotoGallery = () => {
       toast.success(`Deleted ${selectedPhotos.size} photo(s)`, { id: toastId });
       setSelectedPhotos(new Set());
       setSelectionMode(false);
-      fetchPhotos();
+      
+      // Reset to page 0 after deletion
+      setPage(0);
+      setPhotos([]);
+      setHasMore(true);
+      fetchPhotos(0, true);
     } catch (error: any) {
       toast.error(error.message || "Failed to delete photos");
     } finally {
@@ -210,7 +244,12 @@ const PhotoGallery = () => {
       toast.success(`Re-analyzed ${successCount} photo(s)`, { id: toastId });
       setSelectedPhotos(new Set());
       setSelectionMode(false);
-      fetchPhotos();
+      
+      // Reset to page 0 after re-analysis
+      setPage(0);
+      setPhotos([]);
+      setHasMore(true);
+      fetchPhotos(0, true);
     } catch (error: any) {
       toast.error(error.message || "Failed to re-analyze photos");
     } finally {
@@ -237,7 +276,12 @@ const PhotoGallery = () => {
       toast.success(`Updated ${selectedPhotos.size} photo(s) to ${newStatus}`, { id: toastId });
       setSelectedPhotos(new Set());
       setSelectionMode(false);
-      fetchPhotos();
+      
+      // Reset to page 0 after status update
+      setPage(0);
+      setPhotos([]);
+      setHasMore(true);
+      fetchPhotos(0, true);
     } catch (error: any) {
       toast.error(error.message || "Failed to update photos");
     } finally {
@@ -271,7 +315,11 @@ const PhotoGallery = () => {
 
       if (dbError) throw dbError;
 
-      fetchPhotos();
+      // Reset to page 0 after watermark
+      setPage(0);
+      setPhotos([]);
+      setHasMore(true);
+      fetchPhotos(0, true);
     } catch (error) {
       console.error('Failed to apply watermark:', error);
       throw error;
@@ -308,7 +356,12 @@ const PhotoGallery = () => {
       toast.success(`Watermarked ${successCount} photo(s)`, { id: toastId });
       setSelectedPhotos(new Set());
       setSelectionMode(false);
-      fetchPhotos();
+      
+      // Reset to page 0 after watermarking
+      setPage(0);
+      setPhotos([]);
+      setHasMore(true);
+      fetchPhotos(0, true);
     } catch (error: any) {
       toast.error(error.message || "Failed to watermark photos");
     } finally {
@@ -365,69 +418,82 @@ const PhotoGallery = () => {
     }
   };
 
-  const fetchPhotos = async () => {
+  const buildQuery = () => {
+    let query = supabase.from('photos').select('*', { count: 'exact' });
+
+    // Apply tier filter (based on score ranges)
+    if (tierFilter !== 'all') {
+      if (tierFilter === 'vault-worthy') {
+        query = query.gte('score', 8);
+      } else if (tierFilter === 'high-value') {
+        query = query.gte('score', 6.5).lt('score', 8);
+      } else if (tierFilter === 'archive') {
+        query = query.lt('score', 6.5);
+      }
+    }
+
+    // Apply status filter
+    if (filterStatus !== 'all') {
+      query = query.eq('status', filterStatus);
+    }
+
+    // Apply score filter
+    if (scoreFilter !== 'all') {
+      const [min, max] = scoreFilter.split('-').map(Number);
+      if (max) {
+        query = query.gte('score', min).lte('score', max);
+      } else {
+        query = query.gte('score', min);
+      }
+    }
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      query = query.ilike('filename', `%${searchQuery.trim()}%`);
+    }
+
+    // Apply sorting
+    if (sortBy === 'score-desc') {
+      query = query.order('score', { ascending: false, nullsFirst: false });
+    } else if (sortBy === 'score-asc') {
+      query = query.order('score', { ascending: true, nullsFirst: false });
+    } else if (sortBy === 'date-desc') {
+      query = query.order('created_at', { ascending: false });
+    } else if (sortBy === 'date-asc') {
+      query = query.order('created_at', { ascending: true });
+    } else if (sortBy === 'name-asc') {
+      query = query.order('filename', { ascending: true });
+    } else if (sortBy === 'name-desc') {
+      query = query.order('filename', { ascending: false });
+    }
+
+    return query;
+  };
+
+  const fetchPhotos = async (pageNum: number = 0, reset: boolean = false) => {
     try {
-      setLoading(true);
+      if (reset) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+
+      const query = buildQuery();
       
-      // First get total count
-      const { count: total } = await supabase
-        .from('photos')
-        .select('*', { count: 'exact', head: true });
+      // Add pagination
+      const from = pageNum * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
       
-      setTotalPhotos(total || 0);
-
-      let query = supabase
-        .from('photos')
-        .select('*');
-
-      // Apply tier filter
-      if (tierFilter !== 'all') {
-        if (tierFilter === 'archive') {
-          // Archive photos don't have a tier or have a tier that's not vault-worthy or high-value
-          query = query.or('tier.is.null,and(tier.neq.vault-worthy,tier.neq.high-value)');
-        } else {
-          query = query.eq('tier', tierFilter);
-        }
-      }
-
-      // Apply status filter
-      if (filterStatus !== 'all') {
-        query = query.eq('status', filterStatus);
-      }
-
-      // Apply score filter
-      if (scoreFilter !== 'all') {
-        const [min, max] = scoreFilter.split('-').map(Number);
-        if (max) {
-          query = query.gte('overall_score', min).lte('overall_score', max);
-        } else {
-          query = query.gte('overall_score', min);
-        }
-      }
-
-      // Apply search filter
-      if (searchQuery.trim()) {
-        query = query.ilike('filename', `%${searchQuery.trim()}%`);
-      }
-
-      // Apply sorting
-      if (sortBy === 'score-desc') {
-        query = query.order('overall_score', { ascending: false, nullsFirst: false });
-      } else if (sortBy === 'score-asc') {
-        query = query.order('overall_score', { ascending: true, nullsFirst: false });
-      } else if (sortBy === 'date-desc') {
-        query = query.order('created_at', { ascending: false });
-      } else if (sortBy === 'date-asc') {
-        query = query.order('created_at', { ascending: true });
-      } else if (sortBy === 'name-asc') {
-        query = query.order('filename', { ascending: true });
-      } else if (sortBy === 'name-desc') {
-        query = query.order('filename', { ascending: false });
-      }
-
-      const { data, error } = await query;
+      const { data, error, count } = await query.range(from, to);
 
       if (error) throw error;
+
+      // Update total count
+      setTotalPhotos(count || 0);
+
+      // Check if there are more items
+      const hasMoreItems = count ? from + data.length < count : false;
+      setHasMore(hasMoreItems);
 
       // Get signed URLs for photos and thumbnails
       const photosWithUrls = await Promise.all(
@@ -446,12 +512,25 @@ const PhotoGallery = () => {
         })
       );
 
-      setPhotos(photosWithUrls);
+      if (reset) {
+        setPhotos(photosWithUrls);
+      } else {
+        setPhotos(prev => [...prev, ...photosWithUrls]);
+      }
     } catch (error: any) {
       toast.error(error.message || "Failed to load photos");
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
+  };
+
+  const loadMorePhotos = async () => {
+    if (loadingMore || !hasMore) return;
+    
+    const nextPage = page + 1;
+    setPage(nextPage);
+    await fetchPhotos(nextPage, false);
   };
 
   return (
@@ -607,23 +686,46 @@ const PhotoGallery = () => {
           </p>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {photos.map((photo) => (
-          <PhotoCard
-            key={photo.id}
-            photo={photo}
-            onClick={() => {
-              if (!selectionMode) {
-                setDetailModalPhoto(photo);
-                setDetailModalOpen(true);
-              }
-            }}
-            selectionMode={selectionMode}
-            isSelected={selectedPhotos.has(photo.id)}
-            onToggleSelect={() => toggleSelection(photo.id)}
-          />
-        ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {photos.map((photo) => (
+              <PhotoCard
+                key={photo.id}
+                photo={photo}
+                onClick={() => {
+                  if (!selectionMode) {
+                    setDetailModalPhoto(photo);
+                    setDetailModalOpen(true);
+                  }
+                }}
+                selectionMode={selectionMode}
+                isSelected={selectedPhotos.has(photo.id)}
+                onToggleSelect={() => toggleSelection(photo.id)}
+              />
+            ))}
+          </div>
+
+          {/* Loading More Indicator */}
+          {loadingMore && (
+            <Card className="p-8 text-center bg-vault-dark-gray border-vault-mid-gray mt-6">
+              <div className="flex items-center justify-center gap-3">
+                <div className="h-4 w-4 border-2 border-vault-gold border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-vault-light-gray font-bold uppercase tracking-wide text-sm">
+                  Loading more photos...
+                </span>
+              </div>
+            </Card>
+          )}
+
+          {/* End of Results Indicator */}
+          {!hasMore && photos.length > 0 && (
+            <Card className="p-6 text-center bg-vault-dark-gray border-vault-mid-gray mt-6">
+              <div className="text-vault-light-gray uppercase tracking-wide text-sm">
+                ✓ All {totalPhotos} photos loaded
+              </div>
+            </Card>
+          )}
+        </>
       )}
 
       {/* Lightbox */}
