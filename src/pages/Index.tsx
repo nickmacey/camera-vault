@@ -44,16 +44,9 @@ const Index = () => {
     }
   }, [searchParams, setSearchParams]);
 
-  const handleStartGoogleSync = (filters: ImportFilters) => {
-    console.log('Starting Google Photos sync with filters:', filters);
+  const handleStartGoogleSync = (jobId: string) => {
+    console.log('Google Photos sync started with job:', jobId);
     setShowGoogleImport(false);
-    
-    toast({
-      title: "Sync Started",
-      description: "Google Photos sync is starting. You'll be notified when complete.",
-    });
-    
-    // TODO: Start background sync job
   };
 
   return (
@@ -108,7 +101,7 @@ const Index = () => {
       <GooglePhotosImportModal
         open={showGoogleImport}
         onOpenChange={setShowGoogleImport}
-        onStartSync={handleStartGoogleSync}
+        onSyncStarted={handleStartGoogleSync}
       />
     </div>
   );
