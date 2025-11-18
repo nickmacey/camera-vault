@@ -386,7 +386,7 @@ export const PhotoDetailModal = ({ photo, open, onOpenChange }: PhotoDetailModal
                             <div className="flex-1">
                               <p className="text-muted-foreground text-xs">Coordinates</p>
                               <p className="font-mono text-foreground text-xs">
-                                {locationData.latitude.toFixed(6)}, {locationData.longitude.toFixed(6)}
+                                {Number(locationData.latitude).toFixed(6)}, {Number(locationData.longitude).toFixed(6)}
                               </p>
                             </div>
                           </div>
