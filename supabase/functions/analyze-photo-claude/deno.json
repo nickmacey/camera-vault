@@ -1,5 +1,6 @@
 {
   "imports": {
-    "std/": "https://deno.land/std@0.168.0/"
+    "std/": "https://deno.land/std@0.168.0/",
+    "imagescript": "https://deno.land/x/imagescript@1.2.15/mod.ts"
   }
 }

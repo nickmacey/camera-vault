@@ -1,9 +1,74 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { Image } from "https://deno.land/x/imagescript@1.2.15/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Compress image if it exceeds the size limit
+async function compressImageIfNeeded(imageBase64: string): Promise<string> {
+  const MAX_SIZE_BYTES = 4 * 1024 * 1024; // 4MB limit
+  
+  // Calculate approximate size of base64 string (base64 is ~33% larger than binary)
+  const approximateSize = (imageBase64.length * 3) / 4;
+  
+  console.log(`Image size: ${(approximateSize / 1024 / 1024).toFixed(2)} MB`);
+  
+  if (approximateSize <= MAX_SIZE_BYTES) {
+    console.log("Image is under 4MB, no compression needed");
+    return imageBase64;
+  }
+  
+  console.log("Image exceeds 4MB, compressing...");
+  
+  try {
+    // Decode base64 to binary
+    const binaryData = Uint8Array.from(atob(imageBase64), c => c.charCodeAt(0));
+    
+    // Decode image
+    const image = await Image.decode(binaryData);
+    
+    // Calculate new dimensions (reduce by 50% each time until under limit)
+    let scale = 0.7;
+    let compressed = imageBase64;
+    let attempts = 0;
+    const maxAttempts = 5;
+    
+    while (attempts < maxAttempts) {
+      const newWidth = Math.floor(image.width * scale);
+      const newHeight = Math.floor(image.height * scale);
+      
+      console.log(`Attempt ${attempts + 1}: Resizing to ${newWidth}x${newHeight}`);
+      
+      // Resize image
+      const resized = image.resize(newWidth, newHeight);
+      
+      // Encode to JPEG with quality 85
+      const encoded = await resized.encodeJPEG(85);
+      compressed = btoa(String.fromCharCode(...encoded));
+      
+      const newSize = (compressed.length * 3) / 4;
+      console.log(`New size: ${(newSize / 1024 / 1024).toFixed(2)} MB`);
+      
+      if (newSize <= MAX_SIZE_BYTES) {
+        console.log("Compression successful");
+        return compressed;
+      }
+      
+      scale *= 0.8;
+      attempts++;
+    }
+    
+    console.log("Using last compressed version after max attempts");
+    return compressed;
+    
+  } catch (error) {
+    console.error("Error compressing image:", error);
+    // Return original if compression fails
+    return imageBase64;
+  }
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -11,7 +76,10 @@ serve(async (req) => {
   }
 
   try {
-    const { imageBase64, userSettings } = await req.json();
+    const { imageBase64: rawImageBase64, userSettings } = await req.json();
+    
+    // Compress image if needed
+    const imageBase64 = await compressImageIfNeeded(rawImageBase64);
     
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
     if (!ANTHROPIC_API_KEY) {
