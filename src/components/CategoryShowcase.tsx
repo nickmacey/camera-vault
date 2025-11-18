@@ -56,7 +56,7 @@ export const CategoryShowcase = () => {
             photoUrl={vaultWorthy[0]?.url}
             icon={Sparkles}
             title="ELITE"
-            subtitle="Premium Portfolio"
+            subtitle="Ready to Share"
             count={vaultWorthyCount}
             value={`$${vaultWorthyValue.toLocaleString()}`}
             description="Your most valuable assets. Portfolio-ready and market-tested."
@@ -69,7 +69,7 @@ export const CategoryShowcase = () => {
             photoUrl={highValue[0]?.url}
             icon={Star}
             title="STARS"
-            subtitle="Strong Contenders"
+            subtitle="Refine with AI"
             count={highValueCount}
             value={`$${highValueValue.toLocaleString()}`}
             description="Exceptional work with elite potential. Refine and elevate."
@@ -85,7 +85,7 @@ export const CategoryShowcase = () => {
             }
             icon={Gem}
             title="GEMS"
-            subtitle="Discovery Zone"
+            subtitle="Hidden Talent"
             count={archiveCount}
             description="Explore and uncover diamonds in the rough waiting to shine."
             previewPhotos={archivePhotos.slice(0, 12).map(p => 
