@@ -1,4 +1,4 @@
-import { Lock, TrendingUp, Archive } from "lucide-react";
+import { Lock, TrendingUp, Archive, Sparkles, Gem, Star } from "lucide-react";
 import { PhotoBackgroundCard } from "./PhotoBackgroundCard";
 import { useTop10Photos } from "@/hooks/useTop10Photos";
 import { useState, useEffect } from "react";
@@ -36,56 +36,64 @@ export const CategoryShowcase = () => {
   );
 
   return (
-    <section className="p-6 md:p-12">
-      <div className="mb-8">
-        <h2 className="font-black text-3xl md:text-4xl text-foreground mb-2">
-          YOUR COLLECTION
-        </h2>
-        <p className="text-muted-foreground">
-          Assets organized by market value and quality
-        </p>
-      </div>
+    <section className="relative py-16 md:py-24 px-4 md:px-12 overflow-hidden">
+      {/* Background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-background/95 to-background pointer-events-none" />
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Vault Worthy */}
-        <PhotoBackgroundCard
-          photoUrl={vaultWorthy[0]?.url}
-          icon={Lock}
-          title="VAULT WORTHY"
-          count={vaultWorthyCount}
-          value={`$${vaultWorthyValue.toLocaleString()}`}
-          description="These are your money shots. Protected. Ready to sell."
-          previewPhotos={vaultWorthy.slice(0, 12).map(p => p.url)}
-          variant="vault-worthy"
-        />
+      <div className="relative z-10 max-w-7xl mx-auto">
+        <div className="text-center mb-12 md:mb-20">
+          <h2 className="font-black text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-foreground mb-4 tracking-tight">
+            YOUR COLLECTION
+          </h2>
+          <p className="text-lg md:text-xl text-muted-foreground font-light max-w-2xl mx-auto">
+            Every photo analyzed, categorized, and valued
+          </p>
+        </div>
         
-        {/* High Value */}
-        <PhotoBackgroundCard
-          photoUrl={highValue[0]?.url}
-          icon={TrendingUp}
-          title="HIGH VALUE"
-          count={highValueCount}
-          value={`$${highValueValue.toLocaleString()}`}
-          description="Strong work. Could be refined into vault-worthy."
-          previewPhotos={highValue.slice(0, 12).map(p => p.url)}
-          variant="high-value"
-        />
-        
-        {/* Archive */}
-        <PhotoBackgroundCard
-          photoUrl={archivePhotos[0]?.storage_path ? 
-            `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/photos/${archivePhotos[0].storage_path}` : 
-            undefined
-          }
-          icon={Archive}
-          title="ARCHIVE"
-          count={archiveCount}
-          description="Not everything makes the cut. Review to unlock hidden gems."
-          previewPhotos={archivePhotos.slice(0, 12).map(p => 
-            `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/photos/${p.storage_path}`
-          )}
-          variant="archive"
-        />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+          {/* Elite Collection (Vault Worthy) */}
+          <PhotoBackgroundCard
+            photoUrl={vaultWorthy[0]?.url}
+            icon={Sparkles}
+            title="ELITE COLLECTION"
+            subtitle="Premium Portfolio"
+            count={vaultWorthyCount}
+            value={`$${vaultWorthyValue.toLocaleString()}`}
+            description="Your most valuable assets. Portfolio-ready and market-tested."
+            previewPhotos={vaultWorthy.slice(0, 12).map(p => p.url)}
+            variant="vault-worthy"
+          />
+          
+          {/* Rising Stars (High Value) */}
+          <PhotoBackgroundCard
+            photoUrl={highValue[0]?.url}
+            icon={Star}
+            title="RISING STARS"
+            subtitle="Strong Contenders"
+            count={highValueCount}
+            value={`$${highValueValue.toLocaleString()}`}
+            description="Exceptional work with elite potential. Refine and elevate."
+            previewPhotos={highValue.slice(0, 12).map(p => p.url)}
+            variant="high-value"
+          />
+          
+          {/* Hidden Gems (Archive) */}
+          <PhotoBackgroundCard
+            photoUrl={archivePhotos[0]?.storage_path ? 
+              `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/photos/${archivePhotos[0].storage_path}` : 
+              undefined
+            }
+            icon={Gem}
+            title="HIDDEN GEMS"
+            subtitle="Discovery Zone"
+            count={archiveCount}
+            description="Explore and uncover diamonds in the rough waiting to shine."
+            previewPhotos={archivePhotos.slice(0, 12).map(p => 
+              `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/photos/${p.storage_path}`
+            )}
+            variant="archive"
+          />
+        </div>
       </div>
     </section>
   );
