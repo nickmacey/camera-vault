@@ -58,12 +58,9 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
             <h1 className="font-black text-5xl sm:text-6xl md:text-8xl lg:text-9xl text-foreground mb-6 md:mb-8 drop-shadow-2xl tracking-tight vault-text-gradient">
               VAULT
             </h1>
-            <div className="mb-8 md:mb-14 space-y-2">
+            <div className="mb-8 md:mb-14">
               <p className="text-2xl sm:text-3xl md:text-5xl font-light text-foreground/95 drop-shadow-xl leading-tight">
                 Unlock the magic in your moments.
-              </p>
-              <p className="text-xl sm:text-2xl md:text-4xl font-light text-foreground/90 drop-shadow-lg">
-                Share the best of your content with the world.
               </p>
             </div>
             <Button 
@@ -134,12 +131,9 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
             <h1 className="font-black text-5xl sm:text-6xl md:text-8xl lg:text-9xl text-foreground mb-6 md:mb-8 drop-shadow-2xl tracking-tight vault-text-gradient">
               VAULT
             </h1>
-            <div className="mb-8 md:mb-14 space-y-2">
+            <div className="mb-8 md:mb-14">
               <p className="text-2xl sm:text-3xl md:text-5xl font-light text-foreground/95 drop-shadow-xl leading-tight">
                 Unlock the magic in your moments.
-              </p>
-              <p className="text-xl sm:text-2xl md:text-4xl font-light text-foreground/90 drop-shadow-lg">
-                Share the best of your content with the world.
               </p>
             </div>
           </div>
