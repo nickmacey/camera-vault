@@ -12,27 +12,43 @@ serve(async (req) => {
   }
 
   try {
-    const clientId = Deno.env.get('VITE_GOOGLE_CLIENT_ID') || Deno.env.get('GOOGLE_CLIENT_ID');
+    // Prefer GOOGLE_CLIENT_ID; fallback to VITE_GOOGLE_CLIENT_ID for compatibility
+    const candidates = [
+      Deno.env.get('GOOGLE_CLIENT_ID') || '',
+      Deno.env.get('VITE_GOOGLE_CLIENT_ID') || ''
+    ].filter(Boolean);
+
     const redirectUri = Deno.env.get('GOOGLE_REDIRECT_URI');
 
-    if (!clientId) {
-      console.error('VITE_GOOGLE_CLIENT_ID not configured');
+    // Helper validations
+    const isClientSecret = (val: string) => /^GOCSPX-/.test(val);
+    const isClientId = (val: string) => /\.apps\.googleusercontent\.com$/.test(val);
+
+    const validId = candidates.find(isClientId);
+    const provided = candidates[0] || '';
+
+    if (!validId) {
+      const looksLikeSecret = provided && isClientSecret(provided);
+      const msg = looksLikeSecret
+        ? 'Configured value looks like a Google Client Secret. Please provide the Client ID ending with .apps.googleusercontent.com.'
+        : 'Google Client ID not configured or invalid.';
+
       return new Response(
-        JSON.stringify({ error: 'Google OAuth not configured' }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        JSON.stringify({ error: 'invalid_client_id', message: msg }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
 
     return new Response(
       JSON.stringify({
-        clientId,
+        clientId: validId,
         redirectUri: redirectUri || `${req.headers.get('origin')}/auth/google/callback`
       }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   } catch (error) {
