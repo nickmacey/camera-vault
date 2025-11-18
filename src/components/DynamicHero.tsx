@@ -13,7 +13,7 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [scrollY, setScrollY] = useState(0);
   const heroRef = useRef<HTMLElement>(null);
-  const heroPhotos = vaultWorthy.slice(0, 3);
+  const heroPhotos = vaultWorthy.slice(0, 5);
 
   useEffect(() => {
     if (heroPhotos.length === 0) return;
@@ -91,7 +91,7 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
 
   return (
     <section ref={heroRef} className="relative h-screen overflow-hidden">
-      {/* Background: Rotating through top 3 with parallax and 4K backdrop */}
+      {/* Background: Rotating through top 5 with parallax and 4K backdrop */}
       <div className="absolute inset-0 z-0">
         {/* 4K Background Layer */}
         <div className="absolute inset-0">
