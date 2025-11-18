@@ -9,11 +9,12 @@ interface DynamicHeroProps {
 }
 
 export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
-  const { vaultWorthy, loading } = useTop10Photos();
+  const { vaultWorthy, highValue, loading } = useTop10Photos();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [scrollY, setScrollY] = useState(0);
   const heroRef = useRef<HTMLElement>(null);
-  const heroPhotos = vaultWorthy.slice(0, 10);
+  // Combine vault-worthy and high-value photos for more variety
+  const heroPhotos = [...vaultWorthy, ...highValue].slice(0, 10);
 
   useEffect(() => {
     if (heroPhotos.length === 0) return;
