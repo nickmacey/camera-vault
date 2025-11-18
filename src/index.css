@@ -137,11 +137,11 @@
       filter: brightness(1) drop-shadow(0 0 10px hsla(var(--primary)/0.6));
     }
     50% {
-      filter: brightness(1.2) drop-shadow(0 0 20px hsla(var(--primary)/0.9));
+      filter: brightness(1.15) drop-shadow(0 0 20px hsla(var(--primary)/0.8));
     }
   }
 
   .animate-glow {
-    animation: glow 2s ease-in-out infinite;
+    animation: glow 4s ease-in-out infinite;
   }
 }

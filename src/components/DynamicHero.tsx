@@ -65,10 +65,10 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
             <Button 
               size="lg"
               onClick={onCTAClick}
-              className="group relative bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 backdrop-blur-sm hover:from-primary/30 hover:to-accent/30 font-black px-8 sm:px-12 md:px-16 py-6 md:py-8 text-sm sm:text-base md:text-xl rounded-full overflow-hidden shadow-[0_0_60px_hsla(var(--primary)/0.6)] hover:shadow-[0_0_100px_hsla(var(--primary)/0.9)] hover:scale-105 transition-all duration-500 border-2 border-primary/50 animate-pulse"
+              className="group relative bg-gradient-to-r from-primary/30 via-accent/25 to-primary/30 backdrop-blur-sm hover:from-primary/40 hover:to-accent/35 font-black px-8 sm:px-12 md:px-16 py-6 md:py-8 text-sm sm:text-base md:text-xl rounded-full overflow-hidden shadow-[0_0_60px_hsla(var(--primary)/0.6)] hover:shadow-[0_0_100px_hsla(var(--primary)/0.9)] hover:scale-105 transition-all duration-500 border-2 border-primary/60"
             >
               <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
-              <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-primary animate-glow font-black tracking-wider drop-shadow-[0_0_15px_hsla(var(--primary)/0.8)]">
+              <span className="relative z-10 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-glow font-black tracking-wider" style={{ WebkitTextStroke: '0.5px hsla(var(--primary)/0.3)' }}>
                 CONNECT YOUR PHOTOS
               </span>
             </Button>
@@ -141,10 +141,10 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
             <Button
             size="lg"
             onClick={onCTAClick}
-            className="group relative bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 backdrop-blur-sm hover:from-primary/30 hover:to-accent/30 font-black px-8 sm:px-12 md:px-16 py-6 md:py-8 text-sm sm:text-base md:text-xl rounded-full overflow-hidden shadow-[0_0_60px_hsla(var(--primary)/0.6)] hover:shadow-[0_0_100px_hsla(var(--primary)/0.9)] hover:scale-105 transition-all duration-500 border-2 border-primary/50 animate-pulse"
+            className="group relative bg-gradient-to-r from-primary/30 via-accent/25 to-primary/30 backdrop-blur-sm hover:from-primary/40 hover:to-accent/35 font-black px-8 sm:px-12 md:px-16 py-6 md:py-8 text-sm sm:text-base md:text-xl rounded-full overflow-hidden shadow-[0_0_60px_hsla(var(--primary)/0.6)] hover:shadow-[0_0_100px_hsla(var(--primary)/0.9)] hover:scale-105 transition-all duration-500 border-2 border-primary/60"
           >
             <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
-            <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-primary animate-glow font-black tracking-wider drop-shadow-[0_0_15px_hsla(var(--primary)/0.8)]">
+            <span className="relative z-10 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-glow font-black tracking-wider" style={{ WebkitTextStroke: '0.5px hsla(var(--primary)/0.3)' }}>
               CONNECT YOUR PHOTOS
             </span>
           </Button>
