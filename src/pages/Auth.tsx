@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Camera } from "lucide-react";
 import { z } from "zod";
@@ -40,6 +41,7 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -70,6 +72,13 @@ const Auth = () => {
           return;
         }
         
+        // Store remember me preference
+        if (!rememberMe) {
+          sessionStorage.setItem("auth_remember_me", "false");
+        } else {
+          sessionStorage.removeItem("auth_remember_me");
+        }
+        
         toast.success("Account created! You're now logged in.");
         navigate("/");
       } else {
@@ -82,6 +91,13 @@ const Auth = () => {
           // Provide generic error to prevent account enumeration
           toast.error("Invalid email or password");
           return;
+        }
+        
+        // Store remember me preference
+        if (!rememberMe) {
+          sessionStorage.setItem("auth_remember_me", "false");
+        } else {
+          sessionStorage.removeItem("auth_remember_me");
         }
         
         toast.success("Welcome back!");
@@ -163,6 +179,19 @@ const Auth = () => {
                   Must be 6+ characters with letters and numbers only
                 </p>
               )}
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="remember-me"
+                checked={rememberMe}
+                onCheckedChange={(checked) => setRememberMe(checked === true)}
+              />
+              <Label
+                htmlFor="remember-me"
+                className="text-sm font-normal cursor-pointer"
+              >
+                Remember me on this device
+              </Label>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}

@@ -10,6 +10,24 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Check if user opted out of "remember me"
+    const rememberMe = sessionStorage.getItem("auth_remember_me");
+    if (rememberMe === "false") {
+      // Set up handler to sign out when browser closes
+      const handleBeforeUnload = () => {
+        // This will clear the session when browser closes (not just tab)
+        supabase.auth.signOut();
+      };
+      
+      window.addEventListener("beforeunload", handleBeforeUnload);
+      
+      return () => {
+        window.removeEventListener("beforeunload", handleBeforeUnload);
+      };
+    }
+  }, []);
+
+  useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
