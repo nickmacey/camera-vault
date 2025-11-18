@@ -1,13 +1,83 @@
 import { Lock } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface AnimatedLockIconProps {
   size?: number;
   className?: string;
 }
 
+interface Particle {
+  id: number;
+  x: number;
+  y: number;
+  delay: number;
+  duration: number;
+  size: number;
+  type: 'float' | 'sparkle';
+}
+
 export const AnimatedLockIcon = ({ size = 64, className = "" }: AnimatedLockIconProps) => {
+  const [particles, setParticles] = useState<Particle[]>([]);
+
+  // Generate particles on mount
+  useEffect(() => {
+    const generateParticles = () => {
+      const newParticles: Particle[] = [];
+      // Floating particles
+      for (let i = 0; i < 15; i++) {
+        newParticles.push({
+          id: i,
+          x: Math.random() * 180 - 90, // -90 to 90
+          y: Math.random() * 180 - 90,
+          delay: Math.random() * 4,
+          duration: 3 + Math.random() * 2,
+          size: 2 + Math.random() * 3,
+          type: 'float',
+        });
+      }
+      // Sparkle particles
+      for (let i = 15; i < 25; i++) {
+        newParticles.push({
+          id: i,
+          x: Math.random() * 160 - 80,
+          y: Math.random() * 160 - 80,
+          delay: Math.random() * 3,
+          duration: 1 + Math.random(),
+          size: 3 + Math.random() * 2,
+          type: 'sparkle',
+        });
+      }
+      setParticles(newParticles);
+    };
+
+    generateParticles();
+  }, []);
+
   return (
     <div className={`relative inline-flex items-center justify-center ${className}`}>
+      {/* Floating & Sparkle Particles */}
+      {particles.map((particle) => (
+        <div
+          key={particle.id}
+          className={`absolute rounded-full pointer-events-none ${
+            particle.type === 'float'
+              ? 'bg-vault-gold/60 blur-[1px] animate-float-up'
+              : 'bg-vault-gold animate-pulse'
+          }`}
+          style={{
+            left: `calc(50% + ${particle.x}px)`,
+            top: `calc(50% + ${particle.y}px)`,
+            width: `${particle.size}px`,
+            height: `${particle.size}px`,
+            animationDelay: `${particle.delay}s`,
+            animationDuration: `${particle.duration}s`,
+            boxShadow: particle.type === 'float' 
+              ? '0 0 10px rgba(212, 175, 55, 0.8)' 
+              : '0 0 8px rgba(212, 175, 55, 1), 0 0 16px rgba(212, 175, 55, 0.6)',
+          }}
+        />
+      ))}
+
       {/* Outer glow ring - pulsing */}
       <div className="absolute inset-0 rounded-full bg-vault-gold/20 animate-ping" 
            style={{ animationDuration: '3s' }} />
