@@ -1,214 +1,280 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "sonner";
-import { Camera } from "lucide-react";
-import { z } from "zod";
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Shield, Lock, Mail, User, ArrowLeft } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
+import { z } from 'zod';
 
-// Validation schema for authentication
-const authSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .min(1, "Email is required")
-    .email("Invalid email address")
-    .max(255, "Email must be less than 255 characters"),
-  password: z
-    .string()
-    .min(6, "Password must be at least 6 characters")
-    .max(128, "Password must be less than 128 characters")
-    .regex(/^[A-Za-z0-9]+$/, "Password must contain only letters and numbers"),
-});
+const emailSchema = z.string().email('Please enter a valid email address');
+const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
+const nameSchema = z.string().min(2, 'Name must be at least 2 characters');
 
 const Auth = () => {
+  const [isLogin, setIsLogin] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const [isSignUp, setIsSignUp] = useState(searchParams.get("mode") === "signup");
 
   useEffect(() => {
-    const mode = searchParams.get("mode");
-    if (mode === "signup") {
-      setIsSignUp(true);
-    } else if (mode === "login") {
-      setIsSignUp(false);
-    }
-  }, [searchParams]);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+    // Check if user is already logged in
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        navigate('/');
+      }
+    });
+  }, [navigate]);
 
-  const handleAuth = async (e: React.FormEvent) => {
+  const validateInputs = () => {
+    try {
+      emailSchema.parse(email);
+      passwordSchema.parse(password);
+      
+      if (!isLogin) {
+        nameSchema.parse(firstName);
+      }
+      
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: 'Validation Error',
+          description: error.errors[0].message,
+          variant: 'destructive',
+        });
+      }
+      return false;
+    }
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateInputs()) return;
+    
     setLoading(true);
-    setErrors({});
 
     try {
-      // Validate input
-      const validatedData = authSchema.parse({ email, password });
-
-      if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
-          email: validatedData.email,
-          password: validatedData.password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/`,
-          },
-        });
-        
-        if (error) {
-          // Provide user-friendly error messages
-          if (error.message.includes("already registered")) {
-            toast.error("This email is already registered. Please sign in instead.");
-          } else {
-            toast.error("Unable to create account. Please try again.");
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            first_name: firstName,
+            last_name: lastName,
           }
-          return;
-        }
-        
-        // Store remember me preference
-        if (!rememberMe) {
-          sessionStorage.setItem("auth_remember_me", "false");
+        },
+      });
+
+      if (error) {
+        if (error.message.includes('already registered')) {
+          toast({
+            title: 'Account Exists',
+            description: 'This email is already registered. Please sign in instead.',
+            variant: 'destructive',
+          });
         } else {
-          sessionStorage.removeItem("auth_remember_me");
+          throw error;
         }
-        
-        toast.success("Account created! You're now logged in.");
-        navigate("/");
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: validatedData.email,
-          password: validatedData.password,
+        return;
+      }
+
+      if (data.user) {
+        toast({
+          title: 'Welcome to the Vault!',
+          description: 'Your account has been created successfully.',
         });
-        
-        if (error) {
-          // Provide generic error to prevent account enumeration
-          toast.error("Invalid email or password");
-          return;
-        }
-        
-        // Store remember me preference
-        if (!rememberMe) {
-          sessionStorage.setItem("auth_remember_me", "false");
-        } else {
-          sessionStorage.removeItem("auth_remember_me");
-        }
-        
-        toast.success("Welcome back!");
-        navigate("/");
+        navigate('/');
       }
     } catch (error: any) {
-      if (error instanceof z.ZodError) {
-        // Display validation errors
-        const fieldErrors: { email?: string; password?: string } = {};
-        error.errors.forEach((err) => {
-          const field = err.path[0] as "email" | "password";
-          if (!fieldErrors[field]) {
-            fieldErrors[field] = err.message;
-          }
-        });
-        setErrors(fieldErrors);
-        
-        // Show first error as toast
-        const firstError = error.errors[0];
-        toast.error(firstError.message);
-      } else {
-        toast.error("An unexpected error occurred. Please try again.");
+      toast({
+        title: 'Signup Failed',
+        description: error.message || 'An error occurred during signup',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateInputs()) return;
+    
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        if (error.message.includes('Invalid login credentials')) {
+          toast({
+            title: 'Invalid Credentials',
+            description: 'Email or password is incorrect. Please try again.',
+            variant: 'destructive',
+          });
+        } else {
+          throw error;
+        }
+        return;
       }
+
+      if (data.user) {
+        toast({
+          title: 'Welcome Back!',
+          description: 'You have successfully signed in.',
+        });
+        navigate('/');
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Sign In Failed',
+        description: error.message || 'An error occurred during sign in',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mx-auto mb-4">
-            <Camera className="h-8 w-8 text-primary" />
+    <div className="min-h-screen bg-gradient-to-br from-vault-dark-gray via-background to-vault-dark-gray flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-vault-gold/5 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+      </div>
+
+      <Button
+        variant="ghost"
+        onClick={() => navigate('/')}
+        className="fixed top-6 left-6 z-50 text-vault-gold hover:text-vault-gold hover:bg-vault-gold/10 border border-vault-gold/20"
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back to Home
+      </Button>
+
+      <Card className="w-full max-w-md bg-vault-dark-gray/80 backdrop-blur-xl border-vault-gold/30 shadow-2xl relative z-10">
+        <CardHeader className="space-y-4 pb-8">
+          <div className="mx-auto w-20 h-20 bg-gradient-to-br from-vault-gold to-vault-gold/60 rounded-full flex items-center justify-center shadow-xl shadow-vault-gold/20 animate-glow">
+            <Shield className="h-10 w-10 text-vault-black" />
           </div>
-          <CardTitle className="text-2xl">
-            {isSignUp ? "Create Account" : "Welcome Back"}
+          <CardTitle className="text-3xl font-black text-center text-vault-gold uppercase tracking-widest">
+            {isLogin ? 'Enter Vault' : 'Join Vault'}
           </CardTitle>
-          <CardDescription>
-            {isSignUp
-              ? "Sign up to start analyzing your photos"
-              : "Sign in to access your photo gallery"}
+          <CardDescription className="text-center text-muted-foreground">
+            {isLogin
+              ? 'Sign in to access your photo vault'
+              : 'Create your account to secure your photos'}
           </CardDescription>
         </CardHeader>
+
         <CardContent>
-          <form onSubmit={handleAuth} className="space-y-4">
+          <form onSubmit={isLogin ? handleSignIn : handleSignUp} className="space-y-4">
+            {!isLogin && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="firstName" className="text-vault-gold font-semibold flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    First Name
+                  </Label>
+                  <Input
+                    id="firstName"
+                    type="text"
+                    placeholder="Enter your first name"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required={!isLogin}
+                    className="bg-vault-mid-gray/30 border-vault-mid-gray text-foreground placeholder:text-muted-foreground focus:border-vault-gold focus:ring-vault-gold"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="lastName" className="text-vault-gold font-semibold flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Last Name (Optional)
+                  </Label>
+                  <Input
+                    id="lastName"
+                    type="text"
+                    placeholder="Enter your last name"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="bg-vault-mid-gray/30 border-vault-mid-gray text-foreground placeholder:text-muted-foreground focus:border-vault-gold focus:ring-vault-gold"
+                  />
+                </div>
+              </>
+            )}
+
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-vault-gold font-semibold flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                Email
+              </Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className={errors.email ? "border-destructive" : ""}
+                className="bg-vault-mid-gray/30 border-vault-mid-gray text-foreground placeholder:text-muted-foreground focus:border-vault-gold focus:ring-vault-gold"
               />
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email}</p>
-              )}
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-vault-gold font-semibold flex items-center gap-2">
+                <Lock className="h-4 w-4" />
+                Password
+              </Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
-                className={errors.password ? "border-destructive" : ""}
+                className="bg-vault-mid-gray/30 border-vault-mid-gray text-foreground placeholder:text-muted-foreground focus:border-vault-gold focus:ring-vault-gold"
               />
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password}</p>
-              )}
-              {isSignUp && !errors.password && (
-                <p className="text-xs text-muted-foreground">
-                  Must be 6+ characters with letters and numbers only
-                </p>
-              )}
             </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="remember-me"
-                checked={rememberMe}
-                onCheckedChange={(checked) => setRememberMe(checked === true)}
-              />
-              <Label
-                htmlFor="remember-me"
-                className="text-sm font-normal cursor-pointer"
-              >
-                Remember me on this device
-              </Label>
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-vault-gold via-vault-gold/90 to-vault-gold text-vault-black font-black text-lg py-6 hover:shadow-xl hover:shadow-vault-gold/30 transition-all duration-300 uppercase tracking-widest"
+            >
+              {loading ? 'Processing...' : isLogin ? 'Sign In' : 'Create Account'}
             </Button>
           </form>
-          <div className="mt-4 text-center text-sm">
-            <button
-              onClick={() => {
-                setIsSignUp(!isSignUp);
-                setErrors({});
-              }}
-              className="text-primary hover:underline"
+
+          <Separator className="my-6 bg-vault-mid-gray" />
+
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground mb-2">
+              {isLogin ? "Don't have an account?" : 'Already have an account?'}
+            </p>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setIsLogin(!isLogin)}
+              className="text-vault-gold hover:text-vault-gold hover:bg-vault-gold/10 font-semibold"
             >
-              {isSignUp
-                ? "Already have an account? Sign in"
-                : "Don't have an account? Sign up"}
-            </button>
+              {isLogin ? 'Create Account' : 'Sign In'}
+            </Button>
           </div>
         </CardContent>
       </Card>

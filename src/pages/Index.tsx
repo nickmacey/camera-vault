@@ -10,6 +10,7 @@ import { CategoryShowcase } from "@/components/CategoryShowcase";
 import StatsBar from "@/components/StatsBar";
 import { useTop10Photos } from "@/hooks/useTop10Photos";
 import { SettingsButton } from "@/components/VaultSettings";
+import { VaultButton } from "@/components/VaultButton";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("gallery");
@@ -30,6 +31,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <VaultButton />
       <SettingsButton />
       <DynamicHero onCTAClick={scrollToUpload} />
       <CategoryShowcase />
