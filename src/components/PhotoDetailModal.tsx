@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import ScoreBadge from "./ScoreBadge";
 import { SocialContentModal } from "./SocialContentModal";
+import { GoogleMap } from "./GoogleMap";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Tables } from "@/integrations/supabase/types";
@@ -419,18 +420,12 @@ export const PhotoDetailModal = ({ photo, open, onOpenChange }: PhotoDetailModal
                           </div>
                         </div>
 
-                        {/* Simple Map Placeholder */}
-                        <div className="w-full h-40 bg-vault-dark-gray rounded-lg flex items-center justify-center border border-vault-mid-gray">
-                          <a
-                            href={`https://www.google.com/maps?q=${locationData.latitude},${locationData.longitude}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm text-vault-gold hover:underline flex items-center gap-2"
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                            View on Google Maps
-                          </a>
-                        </div>
+                        {/* Embedded Google Map */}
+                        <GoogleMap
+                          latitude={Number(locationData.latitude)}
+                          longitude={Number(locationData.longitude)}
+                          className="w-full h-48"
+                        />
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground text-center py-8">
