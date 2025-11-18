@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,6 +27,20 @@ export const PhotoDetailModal = ({ photo, open, onOpenChange }: PhotoDetailModal
   const [socialModalOpen, setSocialModalOpen] = useState(false);
   const [generatingSocial, setGeneratingSocial] = useState(false);
   const [socialContent, setSocialContent] = useState<any>(null);
+  const [photoUrl, setPhotoUrl] = useState<string>('');
+
+  useEffect(() => {
+    if (photo && open) {
+      supabase.storage
+        .from('photos')
+        .createSignedUrl(photo.storage_path, 3600)
+        .then(({ data }) => {
+          if (data?.signedUrl) {
+            setPhotoUrl(data.signedUrl);
+          }
+        });
+    }
+  }, [photo, open]);
 
   if (!photo) return null;
 
@@ -103,7 +117,9 @@ export const PhotoDetailModal = ({ photo, open, onOpenChange }: PhotoDetailModal
   };
 
   const handleDownload = () => {
-    window.open(photo.storage_path, '_blank');
+    if (photoUrl) {
+      window.open(photoUrl, '_blank');
+    }
   };
 
   const tierLabel = photo.tier === 'vault-worthy' ? 'VAULT WORTHY' 
@@ -122,7 +138,7 @@ export const PhotoDetailModal = ({ photo, open, onOpenChange }: PhotoDetailModal
             {/* Left: Photo Display */}
             <div className="relative bg-vault-black flex items-center justify-center p-4 md:p-8 min-h-[40vh] lg:min-h-full">
               <img
-                src={photo.storage_path}
+                src={photoUrl}
                 alt={photo.filename}
                 className="max-w-full max-h-[50vh] lg:max-h-[85vh] object-contain"
               />
