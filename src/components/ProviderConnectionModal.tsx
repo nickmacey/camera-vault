@@ -21,8 +21,12 @@ export function ProviderConnectionModal({ open, onOpenChange }: ProviderConnecti
   const handleConnect = async (providerId: string) => {
     if (providerId === 'google_photos') {
       try {
+        console.log('🔵 Starting Google Photos connection...');
+        
         // Get current user FIRST to avoid stuck "Connecting..." state
         const { data: { user } } = await supabase.auth.getUser();
+        console.log('🔵 User check:', user ? 'Authenticated' : 'Not authenticated');
+        
         if (!user) {
           toast({
             title: "Authentication required",
@@ -34,12 +38,15 @@ export function ProviderConnectionModal({ open, onOpenChange }: ProviderConnecti
         }
 
         setConnecting(providerId);
+        console.log('🔵 Set connecting state to:', providerId);
 
         // Fetch OAuth config from backend
+        console.log('🔵 Fetching OAuth config...');
         const { data: config, error: configError } = await supabase.functions.invoke('google-oauth-config');
+        console.log('🔵 OAuth config response:', { config, configError });
         
         if (configError || !config?.clientId) {
-          console.error('Failed to fetch OAuth config:', configError);
+          console.error('❌ Failed to fetch OAuth config:', configError);
           toast({
             title: "Configuration Error",
             description: "Failed to load Google OAuth configuration. Please try again.",
@@ -50,11 +57,13 @@ export function ProviderConnectionModal({ open, onOpenChange }: ProviderConnecti
         }
 
         const { clientId, redirectUri } = config;
+        console.log('🔵 Using OAuth config:', { clientId, redirectUri });
 
         // Store user ID and initiate OAuth
         sessionStorage.setItem('google_oauth_user_id', user.id);
         const state = crypto.randomUUID();
         sessionStorage.setItem('google_oauth_state', state);
+        console.log('🔵 Stored session data, state:', state);
 
         const params = new URLSearchParams({
           client_id: clientId,
@@ -66,12 +75,15 @@ export function ProviderConnectionModal({ open, onOpenChange }: ProviderConnecti
           state: state
         });
 
-        window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+        console.log('🔵 Redirecting to Google OAuth:', authUrl);
+        
+        window.location.href = authUrl;
       } catch (error) {
-        console.error('Connection error:', error);
+        console.error('❌ Connection error:', error);
         toast({
           title: "Connection failed",
-          description: "Failed to connect to Google Photos",
+          description: error instanceof Error ? error.message : "Failed to connect to Google Photos",
           variant: "destructive"
         });
         setConnecting(null);
