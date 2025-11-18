@@ -329,21 +329,10 @@ const PhotoUpload = () => {
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="group relative w-full">
-          <Card
-            className={`border-4 rounded-lg p-24 vault-transition ${
-              isDragging
-                ? "border-vault-gold bg-vault-gold/5 vault-glow-gold scale-105"
-                : "border-vault-mid-gray hover:border-vault-gold hover:vault-glow-gold"
-            }`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            <div className="text-center space-y-6">
-              <div className="flex justify-center mb-2">
-                <div className={`vault-transition ${isDragging ? 'rotate-12' : 'group-hover:rotate-12'}`}>
-                  <Lock className="h-20 w-20 text-vault-gold" />
-                </div>
+          <Card className="border-4 border-vault-mid-gray hover:border-vault-gold vault-transition rounded-lg p-16">
+            <div className="text-center space-y-8">
+              <div className="flex justify-center mb-4">
+                <Lock className="h-20 w-20 text-vault-gold group-hover:rotate-12 vault-transition" />
               </div>
 
               <div>
@@ -351,34 +340,65 @@ const PhotoUpload = () => {
                   {isAuthenticated ? 'Load your Vault' : 'Start Here'}
                 </h2>
                 <p className="text-base text-vault-light-gray">
-                  {isAuthenticated ? 'Drop files or click to browse' : 'Upload photos and see your scores—no signup required'}
-                </p>
-                <p className="text-xs text-vault-light-gray mt-2">
-                  JPEG, PNG, RAW supported • Instant AI analysis
+                  Connect your photo library for instant AI analysis
                 </p>
               </div>
 
-              <input
-                type="file"
-                id="file-upload"
-                className="hidden"
-                accept="image/*"
-                multiple
-                onChange={handleFileSelect}
-              />
-
+              {/* PRIMARY ACTION: Connect Photo Source */}
               <Button 
-                asChild 
+                onClick={() => setShowProviderModal(true)}
                 size="lg"
-                className="bg-vault-gold hover:bg-vault-gold/90 text-vault-black font-bold px-8 py-6 text-base vault-glow-gold"
+                className="bg-vault-gold hover:bg-vault-gold/90 text-vault-black font-bold px-12 py-7 text-lg vault-glow-gold uppercase tracking-wide w-full max-w-md"
               >
-                <label htmlFor="file-upload" className="cursor-pointer uppercase tracking-wide">
-                  <Shield className="mr-2 h-5 w-5" />
-                  Upload Photos
-                </label>
+                <Link2 className="mr-2 h-6 w-6" />
+                Connect Google Photos
               </Button>
 
-              <div className="flex items-center justify-center gap-3 pt-4">
+              {/* DIVIDER */}
+              <div className="relative py-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-vault-mid-gray/30"></div>
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-card px-4 text-sm text-vault-light-gray uppercase tracking-wider">Or</span>
+                </div>
+              </div>
+
+              {/* SECONDARY ACTION: Manual Upload */}
+              <div 
+                className={`border-2 rounded-lg p-8 vault-transition cursor-pointer ${
+                  isDragging
+                    ? "border-vault-gold bg-vault-gold/5 scale-105"
+                    : "border-vault-mid-gray/50 hover:border-vault-gold/50"
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
+                <input
+                  type="file"
+                  id="file-upload"
+                  className="hidden"
+                  accept="image/*"
+                  multiple
+                  onChange={handleFileSelect}
+                />
+                
+                <label htmlFor="file-upload" className="cursor-pointer block">
+                  <div className="space-y-4">
+                    <Shield className="h-12 w-12 text-vault-light-gray mx-auto" />
+                    <p className="text-sm text-vault-light-gray">
+                      Drop files or click to browse
+                    </p>
+                    <p className="text-xs text-vault-light-gray/70">
+                      JPEG, PNG, RAW supported • Max 20 photos
+                    </p>
+                  </div>
+                </label>
+              </div>
+
+              {/* AI Analysis Toggle */}
+              <div className="flex items-center justify-center gap-3 pt-2">
                 <Switch
                   id="ai-analysis"
                   checked={useAI}
@@ -386,21 +406,10 @@ const PhotoUpload = () => {
                 />
                 <Label 
                   htmlFor="ai-analysis" 
-                  className="cursor-pointer text-vault-light-gray uppercase text-sm font-bold tracking-wide"
+                  className="cursor-pointer text-vault-light-gray uppercase text-xs font-bold tracking-wide"
                 >
                   AI Analysis
                 </Label>
-              </div>
-              
-              {/* Provider Connection Link */}
-              <div className="pt-6 border-t border-vault-mid-gray/30">
-                <button
-                  onClick={() => setShowProviderModal(true)}
-                  className="text-xs text-vault-light-gray hover:text-vault-gold transition-colors flex items-center gap-2 mx-auto"
-                >
-                  <Link2 className="w-3 h-3" />
-                  Or connect a photo source
-                </button>
               </div>
             </div>
           </Card>
