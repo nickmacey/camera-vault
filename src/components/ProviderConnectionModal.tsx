@@ -21,9 +21,7 @@ export function ProviderConnectionModal({ open, onOpenChange }: ProviderConnecti
   const handleConnect = async (providerId: string) => {
     if (providerId === 'google_photos') {
       try {
-        setConnecting(providerId);
-        
-        // Get current user
+        // Get current user FIRST to avoid stuck "Connecting..." state
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
           toast({
@@ -31,18 +29,32 @@ export function ProviderConnectionModal({ open, onOpenChange }: ProviderConnecti
             description: "Please log in to connect Google Photos",
             variant: "destructive"
           });
+          setConnecting(null);
           return;
         }
+
+        // Validate required envs before proceeding
+        const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+        const redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI || `${window.location.origin}/auth/google/callback`;
+        if (!clientId) {
+          toast({
+            title: "Missing Google Client ID",
+            description: "Set VITE_GOOGLE_CLIENT_ID and try again.",
+            variant: "destructive"
+          });
+          setConnecting(null);
+          return;
+        }
+
+        setConnecting(providerId);
 
         // Store user ID and initiate OAuth
         sessionStorage.setItem('google_oauth_user_id', user.id);
         const state = crypto.randomUUID();
         sessionStorage.setItem('google_oauth_state', state);
 
-        const redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI || `${window.location.origin}/auth/google/callback`;
-
         const params = new URLSearchParams({
-          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
+          client_id: clientId,
           redirect_uri: redirectUri,
           response_type: 'code',
           scope: 'https://www.googleapis.com/auth/photoslibrary.readonly',
