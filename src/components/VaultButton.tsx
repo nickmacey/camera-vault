@@ -93,10 +93,10 @@ export const VaultButton = () => {
     return (
       <Button
         onClick={() => navigate('/auth')}
-        className="absolute top-6 left-6 z-50 bg-vault-gold/25 backdrop-blur-md border border-vault-gold/50 hover:bg-vault-gold/35 transition-all duration-300 rounded-full px-8 py-3 group shadow-lg shadow-black/20"
+        className="absolute top-6 left-6 z-50 bg-vault-gold/30 backdrop-blur-md border border-vault-gold/60 hover:bg-vault-gold/40 transition-all duration-300 rounded-full px-8 py-3 group shadow-lg shadow-black/30"
       >
-        <LogIn className="mr-2 h-4 w-4 text-accent group-hover:text-accent/80 transition-colors" />
-        <span className="tracking-wide uppercase text-sm font-bold text-accent group-hover:text-accent/80 transition-colors drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">Connect Your Photos</span>
+        <LogIn className="mr-2 h-4 w-4 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]" />
+        <span className="tracking-wide uppercase text-sm font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Connect Your Photos</span>
       </Button>
     );
   }
@@ -107,10 +107,10 @@ export const VaultButton = () => {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          className="absolute top-6 left-6 z-50 bg-vault-gold/25 backdrop-blur-md border border-vault-gold/50 hover:bg-vault-gold/35 transition-all duration-300 rounded-full px-8 py-3 shadow-lg shadow-black/20"
+          className="absolute top-6 left-6 z-50 bg-vault-gold/30 backdrop-blur-md border border-vault-gold/60 hover:bg-vault-gold/40 transition-all duration-300 rounded-full px-8 py-3 shadow-lg shadow-black/30"
         >
-          <Shield className="mr-2 h-4 w-4 text-accent drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" />
-          <span className="tracking-wide uppercase text-sm font-bold text-accent drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{firstName}'s Vault</span>
+          <Shield className="mr-2 h-4 w-4 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]" />
+          <span className="tracking-wide uppercase text-sm font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{firstName}'s Vault</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
