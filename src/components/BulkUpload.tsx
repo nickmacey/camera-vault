@@ -19,6 +19,7 @@ import {
   Search,
   FileCheck
 } from 'lucide-react';
+import { AnimatedLockIcon } from './AnimatedLockIcon';
 
 interface UploadStats {
   total: number;

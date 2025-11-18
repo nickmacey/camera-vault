@@ -37,37 +37,41 @@ const Index = () => {
 
       <main ref={uploadSectionRef} className="container mx-auto px-4 py-6 md:py-12">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-4 mb-6 md:mb-8 bg-card border border-border h-12 md:h-11">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-4 mb-6 md:mb-8 bg-card border border-border h-14 md:h-11 shadow-lg shadow-vault-gold/10">
             <TabsTrigger 
               value="upload" 
-              className="gap-1 md:gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-background font-bold uppercase tracking-wide text-muted-foreground text-xs md:text-sm"
+              className="gap-1 md:gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-background font-bold uppercase tracking-wide text-muted-foreground text-xs md:text-sm relative overflow-hidden group transition-all duration-300"
             >
-              <Lock className="h-3 w-3 md:h-4 md:w-4" />
+              <Lock className="h-3 w-3 md:h-4 md:w-4 group-data-[state=active]:animate-pulse group-data-[state=active]:drop-shadow-[0_0_4px_rgba(212,175,55,0.6)] transition-transform group-hover:scale-110" />
               <span className="hidden sm:inline">Upload</span>
               <span className="sm:hidden">Upload</span>
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-data-[state=active]:animate-[slide-in-right_2s_ease-in-out_infinite] pointer-events-none" />
             </TabsTrigger>
             <TabsTrigger 
               value="bulk" 
-              className="gap-1 md:gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-background font-bold uppercase tracking-wide text-muted-foreground text-xs md:text-sm"
+              className="gap-1 md:gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-background font-bold uppercase tracking-wide text-muted-foreground text-xs md:text-sm relative overflow-hidden group transition-all duration-300"
             >
-              <FolderOpen className="h-3 w-3 md:h-4 md:w-4" />
+              <FolderOpen className="h-3 w-3 md:h-4 md:w-4 group-data-[state=active]:animate-pulse group-data-[state=active]:drop-shadow-[0_0_4px_rgba(212,175,55,0.6)] transition-transform group-hover:scale-110" />
               <span className="hidden sm:inline">Bulk</span>
               <span className="sm:hidden">Bulk</span>
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-data-[state=active]:animate-[slide-in-right_2s_ease-in-out_infinite] pointer-events-none" style={{ animationDelay: '0.3s' }} />
             </TabsTrigger>
             <TabsTrigger 
               value="gallery" 
-              className="gap-1 md:gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-background font-bold uppercase tracking-wide text-muted-foreground text-xs md:text-sm"
+              className="gap-1 md:gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-background font-bold uppercase tracking-wide text-muted-foreground text-xs md:text-sm relative overflow-hidden group transition-all duration-300"
             >
-              <Shield className="h-3 w-3 md:h-4 md:w-4" />
+              <Shield className="h-3 w-3 md:h-4 md:w-4 group-data-[state=active]:animate-pulse group-data-[state=active]:drop-shadow-[0_0_4px_rgba(212,175,55,0.6)] transition-transform group-hover:scale-110" />
               <span className="hidden sm:inline">Vault</span>
               <span className="sm:hidden">Gallery</span>
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-data-[state=active]:animate-[slide-in-right_2s_ease-in-out_infinite] pointer-events-none" style={{ animationDelay: '0.6s' }} />
             </TabsTrigger>
             <TabsTrigger 
               value="elite" 
-              className="gap-1 md:gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-background font-bold uppercase tracking-wide text-muted-foreground text-xs md:text-sm"
+              className="gap-1 md:gap-2 data-[state=active]:bg-vault-gold data-[state=active]:text-background font-bold uppercase tracking-wide text-muted-foreground text-xs md:text-sm relative overflow-hidden group transition-all duration-300"
             >
-              <Award className="h-3 w-3 md:h-4 md:w-4" />
+              <Award className="h-3 w-3 md:h-4 md:w-4 group-data-[state=active]:animate-pulse group-data-[state=active]:drop-shadow-[0_0_4px_rgba(212,175,55,0.6)] transition-transform group-hover:scale-110" />
               Elite
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-data-[state=active]:animate-[slide-in-right_2s_ease-in-out_infinite] pointer-events-none" style={{ animationDelay: '0.9s' }} />
             </TabsTrigger>
           </TabsList>
 
