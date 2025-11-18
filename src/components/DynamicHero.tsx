@@ -47,14 +47,8 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
             <h1 className="font-black text-5xl sm:text-6xl md:text-8xl text-foreground mb-4 md:mb-6">
               VAULT
             </h1>
-            <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground mb-4 md:mb-6 font-light leading-relaxed px-4">
+            <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground mb-8 md:mb-12 font-light leading-relaxed px-4">
               Share the best of your camera roll with the world.
-            </p>
-            <p className="text-sm sm:text-base text-muted-foreground/80 mb-2 md:mb-4">
-              Discover which photos are worth protecting. Which ones could sell.
-            </p>
-            <p className="text-xs sm:text-sm text-muted-foreground/70 mb-8 md:mb-12">
-              No signup • Instant results • Free forever
             </p>
             <Button 
               size="lg"
@@ -101,14 +95,8 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
           <h1 className="font-black text-5xl sm:text-6xl md:text-8xl text-foreground mb-4 md:mb-6 drop-shadow-2xl">
             VAULT
           </h1>
-          <p className="text-lg sm:text-xl md:text-2xl text-foreground/90 mb-2 md:mb-4 font-light leading-relaxed drop-shadow-lg px-4">
+          <p className="text-lg sm:text-xl md:text-2xl text-foreground/90 mb-8 md:mb-12 font-light leading-relaxed drop-shadow-lg px-4">
             Share the best of your camera roll with the world.
-          </p>
-          <p className="text-sm sm:text-base md:text-lg text-muted-foreground/80 mb-2 md:mb-4 drop-shadow-md">
-            Discover which photos are worth protecting. Which ones could sell.
-          </p>
-          <p className="text-xs sm:text-sm text-muted-foreground/70 mb-8 md:mb-12 drop-shadow-md">
-            No signup • Instant results • Free forever
           </p>
           <Button 
             size="lg"
