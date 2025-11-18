@@ -49,7 +49,7 @@ const PhotoCard = ({ photo, onClick, selectionMode, isSelected, onToggleSelect }
     >
       <div className="aspect-square relative overflow-hidden bg-vault-black">
         <img
-          src={photo.thumbnailUrl || photo.url}
+          src={photo.url}
           alt={photo.filename}
           className="w-full h-full object-cover group-hover:scale-105 vault-transition"
           loading="lazy"
