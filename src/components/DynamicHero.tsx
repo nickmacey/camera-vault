@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useTop10Photos } from "@/hooks/useTop10Photos";
 import { Sparkles } from "lucide-react";
+import heroBackground from "@/assets/hero-background.jpg";
 
 interface DynamicHeroProps {
   onCTAClick?: () => void;
@@ -40,23 +41,37 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
 
   if (loading || heroPhotos.length === 0) {
     return (
-      <section ref={heroRef} className="relative h-screen overflow-hidden bg-background film-grain">
-        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
+      <section ref={heroRef} className="relative h-screen overflow-hidden">
+        {/* Stunning 4K Background */}
+        <div className="absolute inset-0">
+          <img 
+            src={heroBackground}
+            alt="Hero background"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/60 to-background" />
+        </div>
+        
         <div className="relative z-10 flex h-full items-center justify-center text-center px-4 md:px-6">
-          <div className="max-w-4xl">
-            <h1 className="font-black text-5xl sm:text-6xl md:text-8xl text-foreground mb-4 md:mb-6">
+          <div className="max-w-5xl">
+            <h1 className="font-black text-5xl sm:text-6xl md:text-8xl lg:text-9xl text-foreground mb-6 md:mb-8 drop-shadow-2xl tracking-tight">
               VAULT
             </h1>
-            <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground mb-8 md:mb-12 font-light leading-relaxed px-4">
-              Share the best of your camera roll with the world.
-            </p>
+            <div className="mb-8 md:mb-14 space-y-2">
+              <p className="text-2xl sm:text-3xl md:text-5xl font-light text-foreground/95 drop-shadow-xl leading-tight">
+                Unlock the magic in your moments.
+              </p>
+              <p className="text-xl sm:text-2xl md:text-4xl font-light text-foreground/90 drop-shadow-lg">
+                Share the best of your content with the world.
+              </p>
+            </div>
             <Button 
               size="lg"
               onClick={onCTAClick}
-              className="group relative bg-vault-gold hover:bg-vault-gold/90 text-vault-black font-black px-8 sm:px-10 md:px-14 py-5 md:py-7 text-sm sm:text-base md:text-lg rounded-full overflow-hidden shadow-[0_0_40px_hsla(45,70%,52%,0.6),0_4px_20px_rgba(0,0,0,0.4)] hover:shadow-[0_0_80px_hsla(45,70%,52%,0.9),0_8px_30px_rgba(0,0,0,0.5)] hover:scale-105 transition-all duration-500 border-2 border-vault-gold"
+              className="group relative bg-gradient-to-r from-primary via-primary/90 to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-black px-8 sm:px-12 md:px-16 py-6 md:py-8 text-sm sm:text-base md:text-xl rounded-full overflow-hidden shadow-[0_0_60px_hsla(var(--primary)/0.8),0_8px_30px_rgba(0,0,0,0.6)] hover:shadow-[0_0_100px_hsla(var(--primary)/1),0_12px_40px_rgba(0,0,0,0.7)] hover:scale-105 transition-all duration-500 border-2 border-primary/50"
             >
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
-              <Sparkles className="mr-2 h-4 w-4 md:h-5 md:w-5 relative z-10 animate-pulse" />
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+              <Sparkles className="mr-2 h-5 w-5 md:h-6 md:w-6 relative z-10 animate-pulse" />
               <span className="relative z-10">LOAD YOUR VAULT</span>
             </Button>
           </div>
@@ -69,42 +84,60 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
   const parallaxOffset = scrollY * 0.5;
 
   return (
-    <section ref={heroRef} className="relative h-screen overflow-hidden film-grain">
-      {/* Background: Rotating through top 3 with parallax */}
-      <div className="absolute inset-0 z-0" style={{ transform: `translateY(${parallaxOffset}px)` }}>
-        {heroPhotos.map((photo, index) => (
-          <div
-            key={photo.id}
-            className={`absolute inset-0 transition-opacity duration-[2000ms] ease-in-out ${
-              index === currentSlide ? 'opacity-40' : 'opacity-0'
-            }`}
-          >
-            <img 
-              src={photo.url}
-              alt={photo.filename}
-              className="w-full h-full object-cover blur-[2px] scale-110"
-            />
-          </div>
-        ))}
-        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
+    <section ref={heroRef} className="relative h-screen overflow-hidden">
+      {/* Background: Rotating through top 3 with parallax and 4K backdrop */}
+      <div className="absolute inset-0 z-0">
+        {/* 4K Background Layer */}
+        <div className="absolute inset-0">
+          <img 
+            src={heroBackground}
+            alt="Hero background"
+            className="w-full h-full object-cover"
+          />
+        </div>
+        
+        {/* User Photos Layer */}
+        <div className="absolute inset-0" style={{ transform: `translateY(${parallaxOffset}px)` }}>
+          {heroPhotos.map((photo, index) => (
+            <div
+              key={photo.id}
+              className={`absolute inset-0 transition-opacity duration-[2000ms] ease-in-out ${
+                index === currentSlide ? 'opacity-30' : 'opacity-0'
+              }`}
+            >
+              <img 
+                src={photo.url}
+                alt={photo.filename}
+                className="w-full h-full object-cover blur-[2px] scale-110"
+              />
+            </div>
+          ))}
+        </div>
+        
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/60 to-background" />
       </div>
       
       {/* Hero content - fixed position, no parallax */}
       <div className="relative z-20 flex h-full items-center justify-center text-center px-4 md:px-6">
-        <div className="max-w-4xl">
-          <h1 className="font-black text-5xl sm:text-6xl md:text-8xl text-foreground mb-4 md:mb-6 drop-shadow-2xl">
+        <div className="max-w-5xl">
+          <h1 className="font-black text-5xl sm:text-6xl md:text-8xl lg:text-9xl text-foreground mb-6 md:mb-8 drop-shadow-2xl tracking-tight">
             VAULT
           </h1>
-          <p className="text-lg sm:text-xl md:text-2xl text-foreground/90 mb-8 md:mb-12 font-light leading-relaxed drop-shadow-lg px-4">
-            Share the best of your camera roll with the world.
-          </p>
+          <div className="mb-8 md:mb-14 space-y-2">
+            <p className="text-2xl sm:text-3xl md:text-5xl font-light text-foreground/95 drop-shadow-xl leading-tight">
+              Unlock the magic in your moments.
+            </p>
+            <p className="text-xl sm:text-2xl md:text-4xl font-light text-foreground/90 drop-shadow-lg">
+              Share the best of your content with the world.
+            </p>
+          </div>
           <Button 
             size="lg"
             onClick={onCTAClick}
-            className="group relative bg-vault-gold hover:bg-vault-gold/90 text-vault-black font-black px-8 sm:px-10 md:px-14 py-5 md:py-7 text-sm sm:text-base md:text-lg rounded-full overflow-hidden shadow-[0_0_40px_hsla(45,70%,52%,0.6),0_4px_20px_rgba(0,0,0,0.4)] hover:shadow-[0_0_80px_hsla(45,70%,52%,0.9),0_8px_30px_rgba(0,0,0,0.5)] hover:scale-105 transition-all duration-500 border-2 border-vault-gold"
+            className="group relative bg-gradient-to-r from-primary via-primary/90 to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-black px-8 sm:px-12 md:px-16 py-6 md:py-8 text-sm sm:text-base md:text-xl rounded-full overflow-hidden shadow-[0_0_60px_hsla(var(--primary)/0.8),0_8px_30px_rgba(0,0,0,0.6)] hover:shadow-[0_0_100px_hsla(var(--primary)/1),0_12px_40px_rgba(0,0,0,0.7)] hover:scale-105 transition-all duration-500 border-2 border-primary/50"
           >
-            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
-            <Sparkles className="mr-2 h-4 w-4 md:h-5 md:w-5 relative z-10 animate-pulse" />
+            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+            <Sparkles className="mr-2 h-5 w-5 md:h-6 md:w-6 relative z-10 animate-pulse" />
             <span className="relative z-10">LOAD YOUR VAULT</span>
           </Button>
         </div>
