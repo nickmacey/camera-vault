@@ -9,11 +9,17 @@ import { CategoryShowcase } from "@/components/CategoryShowcase";
 import StatsBar from "@/components/StatsBar";
 import { useTop10Photos } from "@/hooks/useTop10Photos";
 import { SettingsButton } from "@/components/VaultSettings";
+import { GooglePhotosImportModal, ImportFilters } from "@/components/GooglePhotosImportModal";
+import { useSearchParams } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("gallery");
   const { dynamicAccent } = useTop10Photos();
   const uploadSectionRef = useRef<HTMLDivElement>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [showGoogleImport, setShowGoogleImport] = useState(false);
+  const { toast } = useToast();
   
   const scrollToUpload = () => {
     setActiveTab("upload");
@@ -26,6 +32,29 @@ const Index = () => {
   useEffect(() => {
     document.documentElement.style.setProperty('--vault-dynamic-accent', dynamicAccent);
   }, [dynamicAccent]);
+
+  // Check for Google Photos connection success
+  useEffect(() => {
+    if (searchParams.get('google_photos_connected') === 'true') {
+      setShowGoogleImport(true);
+      // Remove the param from URL
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('google_photos_connected');
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
+  const handleStartGoogleSync = (filters: ImportFilters) => {
+    console.log('Starting Google Photos sync with filters:', filters);
+    setShowGoogleImport(false);
+    
+    toast({
+      title: "Sync Started",
+      description: "Google Photos sync is starting. You'll be notified when complete.",
+    });
+    
+    // TODO: Start background sync job
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -75,6 +104,12 @@ const Index = () => {
           </TabsContent>
         </Tabs>
       </main>
+
+      <GooglePhotosImportModal
+        open={showGoogleImport}
+        onOpenChange={setShowGoogleImport}
+        onStartSync={handleStartGoogleSync}
+      />
     </div>
   );
 };
