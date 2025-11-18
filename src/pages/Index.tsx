@@ -9,7 +9,9 @@ import { CategoryShowcase } from "@/components/CategoryShowcase";
 import StatsBar from "@/components/StatsBar";
 import { useTop10Photos } from "@/hooks/useTop10Photos";
 import { SettingsButton } from "@/components/VaultSettings";
-import { GooglePhotosImportModal, ImportFilters } from "@/components/GooglePhotosImportModal";
+import { GooglePhotosImportModal } from "@/components/GooglePhotosImportModal";
+import { ProviderConnectionModal } from "@/components/ProviderConnectionModal";
+import { SyncProgress } from "@/components/SyncProgress";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
@@ -19,6 +21,8 @@ const Index = () => {
   const uploadSectionRef = useRef<HTMLDivElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const [showGoogleImport, setShowGoogleImport] = useState(false);
+  const [showProviderModal, setShowProviderModal] = useState(false);
+  const [currentSyncJobId, setCurrentSyncJobId] = useState<string | null>(null);
   const { toast } = useToast();
   
   const scrollToUpload = () => {
@@ -47,6 +51,11 @@ const Index = () => {
   const handleStartGoogleSync = (jobId: string) => {
     console.log('Google Photos sync started with job:', jobId);
     setShowGoogleImport(false);
+    setCurrentSyncJobId(jobId);
+    toast({
+      title: "Sync Started",
+      description: "Your photos are being analyzed in the background",
+    });
   };
 
   return (
@@ -97,6 +106,27 @@ const Index = () => {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Sync Progress - Fixed bottom right */}
+      {currentSyncJobId && (
+        <div className="fixed bottom-4 right-4 w-96 z-50 shadow-xl">
+          <SyncProgress 
+            jobId={currentSyncJobId} 
+            onComplete={() => {
+              setCurrentSyncJobId(null);
+              toast({
+                title: "Sync Complete!",
+                description: "Your photos have been analyzed and categorized",
+              });
+            }}
+          />
+        </div>
+      )}
+
+      <ProviderConnectionModal
+        open={showProviderModal}
+        onOpenChange={setShowProviderModal}
+      />
 
       <GooglePhotosImportModal
         open={showGoogleImport}
