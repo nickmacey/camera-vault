@@ -80,8 +80,10 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
     );
   }
 
-  // Parallax speed multiplier (0.5 = half speed of scroll)
-  const parallaxOffset = scrollY * 0.5;
+  // Parallax speed multipliers for depth effect
+  const bgParallaxOffset = scrollY * 0.5;    // Background moves slowest
+  const textParallaxOffset = scrollY * 0.3;   // Text moves medium speed
+  const buttonParallaxOffset = scrollY * 0.15; // Button moves fastest
 
   return (
     <section ref={heroRef} className="relative h-screen overflow-hidden">
@@ -97,7 +99,7 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
         </div>
         
         {/* User Photos Layer */}
-        <div className="absolute inset-0" style={{ transform: `translateY(${parallaxOffset}px)` }}>
+        <div className="absolute inset-0" style={{ transform: `translateY(${bgParallaxOffset}px)` }}>
           {heroPhotos.map((photo, index) => (
             <div
               key={photo.id}
@@ -117,21 +119,24 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/60 to-background" />
       </div>
       
-      {/* Hero content - fixed position, no parallax */}
+      {/* Hero content - with layered parallax */}
       <div className="relative z-20 flex h-full items-center justify-center text-center px-4 md:px-6">
         <div className="max-w-5xl">
-          <h1 className="font-black text-5xl sm:text-6xl md:text-8xl lg:text-9xl text-foreground mb-6 md:mb-8 drop-shadow-2xl tracking-tight">
-            VAULT
-          </h1>
-          <div className="mb-8 md:mb-14 space-y-2">
-            <p className="text-2xl sm:text-3xl md:text-5xl font-light text-foreground/95 drop-shadow-xl leading-tight">
-              Unlock the magic in your moments.
-            </p>
-            <p className="text-xl sm:text-2xl md:text-4xl font-light text-foreground/90 drop-shadow-lg">
-              Share the best of your content with the world.
-            </p>
+          <div style={{ transform: `translateY(${textParallaxOffset}px)`, transition: 'transform 0.1s ease-out' }}>
+            <h1 className="font-black text-5xl sm:text-6xl md:text-8xl lg:text-9xl text-foreground mb-6 md:mb-8 drop-shadow-2xl tracking-tight">
+              VAULT
+            </h1>
+            <div className="mb-8 md:mb-14 space-y-2">
+              <p className="text-2xl sm:text-3xl md:text-5xl font-light text-foreground/95 drop-shadow-xl leading-tight">
+                Unlock the magic in your moments.
+              </p>
+              <p className="text-xl sm:text-2xl md:text-4xl font-light text-foreground/90 drop-shadow-lg">
+                Share the best of your content with the world.
+              </p>
+            </div>
           </div>
-          <Button 
+          <div style={{ transform: `translateY(${buttonParallaxOffset}px)`, transition: 'transform 0.1s ease-out' }}>
+            <Button
             size="lg"
             onClick={onCTAClick}
             className="group relative bg-gradient-to-r from-primary via-primary/90 to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-black px-8 sm:px-12 md:px-16 py-6 md:py-8 text-sm sm:text-base md:text-xl rounded-full overflow-hidden shadow-[0_0_60px_hsla(var(--primary)/0.8),0_8px_30px_rgba(0,0,0,0.6)] hover:shadow-[0_0_100px_hsla(var(--primary)/1),0_12px_40px_rgba(0,0,0,0.7)] hover:scale-105 transition-all duration-500 border-2 border-primary/50"
@@ -140,6 +145,7 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
             <Sparkles className="mr-2 h-5 w-5 md:h-6 md:w-6 relative z-10 animate-pulse" />
             <span className="relative z-10">LOAD YOUR VAULT</span>
           </Button>
+          </div>
         </div>
       </div>
       
