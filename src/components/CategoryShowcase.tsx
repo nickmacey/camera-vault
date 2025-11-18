@@ -8,16 +8,40 @@ export const CategoryShowcase = () => {
   const { vaultWorthy, highValue, top10Photos } = useTop10Photos();
   const [allPhotos, setAllPhotos] = useState<any[]>([]);
   const [totalPhotos, setTotalPhotos] = useState(0);
+  const [archivePhotosWithUrls, setArchivePhotosWithUrls] = useState<any[]>([]);
   
   useEffect(() => {
     const fetchAllPhotos = async () => {
+      // Fetch ALL photos including those without scores
       const { data, count } = await supabase
         .from('photos')
         .select('*', { count: 'exact' })
-        .order('overall_score', { ascending: false });
+        .order('overall_score', { ascending: false, nullsFirst: false });
       
       setAllPhotos(data || []);
       setTotalPhotos(count || 0);
+
+      // Get archive photos (tier='archive' OR score < 7.0 OR no score yet)
+      const archiveData = (data || []).filter(p => {
+        const score = p.overall_score;
+        return p.tier === 'archive' || score === null || score < 7.0;
+      });
+
+      // Generate signed URLs for archive photos
+      const archiveWithUrls = await Promise.all(
+        archiveData.slice(0, 12).map(async (photo) => {
+          const { data: urlData } = await supabase.storage
+            .from('photos')
+            .createSignedUrl(photo.storage_path, 3600);
+          
+          return {
+            ...photo,
+            url: urlData?.signedUrl || ''
+          };
+        })
+      );
+
+      setArchivePhotosWithUrls(archiveWithUrls);
     };
     
     fetchAllPhotos();
@@ -25,15 +49,15 @@ export const CategoryShowcase = () => {
 
   const vaultWorthyCount = vaultWorthy.length;
   const highValueCount = highValue.length;
-  const archiveCount = totalPhotos - vaultWorthyCount - highValueCount;
+  
+  // Calculate archive count - includes unscored photos
+  const archiveCount = allPhotos.filter(p => {
+    const score = p.overall_score;
+    return p.tier === 'archive' || score === null || score < 7.0;
+  }).length;
   
   const vaultWorthyValue = vaultWorthyCount * 150;
   const highValueValue = highValueCount * 75;
-
-  // Get archive photos
-  const archivePhotos = allPhotos.filter(p => 
-    p.tier !== 'vault-worthy' && p.tier !== 'high-value'
-  );
 
   return (
     <section className="relative py-16 md:py-24 px-4 md:px-12 overflow-hidden">
@@ -79,18 +103,13 @@ export const CategoryShowcase = () => {
           
           {/* Gems (Archive) */}
           <PhotoBackgroundCard
-            photoUrl={archivePhotos[0]?.storage_path ? 
-              `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/photos/${archivePhotos[0].storage_path}` : 
-              undefined
-            }
+            photoUrl={archivePhotosWithUrls[0]?.url}
             icon={Gem}
             title="GEMS"
             subtitle="Hidden Talent"
             count={archiveCount}
             description="Explore and uncover diamonds in the rough waiting to shine."
-            previewPhotos={archivePhotos.slice(0, 12).map(p => 
-              `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/photos/${p.storage_path}`
-            )}
+            previewPhotos={archivePhotosWithUrls.map(p => p.url).filter(Boolean)}
             variant="archive"
           />
         </div>

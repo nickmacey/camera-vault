@@ -51,7 +51,8 @@ export const useTop10Photos = () => {
       const { data, error } = await supabase
         .from('photos')
         .select('*')
-        .order('score', { ascending: false })
+        .not('overall_score', 'is', null)
+        .order('overall_score', { ascending: false })
         .limit(10);
 
       if (error) throw error;
@@ -62,7 +63,7 @@ export const useTop10Photos = () => {
             .from('photos')
             .createSignedUrl(photo.storage_path, 3600);
 
-          const finalScore = cleanScore(photo.score, photo.description) || 0;
+          const finalScore = photo.overall_score || cleanScore(photo.score, photo.description) || 0;
           const aspectRatio = photo.width && photo.height ? photo.width / photo.height : 1;
 
           return {
