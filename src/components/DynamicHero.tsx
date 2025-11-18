@@ -84,6 +84,10 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
   const bgParallaxOffset = scrollY * 0.5;    // Background moves slowest
   const textParallaxOffset = scrollY * 0.3;   // Text moves medium speed
   const buttonParallaxOffset = scrollY * 0.15; // Button moves fastest
+  
+  // Calculate fade-out opacity (fades out over first 60% of viewport height)
+  const fadeThreshold = typeof window !== 'undefined' ? window.innerHeight * 0.6 : 600;
+  const contentOpacity = Math.max(0, 1 - (scrollY / fadeThreshold));
 
   return (
     <section ref={heroRef} className="relative h-screen overflow-hidden">
@@ -119,8 +123,11 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/60 to-background" />
       </div>
       
-      {/* Hero content - with layered parallax */}
-      <div className="relative z-20 flex h-full items-center justify-center text-center px-4 md:px-6">
+      {/* Hero content - with layered parallax and fade-out */}
+      <div 
+        className="relative z-20 flex h-full items-center justify-center text-center px-4 md:px-6"
+        style={{ opacity: contentOpacity, transition: 'opacity 0.1s ease-out' }}
+      >
         <div className="max-w-5xl">
           <div style={{ transform: `translateY(${textParallaxOffset}px)`, transition: 'transform 0.1s ease-out' }}>
             <h1 className="font-black text-5xl sm:text-6xl md:text-8xl lg:text-9xl text-foreground mb-6 md:mb-8 drop-shadow-2xl tracking-tight">
