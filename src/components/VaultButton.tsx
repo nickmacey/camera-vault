@@ -80,11 +80,11 @@ export const VaultButton = () => {
     return (
       <Button
         variant="ghost"
-        className="absolute top-6 left-6 z-50 bg-vault-gold/20 backdrop-blur-md border border-vault-gold/40 text-vault-gold hover:bg-vault-gold/30 transition-all duration-300 rounded-full px-6 py-3"
+        className="absolute top-4 left-4 z-50 bg-vault-gold/20 backdrop-blur-md border border-vault-gold/40 text-vault-gold hover:bg-vault-gold/30 transition-all duration-300 rounded-full px-4 py-2 md:px-6 md:py-3"
         disabled
       >
-        <Shield className="mr-2 h-4 w-4" />
-        <span className="font-semibold tracking-wide text-sm">Loading...</span>
+        <Shield className="h-4 w-4 md:mr-2" />
+        <span className="hidden md:inline font-semibold tracking-wide text-sm">Loading...</span>
       </Button>
     );
   }
@@ -93,10 +93,10 @@ export const VaultButton = () => {
     return (
       <Button
         onClick={() => navigate('/auth')}
-        className="absolute top-6 left-6 z-50 bg-vault-gold/30 backdrop-blur-md border border-vault-gold/60 hover:bg-vault-gold/40 transition-all duration-300 rounded-full px-8 py-3 group shadow-lg shadow-black/30"
+        className="absolute top-4 left-4 z-50 bg-vault-gold/30 backdrop-blur-md border border-vault-gold/60 hover:bg-vault-gold/40 transition-all duration-300 rounded-full px-4 py-2 md:px-8 md:py-3 group shadow-lg shadow-black/30"
       >
-        <LogIn className="mr-2 h-4 w-4 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]" />
-        <span className="tracking-wide uppercase text-sm font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Connect Your Photos</span>
+        <LogIn className="h-4 w-4 md:mr-2 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]" />
+        <span className="hidden md:inline tracking-wide uppercase text-sm font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Connect Your Photos</span>
       </Button>
     );
   }
@@ -107,10 +107,10 @@ export const VaultButton = () => {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          className="absolute top-6 left-6 z-50 bg-vault-gold/30 backdrop-blur-md border border-vault-gold/60 hover:bg-vault-gold/40 transition-all duration-300 rounded-full px-8 py-3 shadow-lg shadow-black/30"
+          className="absolute top-4 left-4 z-50 bg-vault-gold/30 backdrop-blur-md border border-vault-gold/60 hover:bg-vault-gold/40 transition-all duration-300 rounded-full px-4 py-2 md:px-8 md:py-3 shadow-lg shadow-black/30"
         >
-          <Shield className="mr-2 h-4 w-4 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]" />
-          <span className="tracking-wide uppercase text-sm font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{firstName}'s Vault</span>
+          <Shield className="h-4 w-4 md:mr-2 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]" />
+          <span className="hidden md:inline tracking-wide uppercase text-sm font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{firstName}'s Vault</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent

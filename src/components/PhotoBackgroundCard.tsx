@@ -63,7 +63,7 @@ export const PhotoBackgroundCard = ({
 
   return (
     <Card 
-      className={`group relative overflow-hidden min-h-[650px] cursor-pointer transition-all duration-700 bg-background/40 backdrop-blur-xl ${styles.border} ${styles.shadow} hover:scale-[1.02] hover:-translate-y-2`}
+      className={`group relative overflow-hidden min-h-[450px] sm:min-h-[550px] md:min-h-[650px] cursor-pointer transition-all duration-700 bg-background/40 backdrop-blur-xl ${styles.border} ${styles.shadow} hover:scale-[1.02] hover:-translate-y-2`}
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -92,38 +92,38 @@ export const PhotoBackgroundCard = ({
         />
       </div>
       
-      <div className="relative z-10 p-6 md:p-8 h-full flex flex-col">
+      <div className="relative z-10 p-4 sm:p-6 md:p-8 h-full flex flex-col">
         {/* Icon with glow */}
-        <div className="mb-6 flex items-start justify-between">
+        <div className="mb-4 sm:mb-6 flex items-start justify-between">
           <div className="relative">
             <div className={`absolute inset-0 ${styles.glowColor} blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-            <Icon className={`relative h-12 w-12 md:h-14 md:w-14 ${styles.iconColor} transition-all duration-500 ${
+            <Icon className={`relative h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 ${styles.iconColor} transition-all duration-500 ${
               isHovered ? 'scale-110 rotate-12' : 'scale-100 rotate-0'
             }`} />
           </div>
         </div>
 
         {/* Title and subtitle */}
-        <div className="mb-6">
-          <h3 className="font-black text-2xl md:text-3xl text-foreground mb-1 tracking-tight leading-none">
+        <div className="mb-4 sm:mb-6">
+          <h3 className="font-black text-xl sm:text-2xl md:text-3xl text-foreground mb-1 tracking-tight leading-none">
             {title}
           </h3>
           {subtitle && (
-            <p className="text-sm md:text-base text-muted-foreground font-light">
+            <p className="text-xs sm:text-sm md:text-base text-muted-foreground font-light">
               {subtitle}
             </p>
           )}
         </div>
         
         {/* Count with animation */}
-        <div className="mb-4">
-          <div className="flex items-baseline gap-3">
-            <span className={`font-black text-6xl md:text-7xl ${styles.countColor} transition-all duration-500 ${
+        <div className="mb-3 sm:mb-4">
+          <div className="flex items-baseline gap-2 sm:gap-3">
+            <span className={`font-black text-4xl sm:text-5xl md:text-7xl ${styles.countColor} transition-all duration-500 ${
               isHovered ? 'scale-110' : 'scale-100'
             }`}>
               {count}
             </span>
-            <span className="text-lg md:text-xl text-muted-foreground font-light">
+            <span className="text-sm sm:text-base md:text-xl text-muted-foreground font-light">
               {count === 1 ? 'asset' : 'assets'}
             </span>
           </div>
@@ -131,18 +131,18 @@ export const PhotoBackgroundCard = ({
         
         {/* Value */}
         {value && (
-          <div className="mb-4">
-            <p className="text-sm text-muted-foreground/80">
+          <div className="mb-3 sm:mb-4">
+            <p className="text-xs sm:text-sm text-muted-foreground/80">
               Estimated value
             </p>
-            <p className={`text-2xl md:text-3xl font-black ${styles.valueColor}`}>
+            <p className={`text-xl sm:text-2xl md:text-3xl font-black ${styles.valueColor}`}>
               {value}
             </p>
           </div>
         )}
         
         {/* Description */}
-        <p className="text-sm md:text-base text-muted-foreground/90 leading-relaxed mb-6 font-light">
+        <p className="text-xs sm:text-sm md:text-base text-muted-foreground/90 leading-relaxed mb-4 sm:mb-6 font-light">
           {description}
         </p>
         

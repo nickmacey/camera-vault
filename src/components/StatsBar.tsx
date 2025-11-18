@@ -93,45 +93,45 @@ const StatsBar = () => {
         </div>
       )}
       
-      <div className="container mx-auto px-4 py-4 relative z-10">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-vault-gold/10 border border-vault-gold/20">
-              <Lock className="h-5 w-5 text-vault-gold" />
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 relative z-10">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-3 sm:mb-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="p-1.5 sm:p-2 rounded-lg bg-vault-gold/10 border border-vault-gold/20">
+              <Lock className="h-4 w-4 sm:h-5 sm:w-5 text-vault-gold" />
             </div>
             <div>
-              <p className="text-2xl font-mono font-bold text-foreground">{displayStats.total_photos}</p>
-              <p className="text-xs text-muted-foreground uppercase tracking-wide font-bold">Assets</p>
+              <p className="text-lg sm:text-2xl font-mono font-bold text-foreground">{displayStats.total_photos}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide font-bold">Assets</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-vault-green/10 border border-vault-green/20">
-              <TrendingUp className="h-5 w-5 text-vault-green" />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="p-1.5 sm:p-2 rounded-lg bg-vault-green/10 border border-vault-green/20">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-vault-green" />
             </div>
             <div>
-              <p className="text-2xl font-mono font-bold text-foreground">{displayStats.avg_score.toFixed(1)}</p>
-              <p className="text-xs text-muted-foreground uppercase tracking-wide font-bold">Avg Score</p>
+              <p className="text-lg sm:text-2xl font-mono font-bold text-foreground">{displayStats.avg_score.toFixed(1)}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide font-bold">Avg Score</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-vault-gold/10 border border-vault-gold/20">
-              <Star className="h-5 w-5 text-vault-gold" />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="p-1.5 sm:p-2 rounded-lg bg-vault-gold/10 border border-vault-gold/20">
+              <Star className="h-4 w-4 sm:h-5 sm:w-5 text-vault-gold" />
             </div>
             <div>
-              <p className="text-2xl font-mono font-bold text-vault-gold">{displayStats.top_score.toFixed(1)}</p>
-              <p className="text-xs text-muted-foreground uppercase tracking-wide font-bold">Peak Score</p>
+              <p className="text-lg sm:text-2xl font-mono font-bold text-vault-gold">{displayStats.top_score.toFixed(1)}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide font-bold">Peak Score</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-vault-gold/10 border border-vault-gold/20">
-              <Award className="h-5 w-5 text-vault-gold" />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="p-1.5 sm:p-2 rounded-lg bg-vault-gold/10 border border-vault-gold/20">
+              <Award className="h-4 w-4 sm:h-5 sm:w-5 text-vault-gold" />
             </div>
             <div>
-              <p className="text-2xl font-mono font-bold text-vault-gold">{displayStats.vault_worthy}</p>
-              <p className="text-xs text-muted-foreground uppercase tracking-wide font-bold">Vault Worthy</p>
+              <p className="text-lg sm:text-2xl font-mono font-bold text-vault-gold">{displayStats.vault_worthy}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide font-bold whitespace-nowrap">Vault Worthy</p>
             </div>
           </div>
         </div>
@@ -139,20 +139,21 @@ const StatsBar = () => {
         {/* Tier Distribution Bar */}
         {displayStats.total_photos > 0 && (
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span className="font-medium">Collection Distribution</span>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1.5">
+            <div className="flex items-center justify-between text-[10px] sm:text-xs text-muted-foreground">
+              <span className="font-medium hidden sm:inline">Collection Distribution</span>
+              <span className="font-medium sm:hidden">Distribution</span>
+              <div className="flex items-center gap-2 sm:gap-4">
+                <div className="flex items-center gap-1 sm:gap-1.5">
                   <Sparkles className="h-3 w-3 text-vault-gold" />
-                  <span className="font-mono">{displayStats.vault_worthy}</span>
+                  <span className="font-mono text-[10px] sm:text-xs">{displayStats.vault_worthy}</span>
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1 sm:gap-1.5">
                   <Star className="h-3 w-3 text-vault-green" />
-                  <span className="font-mono">{displayStats.high_value}</span>
+                  <span className="font-mono text-[10px] sm:text-xs">{displayStats.high_value}</span>
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1 sm:gap-1.5">
                   <Archive className="h-3 w-3 text-muted-foreground" />
-                  <span className="font-mono">{displayStats.archive}</span>
+                  <span className="font-mono text-[10px] sm:text-xs">{displayStats.archive}</span>
                 </div>
               </div>
             </div>

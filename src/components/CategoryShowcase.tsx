@@ -60,21 +60,21 @@ export const CategoryShowcase = () => {
   const highValueValue = highValueCount * 75;
 
   return (
-    <section className="relative py-16 md:py-24 px-4 md:px-12 overflow-hidden">
+    <section className="relative py-12 md:py-24 px-3 sm:px-4 md:px-12 overflow-hidden">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-background via-background/95 to-background pointer-events-none" />
       
       <div className="relative z-10 max-w-7xl mx-auto">
-        <div className="text-center mb-12 md:mb-20">
-          <h2 className="font-black text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-foreground mb-4 tracking-tight">
+        <div className="text-center mb-8 md:mb-20">
+          <h2 className="font-black text-3xl sm:text-4xl md:text-6xl lg:text-7xl text-foreground mb-3 md:mb-4 tracking-tight px-2">
             YOUR COLLECTION
           </h2>
-          <p className="text-lg md:text-xl text-muted-foreground font-light max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground font-light max-w-2xl mx-auto px-4">
             Every photo analyzed, categorized, and valued
           </p>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
           {/* Elite (Vault Worthy) */}
           <PhotoBackgroundCard
             photoUrl={vaultWorthy[0]?.url}
