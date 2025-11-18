@@ -146,11 +146,11 @@ export const PhotoBackgroundCard = ({
           {description}
         </p>
         
-        {/* Photo grid preview with stagger animation */}
-        {previewPhotos.length > 0 && (
+        {/* Photo grid preview with stagger animation - only show if photos exist */}
+        {previewPhotos.length > 0 && previewPhotos.some(url => url) && (
           <div className="flex-1 overflow-hidden mt-auto">
             <div className="grid grid-cols-4 gap-2">
-              {previewPhotos.slice(0, 8).map((url, i) => (
+              {previewPhotos.filter(url => url).slice(0, 8).map((url, i) => (
                 <div 
                   key={i} 
                   className={`aspect-square rounded-lg overflow-hidden relative ${
