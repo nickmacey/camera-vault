@@ -255,23 +255,34 @@ export const PhotoDetailModal = ({ photo, open, onOpenChange }: PhotoDetailModal
                         </div>
                       </div>
 
-                      {photo.date_taken && (
-                        <div className="flex items-start gap-2">
-                          <Calendar className="h-4 w-4 text-vault-gold mt-0.5" />
-                          <div className="flex-1">
-                            <p className="text-muted-foreground text-xs">Date Taken</p>
-                            <p className="font-mono text-foreground">
-                              {new Date(photo.date_taken).toLocaleDateString('en-US', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </p>
-                          </div>
-                        </div>
-                      )}
+                      {photo.date_taken && (() => {
+                        try {
+                          const date = new Date(photo.date_taken);
+                          // Check if date is valid
+                          if (isNaN(date.getTime())) {
+                            return null;
+                          }
+                          return (
+                            <div className="flex items-start gap-2">
+                              <Calendar className="h-4 w-4 text-vault-gold mt-0.5" />
+                              <div className="flex-1">
+                                <p className="text-muted-foreground text-xs">Date Taken</p>
+                                <p className="font-mono text-foreground">
+                                  {date.toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        } catch {
+                          return null;
+                        }
+                      })()}
                     </div>
                   </TabsContent>
 
