@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const clientId = Deno.env.get('VITE_GOOGLE_CLIENT_ID');
+    const clientId = Deno.env.get('VITE_GOOGLE_CLIENT_ID') || Deno.env.get('GOOGLE_CLIENT_ID');
     const redirectUri = Deno.env.get('GOOGLE_REDIRECT_URI');
 
     if (!clientId) {
