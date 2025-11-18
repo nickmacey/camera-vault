@@ -7,6 +7,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Camera } from "lucide-react";
+import { z } from "zod";
+
+// Validation schema for authentication
+const authSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .min(1, "Email is required")
+    .email("Invalid email address")
+    .max(255, "Email must be less than 255 characters"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .max(128, "Password must be less than 128 characters")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number"),
+});
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -14,36 +32,71 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setErrors({});
 
     try {
+      // Validate input
+      const validatedData = authSchema.parse({ email, password });
+
       if (isSignUp) {
         const { error } = await supabase.auth.signUp({
-          email,
-          password,
+          email: validatedData.email,
+          password: validatedData.password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
           },
         });
         
-        if (error) throw error;
+        if (error) {
+          // Provide user-friendly error messages
+          if (error.message.includes("already registered")) {
+            toast.error("This email is already registered. Please sign in instead.");
+          } else {
+            toast.error("Unable to create account. Please try again.");
+          }
+          return;
+        }
+        
         toast.success("Account created! You're now logged in.");
         navigate("/");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
+          email: validatedData.email,
+          password: validatedData.password,
         });
         
-        if (error) throw error;
+        if (error) {
+          // Provide generic error to prevent account enumeration
+          toast.error("Invalid email or password");
+          return;
+        }
+        
         toast.success("Welcome back!");
         navigate("/");
       }
     } catch (error: any) {
-      toast.error(error.message || "Authentication failed");
+      if (error instanceof z.ZodError) {
+        // Display validation errors
+        const fieldErrors: { email?: string; password?: string } = {};
+        error.errors.forEach((err) => {
+          const field = err.path[0] as "email" | "password";
+          if (!fieldErrors[field]) {
+            fieldErrors[field] = err.message;
+          }
+        });
+        setErrors(fieldErrors);
+        
+        // Show first error as toast
+        const firstError = error.errors[0];
+        toast.error(firstError.message);
+      } else {
+        toast.error("An unexpected error occurred. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -76,7 +129,11 @@ const Auth = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className={errors.email ? "border-destructive" : ""}
               />
+              {errors.email && (
+                <p className="text-sm text-destructive">{errors.email}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
@@ -87,8 +144,17 @@ const Auth = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={8}
+                className={errors.password ? "border-destructive" : ""}
               />
+              {errors.password && (
+                <p className="text-sm text-destructive">{errors.password}</p>
+              )}
+              {isSignUp && !errors.password && (
+                <p className="text-xs text-muted-foreground">
+                  Must be 8+ characters with uppercase, lowercase, and number
+                </p>
+              )}
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
@@ -96,7 +162,10 @@ const Auth = () => {
           </form>
           <div className="mt-4 text-center text-sm">
             <button
-              onClick={() => setIsSignUp(!isSignUp)}
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setErrors({});
+              }}
               className="text-primary hover:underline"
             >
               {isSignUp

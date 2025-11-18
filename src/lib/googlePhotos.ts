@@ -67,20 +67,23 @@ export async function handleGooglePhotosCallback() {
   }
   sessionStorage.removeItem('google_oauth_state');
 
-  // Get current session
+  // Get current session for authentication
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
     throw new Error('Not authenticated');
   }
 
-  // Exchange code for tokens via Edge Function (secure!)\\
+  // Exchange code for tokens via Edge Function (secure!)
   // Client secret never leaves the server
+  // User ID is extracted from JWT token on the server
   const { data, error: exchangeError } = await supabase.functions.invoke('google-oauth-exchange', {
     body: {
       action: 'exchange',
       code,
-      userId: session.user.id
-    }
+    },
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
   });
 
   if (exchangeError) {
@@ -149,9 +152,16 @@ export async function startGooglePhotosSync(filters: ImportFilters) {
 
   if (error) throw error;
 
-  // Trigger background sync via Edge Function
+  // Get current session for authentication
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('Session expired');
+
+  // Trigger background sync via Edge Function with authentication
   const { error: syncError } = await supabase.functions.invoke('google-photos-sync', {
-    body: { syncJobId: syncJob.id }
+    body: { syncJobId: syncJob.id },
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
   });
 
   if (syncError) {
@@ -221,9 +231,16 @@ export async function resumeSyncJob(jobId: string) {
 
   if (error) throw error;
 
-  // Restart the Edge Function
+  // Get current session for authentication
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('Session expired');
+
+  // Restart the Edge Function with authentication
   const { error: syncError } = await supabase.functions.invoke('google-photos-sync', {
-    body: { syncJobId: jobId }
+    body: { syncJobId: jobId },
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
   });
 
   if (syncError) throw syncError;
