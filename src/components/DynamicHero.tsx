@@ -13,7 +13,7 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [scrollY, setScrollY] = useState(0);
   const heroRef = useRef<HTMLElement>(null);
-  const heroPhotos = vaultWorthy.slice(0, 5);
+  const heroPhotos = vaultWorthy.slice(0, 10);
 
   useEffect(() => {
     if (heroPhotos.length === 0) return;
