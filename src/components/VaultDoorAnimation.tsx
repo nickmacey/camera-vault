@@ -46,25 +46,25 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
   }, [stage]);
 
   useEffect(() => {
-    // Stage 1: Show lock for 1s
+    // Stage 1: Show lock for 2s - build anticipation
     const lockTimer = setTimeout(() => {
       setStage('unlocking');
-    }, 1000);
+    }, 2000);
 
-    // Stage 2: Lock changes color and opens for 1.2s
+    // Stage 2: Lock changes color and opens for 1.5s - slower explosion
     const unlockTimer = setTimeout(() => {
       setStage('opening');
-    }, 2200);
+    }, 3500);
 
-    // Stage 3: Door opening animation for 1.5s
+    // Stage 3: Door opening animation for 2s - more dramatic reveal
     const openTimer = setTimeout(() => {
       setStage('complete');
-    }, 3700);
+    }, 5500);
 
     // Stage 4: Fade out and complete
     const completeTimer = setTimeout(() => {
       onComplete();
-    }, 4400);
+    }, 6300);
 
     return () => {
       clearTimeout(lockTimer);
