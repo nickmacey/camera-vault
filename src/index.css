@@ -145,6 +145,28 @@ html {
     background-clip: text;
   }
 
+  .text-glow-gold {
+    color: hsl(45 70% 52%);
+    text-shadow: 
+      0 0 10px hsla(45, 100%, 65%, 0.8),
+      0 0 20px hsla(45, 100%, 60%, 0.6),
+      0 0 30px hsla(45, 90%, 55%, 0.4),
+      0 0 40px hsla(45, 80%, 50%, 0.2),
+      0 0 2px hsla(45, 100%, 70%, 0.9);
+    filter: brightness(1.2);
+  }
+
+  /* Apply glowing effect to all vault-gold text */
+  .text-vault-gold {
+    text-shadow: 
+      0 0 10px hsla(45, 100%, 65%, 0.8),
+      0 0 20px hsla(45, 100%, 60%, 0.6),
+      0 0 30px hsla(45, 90%, 55%, 0.4),
+      0 0 40px hsla(45, 80%, 50%, 0.2),
+      0 0 2px hsla(45, 100%, 70%, 0.9);
+    filter: brightness(1.2);
+  }
+
   .bg-gradient-radial {
     background-image: radial-gradient(circle, var(--tw-gradient-stops));
   }
