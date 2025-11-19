@@ -182,16 +182,6 @@ export const PhotoBackgroundCard = ({
           </div>
         )}
 
-        {/* Hover indicator */}
-        <div className={`absolute bottom-6 right-6 transition-all duration-500 ${
-          isHovered ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'
-        }`}>
-          <div className={`w-12 h-12 rounded-full ${styles.glowColor} backdrop-blur-sm flex items-center justify-center`}>
-            <svg className="w-6 h-6 text-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </div>
-        </div>
       </div>
     </Card>
   );
