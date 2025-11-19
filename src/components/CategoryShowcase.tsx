@@ -90,8 +90,8 @@ export const CategoryShowcase = () => {
     fetchTierPhotos();
   }, []);
 
-  const vaultWorthyCount = stats.vault_worthy;
-  const highValueCount = stats.high_value;
+  const vaultWorthyCount = stats.vaultWorthy;
+  const highValueCount = stats.highValue;
   const archiveCount = stats.archive;
   
   const vaultWorthyValue = calculateTierValue(vaultWorthyCount, 'elite');
