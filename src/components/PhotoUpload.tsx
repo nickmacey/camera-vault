@@ -64,11 +64,6 @@ const PhotoUpload = () => {
       return true;
     });
 
-    if (droppedFiles.length > 20) {
-      toast.error("Maximum 20 photos per upload. Please select fewer files.");
-      return;
-    }
-
     if (droppedFiles.length > 0) {
       setFiles(droppedFiles);
     }
@@ -76,6 +71,7 @@ const PhotoUpload = () => {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
+      const isFolder = e.target.hasAttribute('webkitdirectory');
       const selectedFiles = Array.from(e.target.files).filter((file) => {
         if (!isValidImageFormat(file)) {
           toast.error(`${file.name}: Unsupported format`);
@@ -88,8 +84,9 @@ const PhotoUpload = () => {
         return true;
       });
       
-      if (selectedFiles.length > 20) {
-        toast.error("Maximum 20 photos per upload. Please select fewer files.");
+      // Only apply 20 photo limit to individual file uploads, not folder uploads
+      if (!isFolder && selectedFiles.length > 20) {
+        toast.error("Maximum 20 photos per batch. Please select fewer files or use folder upload.");
         return;
       }
       setFiles(selectedFiles);
@@ -394,7 +391,7 @@ const PhotoUpload = () => {
                       Drop entire folders or click to browse
                     </p>
                     <p className="text-xs text-vault-light-gray/70">
-                      JPEG, PNG, RAW supported • Unlimited photos
+                      JPEG, PNG, RAW supported • No limits
                     </p>
                   </div>
                 </label>
@@ -433,15 +430,18 @@ const PhotoUpload = () => {
 
               {/* TERTIARY ACTION: Single File Upload */}
               <div 
-                className={`border-2 rounded-lg p-6 vault-transition cursor-pointer ${
+                className={`relative border-2 rounded-lg p-8 vault-transition cursor-pointer overflow-hidden ${
                   isDragging
                     ? "border-vault-gold bg-vault-gold/5 scale-105"
-                    : "border-vault-mid-gray/50 hover:border-vault-gold/50"
+                    : "border-vault-gold/30 hover:border-vault-gold bg-gradient-to-br from-vault-gold/5 via-transparent to-vault-gold/10 hover:from-vault-gold/10 hover:to-vault-gold/15"
                 }`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
               >
+                {/* Animated background glow */}
+                <div className="absolute inset-0 bg-gradient-to-r from-vault-gold/0 via-vault-gold/5 to-vault-gold/0 opacity-0 hover:opacity-100 vault-transition" />
+                
                 <input
                   type="file"
                   id="file-upload"
@@ -451,14 +451,20 @@ const PhotoUpload = () => {
                   onChange={handleFileSelect}
                 />
                 
-                <label htmlFor="file-upload" className="cursor-pointer block">
-                  <div className="space-y-3">
-                    <Shield className="h-10 w-10 text-vault-light-gray mx-auto" />
-                    <p className="text-sm text-vault-light-gray">
-                      Select individual files
+                <label htmlFor="file-upload" className="cursor-pointer block relative z-10">
+                  <div className="space-y-4">
+                    <div className="relative inline-block">
+                      <Shield className="h-12 w-12 text-vault-gold mx-auto drop-shadow-[0_0_8px_rgba(212,175,55,0.5)]" />
+                      <div className="absolute inset-0 bg-vault-gold/20 blur-xl rounded-full" />
+                    </div>
+                    <p className="text-base font-bold text-vault-platinum uppercase tracking-wide">
+                      Quick Upload
                     </p>
-                    <p className="text-xs text-vault-light-gray/70">
-                      Max 20 photos per batch
+                    <p className="text-sm text-vault-light-gray">
+                      Perfect for testing a few select shots
+                    </p>
+                    <p className="text-xs text-vault-gold/90 font-semibold uppercase tracking-wider">
+                      Up to 20 photos • Instant Analysis
                     </p>
                   </div>
                 </label>
