@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { 
   X, Camera, MapPin, Calendar, FileType, Maximize2, Download,
-  Sparkles, ExternalLink, Aperture, Gauge, Zap, Mountain
+  Sparkles, ExternalLink, Aperture, Gauge, Zap, Mountain, Trash2
 } from "lucide-react";
 import ScoreBadge from "./ScoreBadge";
 import { SocialContentModal } from "./SocialContentModal";
@@ -16,6 +16,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Tables } from "@/integrations/supabase/types";
 import { AnimatedScoreBar } from "./AnimatedScoreBar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type Photo = Tables<"photos">;
 
@@ -23,13 +33,16 @@ interface PhotoDetailModalProps {
   photo: Photo | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onPhotoDeleted?: () => void;
 }
 
-export const PhotoDetailModal = ({ photo, open, onOpenChange }: PhotoDetailModalProps) => {
+export const PhotoDetailModal = ({ photo, open, onOpenChange, onPhotoDeleted }: PhotoDetailModalProps) => {
   const [socialModalOpen, setSocialModalOpen] = useState(false);
   const [generatingSocial, setGeneratingSocial] = useState(false);
   const [socialContent, setSocialContent] = useState<any>(null);
   const [photoUrl, setPhotoUrl] = useState<string>('');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (photo && open) {
@@ -121,6 +134,57 @@ export const PhotoDetailModal = ({ photo, open, onOpenChange }: PhotoDetailModal
   const handleDownload = () => {
     if (photoUrl) {
       window.open(photoUrl, '_blank');
+    }
+  };
+
+  const handleDeleteClick = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!photo) return;
+
+    setDeleting(true);
+    try {
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from('photos')
+        .remove([photo.storage_path]);
+
+      if (storageError) throw storageError;
+
+      // Delete thumbnail if exists
+      if (photo.thumbnail_path) {
+        await supabase.storage
+          .from('thumbnails')
+          .remove([photo.thumbnail_path]);
+      }
+
+      // Delete from database
+      const { error: dbError } = await supabase
+        .from('photos')
+        .delete()
+        .eq('id', photo.id);
+
+      if (dbError) throw dbError;
+
+      toast({
+        title: "Photo deleted",
+        description: "Your photo has been permanently deleted.",
+      });
+
+      onOpenChange(false);
+      onPhotoDeleted?.();
+    } catch (error) {
+      console.error('Error deleting photo:', error);
+      toast({
+        title: "Deletion failed",
+        description: "Could not delete photo. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(false);
+      setDeleteDialogOpen(false);
     }
   };
 
@@ -468,12 +532,42 @@ export const PhotoDetailModal = ({ photo, open, onOpenChange }: PhotoDetailModal
                       View in {photo.provider}
                     </Button>
                   )}
+
+                  <Button
+                    onClick={handleDeleteClick}
+                    variant="outline"
+                    className="w-full border-destructive text-destructive hover:bg-destructive/10 h-11 text-sm"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete Photo
+                  </Button>
                 </div>
               </div>
             </div>
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Photo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete "{photo?.filename}" from your vault and storage. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={deleting}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {deleting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <SocialContentModal
         open={socialModalOpen}
