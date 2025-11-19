@@ -5,8 +5,45 @@ interface VaultDoorAnimationProps {
   onComplete: () => void;
 }
 
+interface Particle {
+  id: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  size: number;
+  delay: number;
+  type: 'dust' | 'light' | 'spark';
+}
+
 export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
   const [stage, setStage] = useState<'lock' | 'unlocking' | 'opening' | 'complete'>('lock');
+  const [particles, setParticles] = useState<Particle[]>([]);
+
+  // Generate explosion particles when unlocking starts
+  useEffect(() => {
+    if (stage === 'unlocking') {
+      const newParticles: Particle[] = [];
+      // Create 50 particles
+      for (let i = 0; i < 50; i++) {
+        const angle = (Math.PI * 2 * i) / 50;
+        const velocity = 2 + Math.random() * 4;
+        const type = i % 3 === 0 ? 'spark' : i % 2 === 0 ? 'light' : 'dust';
+        
+        newParticles.push({
+          id: i,
+          x: 0,
+          y: 0,
+          vx: Math.cos(angle) * velocity,
+          vy: Math.sin(angle) * velocity,
+          size: type === 'spark' ? 3 + Math.random() * 2 : 4 + Math.random() * 6,
+          delay: Math.random() * 0.1,
+          type,
+        });
+      }
+      setParticles(newParticles);
+    }
+  }, [stage]);
 
   useEffect(() => {
     // Stage 1: Show lock for 1s
@@ -43,6 +80,35 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
         stage === 'complete' ? 'opacity-0' : 'opacity-100'
       }`}
     >
+      {/* Particle Explosion - Appears during unlocking */}
+      {stage === 'unlocking' && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          {particles.map((particle) => (
+            <div
+              key={particle.id}
+              className={`absolute rounded-full ${
+                particle.type === 'spark' 
+                  ? 'bg-vault-gold animate-pulse' 
+                  : particle.type === 'light'
+                  ? 'bg-vault-gold/80 blur-sm'
+                  : 'bg-vault-gold/60 blur-[2px]'
+              }`}
+              style={{
+                width: `${particle.size}px`,
+                height: `${particle.size}px`,
+                animation: `particle-explode 1.2s ease-out forwards`,
+                animationDelay: `${particle.delay}s`,
+                '--particle-x': `${particle.vx * 80}px`,
+                '--particle-y': `${particle.vy * 80}px`,
+                boxShadow: particle.type === 'spark' 
+                  ? '0 0 20px rgba(212, 175, 55, 1), 0 0 40px rgba(212, 175, 55, 0.6)'
+                  : '0 0 10px rgba(212, 175, 55, 0.8)',
+              } as React.CSSProperties}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Lock Icon - Transitions through stages */}
       <div 
         className={`absolute transition-all duration-700 ${
