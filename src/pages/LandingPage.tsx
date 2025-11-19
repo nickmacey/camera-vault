@@ -272,9 +272,9 @@ export default function LandingPage() {
                 <DollarSign className="h-8 w-8 text-primary" />
               </div>
               <div className="text-4xl font-black text-primary mb-2">4</div>
-              <h3 className="text-lg font-bold text-foreground mb-2 uppercase">Start Selling</h3>
+              <h3 className="text-lg font-bold text-foreground mb-2 uppercase">Start Sharing</h3>
               <p className="text-sm text-muted-foreground">
-                One-click store setup. Automatic fulfillment. Instant payouts. Keep 70% of profits.
+                Seamless integrations with Google Photos, social platforms, and more. Share your magic effortlessly.
               </p>
             </Card>
           </div>
