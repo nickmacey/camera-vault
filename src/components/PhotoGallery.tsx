@@ -31,6 +31,8 @@ import { PhotoFilterBar } from "./PhotoFilterBar";
 import { PhotoDetailModal } from "./PhotoDetailModal";
 import { Tables } from "@/integrations/supabase/types";
 import { AnimatedLockIcon } from "./AnimatedLockIcon";
+import { BatchEditModal } from "./BatchEditModal";
+import { Edit3 } from "lucide-react";
 
 type Photo = Tables<"photos"> & {
   url: string;
@@ -58,6 +60,7 @@ const PhotoGallery = () => {
   const [watermarkStudioPhoto, setWatermarkStudioPhoto] = useState<any | null>(null);
   const [detailModalPhoto, setDetailModalPhoto] = useState<Photo | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [batchEditOpen, setBatchEditOpen] = useState(false);
 
   const ITEMS_PER_PAGE = 50;
 
@@ -634,6 +637,16 @@ const PhotoGallery = () => {
                 <Button
                   size="sm"
                   variant="outline"
+                  onClick={() => setBatchEditOpen(true)}
+                  disabled={batchProcessing}
+                  className="bg-vault-black border-vault-gold text-vault-gold hover:bg-vault-gold hover:text-vault-black"
+                >
+                  <Edit3 className="h-4 w-4 mr-2" />
+                  Edit Metadata
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
                   onClick={handleBatchReanalyze}
                   disabled={batchProcessing}
                 >
@@ -799,6 +812,21 @@ const PhotoGallery = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <BatchEditModal
+        open={batchEditOpen}
+        onOpenChange={setBatchEditOpen}
+        selectedCount={selectedPhotos.size}
+        selectedPhotoIds={Array.from(selectedPhotos)}
+        onSuccess={() => {
+          setSelectedPhotos(new Set());
+          setSelectionMode(false);
+          setPage(0);
+          setPhotos([]);
+          setHasMore(true);
+          fetchPhotos(0, true);
+        }}
+      />
     </div>
   );
 };
