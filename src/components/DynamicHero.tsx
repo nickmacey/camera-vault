@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/Logo";
 import { useTop10Photos } from "@/hooks/useTop10Photos";
 import { supabase } from "@/integrations/supabase/client";
 import heroBackground from "@/assets/hero-background.jpg";
@@ -284,6 +285,9 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
       >
         <div className="max-w-5xl">
           <div style={{ transform: `translateY(${textParallaxOffset}px)`, transition: 'transform 0.1s ease-out' }}>
+            <div className="flex justify-center mb-6 md:mb-8">
+              <Logo variant="icon" size="lg" animated />
+            </div>
             <h1 className="font-black text-5xl sm:text-6xl md:text-8xl lg:text-9xl text-foreground mb-6 md:mb-8 drop-shadow-2xl tracking-tight vault-text-gradient">
               VAULT
             </h1>

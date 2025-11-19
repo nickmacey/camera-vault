@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { Logo } from "@/components/Logo";
 import { 
   Lock, 
   Sparkles, 
@@ -25,12 +26,7 @@ export default function LandingPage() {
       {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 border-b border-border bg-background/80 backdrop-blur-lg">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Lock className="h-6 w-6 text-primary" />
-            <span className="text-xl font-black text-foreground uppercase tracking-tight">
-              VAULT
-            </span>
-          </div>
+          <Logo variant="wordmark" size="sm" />
           
           <div className="flex items-center gap-4">
             <Button 
@@ -52,6 +48,10 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-4">
         <div className="container mx-auto max-w-6xl text-center animate-fade-in">
+          <div className="flex justify-center mb-8">
+            <Logo variant="icon" size="lg" animated />
+          </div>
+
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/10 mb-8">
             <Sparkles className="h-4 w-4 text-primary" />
             <span className="text-sm text-primary font-bold uppercase tracking-wide">
@@ -586,9 +586,8 @@ export default function LandingPage() {
         <div className="container mx-auto">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <Lock className="h-6 w-6 text-primary" />
-                <span className="text-xl font-black text-foreground uppercase">VAULT</span>
+              <div className="mb-4">
+                <Logo variant="full" size="sm" />
               </div>
               <p className="text-sm text-muted-foreground">
                 AI-powered photo management and monetization platform for photographers.
