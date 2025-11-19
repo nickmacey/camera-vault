@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Lock, Shield, Link2 } from "lucide-react";
+import { Lock, Shield, Link2, FolderOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -358,17 +358,66 @@ const PhotoUpload = () => {
                   {isAuthenticated ? 'Load your Vault' : 'Start Here'}
                 </h2>
                 <p className="text-base text-vault-light-gray">
-                  Connect your photo library for instant AI analysis
+                  Upload entire folders from Google Takeout or local storage
                 </p>
               </div>
 
-              {/* PRIMARY ACTION: Connect Photo Source */}
+              {/* PRIMARY ACTION: Bulk/Folder Upload */}
+              <div 
+                className={`border-2 rounded-lg p-8 vault-transition cursor-pointer ${
+                  isDragging
+                    ? "border-vault-gold bg-vault-gold/5 scale-105"
+                    : "border-vault-gold/70 hover:border-vault-gold bg-vault-gold/5"
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
+                <input
+                  type="file"
+                  id="folder-upload"
+                  className="hidden"
+                  accept="image/*"
+                  multiple
+                  webkitdirectory=""
+                  directory=""
+                  onChange={handleFileSelect}
+                />
+                
+                <label htmlFor="folder-upload" className="cursor-pointer block">
+                  <div className="space-y-4">
+                    <FolderOpen className="h-16 w-16 text-vault-gold mx-auto" />
+                    <p className="text-lg font-bold text-vault-platinum uppercase tracking-wide">
+                      Upload Folder
+                    </p>
+                    <p className="text-sm text-vault-light-gray">
+                      Drop entire folders or click to browse
+                    </p>
+                    <p className="text-xs text-vault-light-gray/70">
+                      JPEG, PNG, RAW supported • Unlimited photos
+                    </p>
+                  </div>
+                </label>
+              </div>
+
+              {/* DIVIDER */}
+              <div className="relative py-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-vault-mid-gray/30"></div>
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-card px-4 text-sm text-vault-light-gray uppercase tracking-wider">Or</span>
+                </div>
+              </div>
+
+              {/* SECONDARY ACTION: Connect Google Photos */}
               <Button 
                 onClick={() => setShowProviderModal(true)}
                 size="lg"
-                className="bg-vault-gold hover:bg-vault-gold/90 text-vault-black font-bold px-12 py-7 text-lg vault-glow-gold uppercase tracking-wide w-full max-w-md"
+                variant="outline"
+                className="border-vault-gold/50 hover:border-vault-gold hover:bg-vault-gold/10 text-vault-platinum font-bold px-12 py-7 text-base uppercase tracking-wide w-full max-w-md"
               >
-                <Link2 className="mr-2 h-6 w-6" />
+                <Link2 className="mr-2 h-5 w-5" />
                 Connect Google Photos
               </Button>
 
@@ -382,9 +431,9 @@ const PhotoUpload = () => {
                 </div>
               </div>
 
-              {/* SECONDARY ACTION: Manual Upload */}
+              {/* TERTIARY ACTION: Single File Upload */}
               <div 
-                className={`border-2 rounded-lg p-8 vault-transition cursor-pointer ${
+                className={`border-2 rounded-lg p-6 vault-transition cursor-pointer ${
                   isDragging
                     ? "border-vault-gold bg-vault-gold/5 scale-105"
                     : "border-vault-mid-gray/50 hover:border-vault-gold/50"
@@ -403,13 +452,13 @@ const PhotoUpload = () => {
                 />
                 
                 <label htmlFor="file-upload" className="cursor-pointer block">
-                  <div className="space-y-4">
-                    <Shield className="h-12 w-12 text-vault-light-gray mx-auto" />
+                  <div className="space-y-3">
+                    <Shield className="h-10 w-10 text-vault-light-gray mx-auto" />
                     <p className="text-sm text-vault-light-gray">
-                      Drop files or click to browse
+                      Select individual files
                     </p>
                     <p className="text-xs text-vault-light-gray/70">
-                      JPEG, PNG, RAW supported • Max 20 photos
+                      Max 20 photos per batch
                     </p>
                   </div>
                 </label>
