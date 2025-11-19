@@ -90,6 +90,7 @@ export type Database = {
           emotional_score: number | null
           external_id: string | null
           featured_order: number | null
+          file_hash: string | null
           file_size: number | null
           filename: string
           hashtags: Json | null
@@ -139,6 +140,7 @@ export type Database = {
           emotional_score?: number | null
           external_id?: string | null
           featured_order?: number | null
+          file_hash?: string | null
           file_size?: number | null
           filename: string
           hashtags?: Json | null
@@ -188,6 +190,7 @@ export type Database = {
           emotional_score?: number | null
           external_id?: string | null
           featured_order?: number | null
+          file_hash?: string | null
           file_size?: number | null
           filename?: string
           hashtags?: Json | null
