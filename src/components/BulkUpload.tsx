@@ -17,9 +17,11 @@ import {
   Clock,
   TrendingUp,
   Search,
-  FileCheck
+  FileCheck,
+  Minimize2
 } from 'lucide-react';
 import { AnimatedLockIcon } from './AnimatedLockIcon';
+import { useUpload } from '@/contexts/UploadContext';
 
 interface UploadStats {
   total: number;
@@ -82,6 +84,7 @@ export function BulkUpload() {
   const folderInputRef = useRef<HTMLInputElement>(null);
   const shouldPauseRef = useRef(false);
   const { toast } = useToast();
+  const { startUpload: startUploadContext, updateStats: updateUploadStats, setMinimized } = useUpload();
 
   const handleFolderSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
@@ -339,7 +342,11 @@ export function BulkUpload() {
 
     setStatus('running');
     shouldPauseRef.current = false;
-    setStats(prev => ({ ...prev, startTime: Date.now() }));
+    const startTime = Date.now();
+    setStats(prev => ({ ...prev, startTime }));
+    
+    // Initialize global upload context
+    startUploadContext(files.length);
 
     const batchSize = 5;
     
@@ -353,16 +360,33 @@ export function BulkUpload() {
       
       await Promise.all(
         batch.map(async (file) => {
-          setStats(prev => ({ ...prev, currentFile: file.name }));
+          const currentFile = file.name;
+          setStats(prev => ({ ...prev, currentFile }));
+          updateUploadStats({ currentFile }); // Sync to global context
+          
           const result = await processFile(file);
           
-          setStats(prev => ({
-            ...prev,
-            processed: prev.processed + 1,
-            successful: result === 'success' ? prev.successful + 1 : prev.successful,
-            skipped: result === 'skipped' ? prev.skipped + 1 : prev.skipped,
-            failed: result === 'failed' ? prev.failed + 1 : prev.failed
-          }));
+          setStats(prev => {
+            const newStats = {
+              ...prev,
+              processed: prev.processed + 1,
+              successful: result === 'success' ? prev.successful + 1 : prev.successful,
+              skipped: result === 'skipped' ? prev.skipped + 1 : prev.skipped,
+              failed: result === 'failed' ? prev.failed + 1 : prev.failed
+            };
+            
+            // Sync to global context
+            updateUploadStats({
+              processed: newStats.processed,
+              successful: newStats.successful,
+              failed: newStats.failed,
+              vaultWorthy: newStats.vaultWorthy,
+              currentFile: newStats.currentFile,
+              startTime: newStats.startTime
+            });
+            
+            return newStats;
+          });
         })
       );
 
@@ -712,9 +736,20 @@ export function BulkUpload() {
                 <h3 className="text-xl font-bold text-vault-platinum">
                   {status === 'running' ? 'Processing Photos...' : 'Paused'}
                 </h3>
-                <span className="text-vault-gold font-mono text-xl font-bold">
-                  {Math.round(progress)}%
-                </span>
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setMinimized(true)}
+                    className="text-vault-light-gray hover:text-vault-gold hover:bg-vault-gold/10"
+                  >
+                    <Minimize2 className="h-4 w-4 mr-2" />
+                    Minimize
+                  </Button>
+                  <span className="text-vault-gold font-mono text-xl font-bold">
+                    {Math.round(progress)}%
+                  </span>
+                </div>
               </div>
               
               <Progress value={progress} className="h-3 mb-2" />
