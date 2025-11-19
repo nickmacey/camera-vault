@@ -12,6 +12,8 @@ import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 import { VaultDoorAnimation } from "@/components/VaultDoorAnimation";
 import { AuthGuard } from "@/components/AuthGuard";
+import { UploadProvider } from "@/contexts/UploadContext";
+import { FloatingUploadProgress } from "@/components/FloatingUploadProgress";
 
 const queryClient = new QueryClient();
 
@@ -29,24 +31,27 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        {showAnimation && !animationComplete && (
-          <VaultDoorAnimation onComplete={handleAnimationComplete} />
-        )}
-        <div className={`transition-opacity duration-700 ${animationComplete ? 'opacity-100' : 'opacity-0'}`}>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<AuthGuard><Index /></AuthGuard>} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/auth/google/callback" element={<GoogleCallback />} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/terms" element={<Terms />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </div>
+        <UploadProvider>
+          <Toaster />
+          <Sonner />
+          <FloatingUploadProgress />
+          {showAnimation && !animationComplete && (
+            <VaultDoorAnimation onComplete={handleAnimationComplete} />
+          )}
+          <div className={`transition-opacity duration-700 ${animationComplete ? 'opacity-100' : 'opacity-0'}`}>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<AuthGuard><Index /></AuthGuard>} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/auth/google/callback" element={<GoogleCallback />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/terms" element={<Terms />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </div>
+        </UploadProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
