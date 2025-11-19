@@ -9,13 +9,13 @@ import { EditorialGrid } from "@/components/EditorialGrid";
 import { CategoryShowcase } from "@/components/CategoryShowcase";
 import StatsBar from "@/components/StatsBar";
 import { useTop10Photos } from "@/hooks/useTop10Photos";
-import { SettingsButton } from "@/components/VaultSettings";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { AutoSyncSettings } from "@/components/AutoSyncSettings";
+import { UserProfile } from "@/components/UserProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
@@ -157,7 +157,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background relative">
-      <SettingsButton />
       <DynamicHero onCTAClick={scrollToUpload} />
       <CategoryShowcase />
       <StatsBar />
@@ -228,12 +227,16 @@ const Index = () => {
           <TabsContent value="settings" className="mt-0 p-4 md:p-8 animate-fade-in">
             <div className="max-w-6xl mx-auto">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-vault-gold text-center mb-6 md:mb-8">VAULT SETTINGS</h2>
-              <Tabs defaultValue="scoring" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-6">
+              <Tabs defaultValue="profile" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6">
+                  <TabsTrigger value="profile">Profile</TabsTrigger>
                   <TabsTrigger value="scoring">Scoring</TabsTrigger>
                   <TabsTrigger value="brand">Brand Voice</TabsTrigger>
                   <TabsTrigger value="sync">Auto-Sync</TabsTrigger>
                 </TabsList>
+                <TabsContent value="profile" className="space-y-6">
+                  <UserProfile />
+                </TabsContent>
                 <TabsContent value="scoring" className="space-y-6">
                   <div className="space-y-4">
                     {['technical', 'commercial', 'artistic', 'emotional'].map((type) => (

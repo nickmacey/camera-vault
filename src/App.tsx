@@ -11,6 +11,7 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 import { VaultDoorAnimation } from "@/components/VaultDoorAnimation";
+import { AuthGuard } from "@/components/AuthGuard";
 
 const queryClient = new QueryClient();
 
@@ -43,7 +44,7 @@ const App = () => {
         <div className={`transition-opacity duration-700 ${animationComplete ? 'opacity-100' : 'opacity-0'}`}>
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<AuthGuard><Index /></AuthGuard>} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/google/callback" element={<GoogleCallback />} />
               <Route path="/privacy" element={<Privacy />} />
