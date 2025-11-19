@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { AnimatedLockIcon } from './AnimatedLockIcon';
 import { useUpload } from '@/contexts/UploadContext';
+import { generateFileHash, checkDuplicateHash } from '@/lib/fileHash';
 
 interface UploadStats {
   total: number;
@@ -150,8 +151,9 @@ export function BulkUpload() {
       }
       
       if (filters.skipExisting && user) {
-        const exists = await checkFileExists(file.name, file.size);
-        if (exists) {
+        const fileHash = await generateFileHash(file);
+        const { isDuplicate } = await checkDuplicateHash(supabase, user.id, fileHash);
+        if (isDuplicate) {
           duplicates++;
         }
       }
@@ -181,19 +183,13 @@ export function BulkUpload() {
     });
   };
 
-  const checkFileExists = async (filename: string, fileSize: number): Promise<boolean> => {
+  const checkFileExists = async (file: File): Promise<boolean> => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
 
-    const { data } = await supabase
-      .from('photos')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('filename', filename)
-      .eq('file_size', fileSize)
-      .maybeSingle();
-
-    return !!data;
+    const fileHash = await generateFileHash(file);
+    const { isDuplicate } = await checkDuplicateHash(supabase, user.id, fileHash);
+    return isDuplicate;
   };
 
   const processFile = async (file: File): Promise<'success' | 'skipped' | 'failed'> => {
@@ -210,13 +206,16 @@ export function BulkUpload() {
         return 'skipped';
       }
 
-      if (filters.skipExisting) {
-        const exists = await checkFileExists(file.name, file.size);
-        if (exists) return 'skipped';
-      }
-
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
+
+      // Generate file hash for duplicate detection
+      const fileHash = await generateFileHash(file);
+      
+      if (filters.skipExisting) {
+        const { isDuplicate } = await checkDuplicateHash(supabase, user.id, fileHash);
+        if (isDuplicate) return 'skipped';
+      }
 
       // Get user settings
       const { data: settings } = await supabase
@@ -308,6 +307,7 @@ export function BulkUpload() {
           filename: suggestedName,
           mime_type: file.type,
           file_size: file.size,
+          file_hash: fileHash,
           width: dimensions.width,
           height: dimensions.height,
           orientation,
