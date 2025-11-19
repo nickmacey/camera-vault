@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { compressImage } from "@/lib/imageOptimization";
 import { z } from "zod";
+import { usePhotoStats } from "@/hooks/usePhotoStats";
 
 const nameSchema = z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters");
 const avatarSchema = z.instanceof(File).refine((file) => file.size <= 5 * 1024 * 1024, "Avatar must be less than 5MB");
@@ -34,25 +35,11 @@ interface ConnectedProvider {
   sync_enabled: boolean | null;
 }
 
-interface PhotoStats {
-  total: number;
-  vault_worthy: number;
-  top_10: number;
-  favorites: number;
-  avg_score: number;
-}
-
 export const UserProfile = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [email, setEmail] = useState<string>("");
   const [providers, setProviders] = useState<ConnectedProvider[]>([]);
-  const [stats, setStats] = useState<PhotoStats>({
-    total: 0,
-    vault_worthy: 0,
-    top_10: 0,
-    favorites: 0,
-    avg_score: 0,
-  });
+  const { stats } = usePhotoStats();
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -99,29 +86,6 @@ export const UserProfile = () => {
 
       if (providersData) {
         setProviders(providersData);
-      }
-
-      // Load photo statistics
-      const { data: photos } = await supabase
-        .from('photos')
-        .select('score, is_top_10, is_favorite, tier')
-        .eq('user_id', user.id);
-
-      if (photos) {
-        const vaultWorthy = photos.filter(p => p.tier === 'vault_worthy').length;
-        const top10 = photos.filter(p => p.is_top_10).length;
-        const favorites = photos.filter(p => p.is_favorite).length;
-        const avgScore = photos.length > 0
-          ? photos.reduce((acc, p) => acc + (p.score || 0), 0) / photos.length
-          : 0;
-
-        setStats({
-          total: photos.length,
-          vault_worthy: vaultWorthy,
-          top_10: top10,
-          favorites,
-          avg_score: avgScore,
-        });
       }
     } catch (error) {
       console.error('Error loading user data:', error);

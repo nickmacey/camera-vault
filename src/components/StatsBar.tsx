@@ -1,67 +1,18 @@
-import { useQuery } from "@tanstack/react-query";
 import { Lock, TrendingUp, Award, Star, Sparkles, Archive } from "lucide-react";
 import { useTop10Photos } from "@/hooks/useTop10Photos";
-import { supabase } from "@/integrations/supabase/client";
+import { usePhotoStats } from "@/hooks/usePhotoStats";
 
 const StatsBar = () => {
   const { top10Photos } = useTop10Photos();
-  
-  const { data: stats } = useQuery({
-    queryKey: ["stats"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return { 
-        total_photos: 0, 
-        avg_score: 0, 
-        top_score: 0, 
-        vault_worthy: 0,
-        high_value: 0,
-        archive: 0
-      };
+  const { stats } = usePhotoStats();
 
-      const { data: photos } = await supabase
-        .from("photos")
-        .select("overall_score, tier")
-        .eq("user_id", user.id);
-
-      if (!photos || photos.length === 0) {
-        return { 
-          total_photos: 0, 
-          avg_score: 0, 
-          top_score: 0, 
-          vault_worthy: 0,
-          high_value: 0,
-          archive: 0
-        };
-      }
-
-      const scores = photos.map(p => p.overall_score || 0);
-      const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-      const max = Math.max(...scores);
-      
-      // Count by tier
-      const vaultWorthy = photos.filter(p => p.tier === 'vault-worthy' || (p.overall_score || 0) >= 8.0).length;
-      const highValue = photos.filter(p => p.tier === 'high-value' || ((p.overall_score || 0) >= 7.0 && (p.overall_score || 0) < 8.0)).length;
-      const archive = photos.filter(p => p.tier === 'archive' || (p.overall_score || 0) < 7.0).length;
-
-      return {
-        total_photos: photos.length,
-        avg_score: avg,
-        top_score: max,
-        vault_worthy: vaultWorthy,
-        high_value: highValue,
-        archive: archive,
-      };
-    },
-  });
-
-  const displayStats = stats || { 
-    total_photos: 0, 
-    avg_score: 0, 
-    top_score: 0, 
-    vault_worthy: 0,
-    high_value: 0,
-    archive: 0
+  const displayStats = {
+    total_photos: stats.total,
+    avg_score: stats.avg_score,
+    top_score: stats.top_score,
+    vault_worthy: stats.vault_worthy,
+    high_value: stats.high_value,
+    archive: stats.archive,
   };
   
   // Get a random top photo for background accent
