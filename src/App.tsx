@@ -11,7 +11,7 @@ import GoogleCallback from "./pages/GoogleCallback";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
-import { VaultDoorAnimation } from "@/components/VaultDoorAnimation";
+import { LogoLoadingScreen } from "@/components/LogoLoadingScreen";
 import { AuthGuard } from "@/components/AuthGuard";
 import { UploadProvider } from "@/contexts/UploadContext";
 import { FloatingUploadProgress } from "@/components/FloatingUploadProgress";
@@ -37,7 +37,7 @@ const App = () => {
           <Sonner />
           <FloatingUploadProgress />
           {showAnimation && !animationComplete && (
-            <VaultDoorAnimation onComplete={handleAnimationComplete} />
+            <LogoLoadingScreen onComplete={handleAnimationComplete} />
           )}
           <div className={`transition-opacity duration-700 ${animationComplete ? 'opacity-100' : 'opacity-0'}`}>
             <BrowserRouter>
