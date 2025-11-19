@@ -4,9 +4,11 @@ import { usePhotoStats } from "@/hooks/usePhotoStats";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateTierValue } from "@/lib/photoValue";
+import { InspirationalQuote } from "./InspirationalQuote";
 
 export const CategoryShowcase = () => {
   const { stats } = usePhotoStats();
+  const [firstName, setFirstName] = useState<string>("");
   const [vaultWorthyPhotos, setVaultWorthyPhotos] = useState<any[]>([]);
   const [highValuePhotos, setHighValuePhotos] = useState<any[]>([]);
   const [archivePhotosWithUrls, setArchivePhotosWithUrls] = useState<any[]>([]);
@@ -20,6 +22,20 @@ export const CategoryShowcase = () => {
   
   useEffect(() => {
     const fetchTierPhotos = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Fetch user's first name from profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('first_name')
+        .eq('id', user.id)
+        .single();
+      
+      if (profile?.first_name) {
+        setFirstName(profile.first_name);
+      }
+
       // Fetch vault-worthy photos
       const { data: vaultData } = await supabase
         .from('photos')
@@ -106,11 +122,12 @@ export const CategoryShowcase = () => {
       <div className="relative z-10 max-w-7xl mx-auto">
         <div className="text-center mb-8 md:mb-20">
           <h2 className="font-black text-3xl sm:text-4xl md:text-6xl lg:text-7xl text-foreground mb-3 md:mb-4 tracking-tight px-2">
-            YOUR COLLECTION
+            {firstName ? `${firstName.toUpperCase()}'S COLLECTION` : 'YOUR COLLECTION'}
           </h2>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground font-light max-w-2xl mx-auto px-4">
             Every photo analyzed, categorized, and valued
           </p>
+          <InspirationalQuote />
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
