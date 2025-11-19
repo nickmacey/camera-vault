@@ -140,7 +140,7 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
             >
               <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
               <span className="relative z-10 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-glow font-black tracking-wider drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]" style={{ WebkitTextStroke: '1px hsla(var(--primary)/0.5)' }}>
-                {hasPhotos ? 'UPLOAD HERE' : 'CONNECT YOUR PHOTOS'}
+                {hasPhotos ? 'LOAD YOUR VAULT' : 'CONNECT YOUR PHOTOS'}
               </span>
             </Button>
           </div>
@@ -237,7 +237,7 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
           >
             <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
             <span className="relative z-10 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-glow font-black tracking-wider drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]" style={{ WebkitTextStroke: '1px hsla(var(--primary)/0.5)' }}>
-              {hasPhotos ? 'UPLOAD HERE' : 'CONNECT YOUR PHOTOS'}
+              {hasPhotos ? 'LOAD YOUR VAULT' : 'CONNECT YOUR PHOTOS'}
             </span>
           </Button>
           </div>
