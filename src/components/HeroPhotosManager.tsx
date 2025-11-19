@@ -2,13 +2,24 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronUp, ChevronDown, X, Plus } from 'lucide-react';
+import { ChevronUp, ChevronDown, X, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Photo {
   id: string;
   filename: string;
   storage_path: string;
+  thumbnail_path: string | null;
   is_hero: boolean;
   hero_order: number | null;
   score: number | null;
@@ -18,6 +29,9 @@ export function HeroPhotosManager() {
   const [allPhotos, setAllPhotos] = useState<Photo[]>([]);
   const [heroPhotos, setHeroPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [photoToDelete, setPhotoToDelete] = useState<Photo | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     loadPhotos();
@@ -30,7 +44,7 @@ export function HeroPhotosManager() {
 
       const { data: photos, error } = await supabase
         .from('photos')
-        .select('id, filename, storage_path, is_hero, hero_order, score')
+        .select('id, filename, storage_path, thumbnail_path, is_hero, hero_order, score')
         .eq('user_id', user.id)
         .order('score', { ascending: false, nullsFirst: false });
 
@@ -107,6 +121,50 @@ export function HeroPhotosManager() {
     return data.publicUrl;
   };
 
+  const handleDeleteClick = (photo: Photo) => {
+    setPhotoToDelete(photo);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!photoToDelete) return;
+
+    setDeleting(true);
+    try {
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from('photos')
+        .remove([photoToDelete.storage_path]);
+
+      if (storageError) throw storageError;
+
+      // Delete thumbnail if exists
+      if (photoToDelete.thumbnail_path) {
+        await supabase.storage
+          .from('thumbnails')
+          .remove([photoToDelete.thumbnail_path]);
+      }
+
+      // Delete from database
+      const { error: dbError } = await supabase
+        .from('photos')
+        .delete()
+        .eq('id', photoToDelete.id);
+
+      if (dbError) throw dbError;
+
+      toast.success('Photo deleted successfully');
+      await loadPhotos();
+    } catch (error) {
+      console.error('Error deleting photo:', error);
+      toast.error('Failed to delete photo');
+    } finally {
+      setDeleting(false);
+      setDeleteDialogOpen(false);
+      setPhotoToDelete(null);
+    }
+  };
+
   if (loading) {
     return <div className="text-center py-8">Loading photos...</div>;
   }
@@ -159,6 +217,14 @@ export function HeroPhotosManager() {
                   >
                     <X className="h-4 w-4" />
                   </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleDeleteClick(photo)}
+                    className="bg-destructive/80 hover:bg-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
                 <div className="absolute top-2 left-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-bold">
                   #{index + 1}
@@ -182,30 +248,66 @@ export function HeroPhotosManager() {
         ) : (
           <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
             {allPhotos.map((photo) => (
-              <button
+              <div
                 key={photo.id}
-                onClick={() => toggleHero(photo.id, false)}
-                disabled={heroPhotos.length >= 10}
-                className="relative group cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                className="relative group"
               >
-                <img
-                  src={getPhotoUrl(photo.storage_path)}
-                  alt={photo.filename}
-                  className="w-full aspect-square object-cover rounded-lg"
-                />
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                  <Plus className="h-8 w-8 text-white" />
-                </div>
+                <button
+                  onClick={() => toggleHero(photo.id, false)}
+                  disabled={heroPhotos.length >= 10}
+                  className="w-full cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <img
+                    src={getPhotoUrl(photo.storage_path)}
+                    alt={photo.filename}
+                    className="w-full aspect-square object-cover rounded-lg"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
+                    <Plus className="h-6 w-6 text-white" />
+                  </div>
+                </button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteClick(photo);
+                  }}
+                  className="absolute top-2 right-2 bg-destructive/80 hover:bg-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
                 {photo.score && (
-                  <div className="absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-bold">
+                  <div className="absolute bottom-2 left-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-bold">
                     {photo.score.toFixed(1)}
                   </div>
                 )}
-              </button>
+              </div>
             ))}
           </div>
         )}
       </Card>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Photo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete "{photoToDelete?.filename}" from your vault and storage. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={deleting}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {deleting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

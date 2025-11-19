@@ -785,6 +785,11 @@ const PhotoGallery = () => {
             fetchPhotos(); // Refresh photos after modal closes (in case social content was generated)
           }
         }}
+        onPhotoDeleted={() => {
+          setDetailModalPhoto(null);
+          setDetailModalOpen(false);
+          fetchPhotos(); // Refresh photos after deletion
+        }}
       />
 
       {watermarkStudioPhoto && (
