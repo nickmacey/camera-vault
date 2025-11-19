@@ -254,20 +254,25 @@ export function BulkUpload() {
         reader.readAsDataURL(file);
       });
 
-      // Analyze photo
-      const { data: analysisData, error: analysisError } = await supabase.functions.invoke('analyze-photo', {
+      // Analyze photo using Claude
+      const { data: analysisData, error: analysisError } = await supabase.functions.invoke('analyze-photo-claude', {
         body: { 
           imageBase64: base64,
-          filename: file.name
+          userSettings: {
+            technical_weight: userSettings.technical_weight,
+            commercial_weight: userSettings.commercial_weight,
+            artistic_weight: userSettings.artistic_weight,
+            emotional_weight: userSettings.emotional_weight
+          }
         }
       });
 
       if (analysisError) {
         console.error('Analysis error:', analysisError);
-        throw new Error(`Analysis failed: ${analysisError.message}`);
+        throw new Error(`Analysis failed: ${analysisError.message || 'Edge Function returned a non-2xx status code'}`);
       }
 
-      if (!analysisData || typeof analysisData.score !== 'number') {
+      if (!analysisData || typeof analysisData.overall_score !== 'number') {
         throw new Error('Invalid analysis response');
       }
 
@@ -283,10 +288,15 @@ export function BulkUpload() {
                         : dimensions.width < dimensions.height ? 'portrait'
                         : 'square';
 
-      // Get score and description from API
-      const score = analysisData.score;
-      const description = analysisData.description || '';
-      const suggestedName = analysisData.suggestedName || file.name.replace(/\.[^/.]+$/, '');
+      // Get analysis results from Claude
+      const overallScore = analysisData.overall_score;
+      const technicalScore = analysisData.technical_score;
+      const commercialScore = analysisData.commercial_score;
+      const artisticScore = analysisData.artistic_score;
+      const emotionalScore = analysisData.emotional_score;
+      const tier = analysisData.tier;
+      const aiAnalysis = analysisData.ai_analysis || '';
+      const suggestedName = file.name.replace(/\.[^/.]+$/, '');
 
       // Save to database
       const { error: dbError } = await supabase
@@ -301,20 +311,25 @@ export function BulkUpload() {
           width: dimensions.width,
           height: dimensions.height,
           orientation,
-          score: score,
-          description: description,
+          overall_score: overallScore,
+          technical_score: technicalScore,
+          commercial_score: commercialScore,
+          artistic_score: artisticScore,
+          emotional_score: emotionalScore,
+          tier: tier,
+          ai_analysis: aiAnalysis,
           status: 'new',
           analyzed_at: new Date().toISOString()
         });
 
       if (dbError) throw dbError;
 
-      // Update tier stats based on score
+      // Update tier stats based on tier from analysis
       setStats(prev => {
-        const tier = score >= 8 ? 'vaultWorthy' : score >= 6.5 ? 'highValue' : 'archive';
+        const tierKey = tier === 'vault-worthy' ? 'vaultWorthy' : tier === 'high-value' ? 'highValue' : 'archive';
         return {
           ...prev,
-          [tier]: prev[tier] + 1
+          [tierKey]: prev[tierKey] + 1
         };
       });
 
