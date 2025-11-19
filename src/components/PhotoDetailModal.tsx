@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { 
   X, Camera, MapPin, Calendar, FileType, Maximize2, Download,
-  Sparkles, ExternalLink, Aperture, Gauge, Zap, Mountain, Trash2
+  Sparkles, ExternalLink, Aperture, Gauge, Zap, Mountain, Trash2, RefreshCw
 } from "lucide-react";
 import ScoreBadge from "./ScoreBadge";
 import { SocialContentModal } from "./SocialContentModal";
@@ -129,6 +129,39 @@ export const PhotoDetailModal = ({ photo, open, onOpenChange, onPhotoDeleted }: 
       altText: photo.alt_text || '',
     });
     setSocialModalOpen(true);
+  };
+
+  const handleSaveEdits = async (editedContent: any) => {
+    try {
+      const { error } = await supabase
+        .from('photos')
+        .update({
+          social_title: editedContent.title,
+          instagram_caption: editedContent.captions.instagram,
+          twitter_caption: editedContent.captions.twitter,
+          linkedin_caption: editedContent.captions.linkedin,
+          hashtags: editedContent.hashtags,
+          alt_text: editedContent.altText,
+        })
+        .eq('id', photo.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Saved!",
+        description: "Social content updated successfully",
+      });
+      
+      // Refresh the photo data
+      onPhotoDeleted?.();
+    } catch (error) {
+      console.error('Error saving social content:', error);
+      toast({
+        title: "Save Failed",
+        description: "Could not save social content. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDownload = () => {
@@ -290,10 +323,11 @@ export const PhotoDetailModal = ({ photo, open, onOpenChange, onPhotoDeleted }: 
 
                 {/* Metadata Tabs */}
                 <Tabs defaultValue="details" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3 h-10 bg-vault-dark-gray">
+                  <TabsList className="grid w-full grid-cols-4 h-10 bg-vault-dark-gray">
                     <TabsTrigger value="details" className="text-xs data-[state=active]:bg-vault-gold data-[state=active]:text-vault-black">Details</TabsTrigger>
                     <TabsTrigger value="camera" className="text-xs data-[state=active]:bg-vault-gold data-[state=active]:text-vault-black">Camera</TabsTrigger>
                     <TabsTrigger value="location" className="text-xs data-[state=active]:bg-vault-gold data-[state=active]:text-vault-black">Location</TabsTrigger>
+                    <TabsTrigger value="social" className="text-xs data-[state=active]:bg-vault-gold data-[state=active]:text-vault-black">Social</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="details" className="space-y-3 mt-4">
@@ -488,6 +522,88 @@ export const PhotoDetailModal = ({ photo, open, onOpenChange, onPhotoDeleted }: 
                       </p>
                     )}
                   </TabsContent>
+
+                  {/* Social Tab */}
+                  <TabsContent value="social" className="space-y-4 mt-4">
+                    {hasSocialContent ? (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <div className="text-sm font-semibold text-vault-gold">SEO Title</div>
+                          <div className="text-sm text-vault-light-gray">{photo.social_title}</div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="text-sm font-semibold text-vault-gold">Instagram Caption</div>
+                          <div className="text-sm text-vault-light-gray whitespace-pre-wrap">{photo.instagram_caption}</div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="text-sm font-semibold text-vault-gold">Twitter Caption</div>
+                          <div className="text-sm text-vault-light-gray whitespace-pre-wrap">{photo.twitter_caption}</div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="text-sm font-semibold text-vault-gold">LinkedIn Caption</div>
+                          <div className="text-sm text-vault-light-gray whitespace-pre-wrap">{photo.linkedin_caption}</div>
+                        </div>
+
+                        {photo.hashtags && (
+                          <div className="space-y-2">
+                            <div className="text-sm font-semibold text-vault-gold">Hashtags</div>
+                            <div className="space-y-2">
+                              {(photo.hashtags as any)?.high && (
+                                <div className="flex flex-wrap gap-2">
+                                  {(photo.hashtags as any).high.map((tag: string, i: number) => (
+                                    <Badge key={i} variant="secondary" className="bg-vault-gold/20 text-vault-gold">
+                                      #{tag}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="space-y-2">
+                          <div className="text-sm font-semibold text-vault-gold">Alt Text (Accessibility)</div>
+                          <div className="text-sm text-vault-light-gray">{photo.alt_text}</div>
+                        </div>
+
+                        <div className="flex gap-2 pt-4">
+                          <Button
+                            variant="outline"
+                            onClick={handleViewSocial}
+                            className="flex-1"
+                          >
+                            <Sparkles className="h-4 w-4 mr-2" />
+                            View & Edit
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={handleGenerateSocial}
+                            disabled={generatingSocial}
+                            className="flex-1"
+                          >
+                            <RefreshCw className={`h-4 w-4 mr-2 ${generatingSocial ? 'animate-spin' : ''}`} />
+                            Regenerate
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 space-y-4">
+                        <Sparkles className="h-12 w-12 text-vault-gold mx-auto opacity-50" />
+                        <p className="text-vault-light-gray">No social content generated yet</p>
+                        <Button
+                          onClick={handleGenerateSocial}
+                          disabled={generatingSocial}
+                          className="bg-vault-gold hover:bg-vault-gold/90 text-background"
+                        >
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          {generatingSocial ? 'Generating...' : 'Generate Social Content'}
+                        </Button>
+                      </div>
+                    )}
+                  </TabsContent>
                 </Tabs>
 
                 <Separator className="bg-vault-mid-gray" />
@@ -575,6 +691,7 @@ export const PhotoDetailModal = ({ photo, open, onOpenChange, onPhotoDeleted }: 
         content={socialContent}
         onRegenerate={handleGenerateSocial}
         loading={generatingSocial}
+        onSave={handleSaveEdits}
       />
     </>
   );
