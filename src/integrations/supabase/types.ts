@@ -89,6 +89,7 @@ export type Database = {
           description: string | null
           emotional_score: number | null
           external_id: string | null
+          featured_order: number | null
           file_size: number | null
           filename: string
           hashtags: Json | null
@@ -96,6 +97,7 @@ export type Database = {
           id: string
           instagram_caption: string | null
           is_favorite: boolean | null
+          is_featured: boolean | null
           is_top_10: boolean | null
           linkedin_caption: string | null
           location_data: Json | null
@@ -136,6 +138,7 @@ export type Database = {
           description?: string | null
           emotional_score?: number | null
           external_id?: string | null
+          featured_order?: number | null
           file_size?: number | null
           filename: string
           hashtags?: Json | null
@@ -143,6 +146,7 @@ export type Database = {
           id?: string
           instagram_caption?: string | null
           is_favorite?: boolean | null
+          is_featured?: boolean | null
           is_top_10?: boolean | null
           linkedin_caption?: string | null
           location_data?: Json | null
@@ -183,6 +187,7 @@ export type Database = {
           description?: string | null
           emotional_score?: number | null
           external_id?: string | null
+          featured_order?: number | null
           file_size?: number | null
           filename?: string
           hashtags?: Json | null
@@ -190,6 +195,7 @@ export type Database = {
           id?: string
           instagram_caption?: string | null
           is_favorite?: boolean | null
+          is_featured?: boolean | null
           is_top_10?: boolean | null
           linkedin_caption?: string | null
           location_data?: Json | null
