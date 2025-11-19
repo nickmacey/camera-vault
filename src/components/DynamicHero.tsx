@@ -13,7 +13,16 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [scrollY, setScrollY] = useState(0);
   const [hasPhotos, setHasPhotos] = useState(false);
+  const [backgroundSlide, setBackgroundSlide] = useState(0);
   const heroRef = useRef<HTMLElement>(null);
+  
+  // Multiple hero background variations that rotate
+  const heroBackgrounds = [
+    heroBackground,
+    heroBackground, // We'll use the same for now but with different overlays
+    heroBackground,
+  ];
+  
   // Combine vault-worthy and high-value photos for more variety
   const heroPhotos = [...vaultWorthy, ...highValue].slice(0, 10);
 
@@ -41,6 +50,15 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
     return () => clearInterval(interval);
   }, [heroPhotos.length]);
 
+  // Rotate background variations
+  useEffect(() => {
+    const bgInterval = setInterval(() => {
+      setBackgroundSlide((prev) => (prev + 1) % heroBackgrounds.length);
+    }, 15000); // Change every 15 seconds
+
+    return () => clearInterval(bgInterval);
+  }, []);
+
   // Parallax scroll effect
   useEffect(() => {
     const handleScroll = () => {
@@ -58,13 +76,23 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
   if (loading || heroPhotos.length === 0) {
     return (
       <section ref={heroRef} className="relative h-screen overflow-hidden">
-        {/* Stunning 4K Background */}
+        {/* Stunning 4K Background with variations */}
         <div className="absolute inset-0">
-          <img 
-            src={heroBackground}
-            alt="Hero background"
-            className="w-full h-full object-cover"
-          />
+          {heroBackgrounds.map((bg, index) => (
+            <div
+              key={index}
+              className={`absolute inset-0 transition-opacity duration-[3000ms] ${
+                index === backgroundSlide ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              <img 
+                src={bg}
+                alt="Hero background"
+                className="w-full h-full object-cover"
+                loading="eager"
+              />
+            </div>
+          ))}
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/60 to-background" />
         </div>
         
@@ -105,16 +133,25 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
 
   return (
     <section ref={heroRef} className="relative h-screen overflow-hidden">
-      {/* Background: Rotating through top 5 with parallax and 4K backdrop */}
+      {/* Background: Rotating through top photos with parallax and 4K backdrop */}
       <div className="absolute inset-0 z-0">
-        {/* 4K Background Layer */}
+        {/* 4K Background Layer with variations */}
         <div className="absolute inset-0">
-          <img 
-            src={heroBackground}
-            alt="Hero background"
-            className="w-full h-full object-cover"
-            loading="eager"
-          />
+          {heroBackgrounds.map((bg, index) => (
+            <div
+              key={index}
+              className={`absolute inset-0 transition-opacity duration-[3000ms] ${
+                index === backgroundSlide ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              <img 
+                src={bg}
+                alt="Hero background"
+                className="w-full h-full object-cover"
+                loading="eager"
+              />
+            </div>
+          ))}
         </div>
         
         {/* User Photos Layer */}
