@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AnalysisLoadingOverlay } from "@/components/AnalysisLoadingOverlay";
-import { ProviderConnectionModal } from "@/components/ProviderConnectionModal";
 import { SignupPromptModal } from "@/components/SignupPromptModal";
 import { extractExifData, calculateOrientation, isValidImageFormat, isValidFileSize } from "@/lib/providers/manualUploadProvider";
 import { compressImage, getOptimalQuality } from "@/lib/imageOptimization";
@@ -22,7 +21,6 @@ const PhotoUpload = () => {
   const [uploading, setUploading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
-  const [showProviderModal, setShowProviderModal] = useState(false);
   const [showSignupPrompt, setShowSignupPrompt] = useState(false);
   const [analysisResults, setAnalysisResults] = useState<{count: number, bestScore: number}>({count: 0, bestScore: 0});
   const [isCompressing, setIsCompressing] = useState(false);
@@ -463,37 +461,6 @@ const PhotoUpload = () => {
                 </label>
               </div>
 
-              {/* DIVIDER */}
-              <div className="relative py-4">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-vault-mid-gray/30"></div>
-                </div>
-                <div className="relative flex justify-center">
-                  <span className="bg-card px-4 text-sm text-vault-light-gray uppercase tracking-wider">Or</span>
-                </div>
-              </div>
-
-              {/* SECONDARY ACTION: Connect Google Photos */}
-              <Button 
-                onClick={() => setShowProviderModal(true)}
-                size="lg"
-                variant="outline"
-                className="border-vault-gold/50 hover:border-vault-gold hover:bg-vault-gold/10 text-vault-platinum font-bold px-12 py-7 text-base uppercase tracking-wide w-full max-w-md"
-              >
-                <Link2 className="mr-2 h-5 w-5" />
-                Connect Google Photos
-              </Button>
-
-              {/* DIVIDER */}
-              <div className="relative py-4">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-vault-mid-gray/30"></div>
-                </div>
-                <div className="relative flex justify-center">
-                  <span className="bg-card px-4 text-sm text-vault-light-gray uppercase tracking-wider">Or</span>
-                </div>
-              </div>
-
               {/* TERTIARY ACTION: Single File Upload */}
               <div 
                 className={`relative border-2 rounded-lg p-8 vault-transition cursor-pointer overflow-hidden ${
@@ -555,8 +522,6 @@ const PhotoUpload = () => {
         </div>
       </div>
       
-      <ProviderConnectionModal open={showProviderModal} onOpenChange={setShowProviderModal} />
-
       {/* Duplicates found notification */}
       {duplicates.length > 0 && (
         <Card className="p-6 bg-amber-950/20 border-amber-700/50">

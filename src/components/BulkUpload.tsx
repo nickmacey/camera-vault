@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -59,6 +59,7 @@ interface ScanResults {
 type UploadStatus = 'idle' | 'scanning' | 'scanned' | 'running' | 'paused' | 'complete' | 'cancelled';
 
 export function BulkUpload() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [status, setStatus] = useState<UploadStatus>('idle');
   const [stats, setStats] = useState<UploadStats>({
@@ -86,6 +87,18 @@ export function BulkUpload() {
   const shouldPauseRef = useRef(false);
   const { toast } = useToast();
   const { startUpload: startUploadContext, updateStats: updateUploadStats, setMinimized } = useUpload();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleFolderSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
@@ -253,27 +266,53 @@ export function BulkUpload() {
         reader.readAsDataURL(file);
       });
 
-      // Analyze photo using Claude
-      const { data: analysisData, error: analysisError } = await supabase.functions.invoke('analyze-photo-claude', {
+      // Analyze photo
+      let analysisData = null;
+      const analysisResponse = await supabase.functions.invoke('analyze-photo', {
         body: { 
           imageBase64: base64,
-          userSettings: {
-            technical_weight: userSettings.technical_weight,
-            commercial_weight: userSettings.commercial_weight,
-            artistic_weight: userSettings.artistic_weight,
-            emotional_weight: userSettings.emotional_weight
-          }
+          filename: file.name
         }
       });
 
-      if (analysisError) {
-        console.error('Analysis error:', analysisError);
-        throw new Error(`Analysis failed: ${analysisError.message || 'Edge Function returned a non-2xx status code'}`);
+      if (analysisResponse.error) {
+        let errorMsg = 'Analysis failed';
+        
+        if (analysisResponse.error.message?.includes('429') || analysisResponse.error.message?.includes('rate limit')) {
+          errorMsg = 'Rate limit reached. Pausing for 60 seconds...';
+          toast({
+            title: "Rate Limit",
+            description: "Pausing for 60 seconds to avoid rate limits",
+            variant: "default"
+          });
+          await new Promise(resolve => setTimeout(resolve, 60000));
+          
+          // Retry once
+          const retry = await supabase.functions.invoke('analyze-photo', {
+            body: { imageBase64: base64, filename: file.name }
+          });
+          
+          if (retry.data) {
+            analysisData = retry.data;
+          } else {
+            throw new Error('Rate limit exceeded - please try again later');
+          }
+        } else if (analysisResponse.error.message?.includes('402') || analysisResponse.error.message?.includes('quota')) {
+          errorMsg = 'API quota exceeded - please add credits to your workspace';
+          throw new Error(errorMsg);
+        } else if (analysisResponse.error.message?.includes('storage')) {
+          errorMsg = 'Storage upload failed - check connection';
+          throw new Error(errorMsg);
+        } else {
+          throw new Error(`Analysis failed: ${analysisResponse.error.message || 'Unknown error'}`);
+        }
+      } else {
+        analysisData = analysisResponse.data;
       }
 
-      if (!analysisData || typeof analysisData.overall_score !== 'number') {
-        throw new Error('Invalid analysis response');
-      }
+      const score = analysisData?.score || 0;
+      const description = analysisData?.description || '';
+      const suggestedName = analysisData?.suggestedName || file.name.replace(/\.[^/.]+$/, '');
 
       // Get image dimensions
       const img = new Image();
@@ -287,17 +326,7 @@ export function BulkUpload() {
                         : dimensions.width < dimensions.height ? 'portrait'
                         : 'square';
 
-      // Get analysis results from Claude
-      const overallScore = analysisData.overall_score;
-      const technicalScore = analysisData.technical_score;
-      const commercialScore = analysisData.commercial_score;
-      const artisticScore = analysisData.artistic_score;
-      const emotionalScore = analysisData.emotional_score;
-      const tier = analysisData.tier;
-      const aiAnalysis = analysisData.ai_analysis || '';
-      const suggestedName = file.name.replace(/\.[^/.]+$/, '');
-
-      // Save to database
+      // Save to database with score field
       const { error: dbError } = await supabase
         .from('photos')
         .insert({
@@ -311,27 +340,20 @@ export function BulkUpload() {
           width: dimensions.width,
           height: dimensions.height,
           orientation,
-          overall_score: overallScore,
-          technical_score: technicalScore,
-          commercial_score: commercialScore,
-          artistic_score: artisticScore,
-          emotional_score: emotionalScore,
-          tier: tier,
-          ai_analysis: aiAnalysis,
-          status: 'new',
-          analyzed_at: new Date().toISOString()
+          score: score,
+          description: description,
+          analyzed_at: new Date().toISOString(),
+          status: 'new'
         });
 
       if (dbError) throw dbError;
 
-      // Update tier stats based on tier from analysis
-      setStats(prev => {
-        const tierKey = tier === 'vault-worthy' ? 'vaultWorthy' : tier === 'high-value' ? 'highValue' : 'archive';
-        return {
-          ...prev,
-          [tierKey]: prev[tierKey] + 1
-        };
-      });
+      // Update tier stats based on score
+      const tier = score >= 8 ? 'vaultWorthy' : score >= 6.5 ? 'highValue' : 'archive';
+      setStats(prev => ({
+        ...prev,
+        [tier]: prev[tier] + 1
+      }));
 
       return 'success';
 

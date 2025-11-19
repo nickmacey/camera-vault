@@ -4,14 +4,16 @@ import { usePhotoStats } from "@/hooks/usePhotoStats";
 
 const StatsBar = () => {
   const { top10Photos } = useTop10Photos();
-  const { stats } = usePhotoStats();
+  const { stats, loading } = usePhotoStats();
+
+  if (loading) return null;
 
   const displayStats = {
     total_photos: stats.total,
-    avg_score: stats.avg_score,
-    top_score: stats.top_score,
-    vault_worthy: stats.vault_worthy,
-    high_value: stats.high_value,
+    avg_score: stats.avgScore,
+    top_score: stats.peakScore,
+    vault_worthy: stats.vaultWorthy,
+    high_value: stats.highValue,
     archive: stats.archive,
   };
   
