@@ -12,6 +12,7 @@ import { ProviderConnectionModal } from "@/components/ProviderConnectionModal";
 import { SignupPromptModal } from "@/components/SignupPromptModal";
 import { extractExifData, calculateOrientation, isValidImageFormat, isValidFileSize } from "@/lib/providers/manualUploadProvider";
 import { compressImage, getOptimalQuality } from "@/lib/imageOptimization";
+import { generateFileHash, checkDuplicateHash } from "@/lib/fileHash";
 
 const PhotoUpload = () => {
   const navigate = useNavigate();
@@ -25,6 +26,8 @@ const PhotoUpload = () => {
   const [showSignupPrompt, setShowSignupPrompt] = useState(false);
   const [analysisResults, setAnalysisResults] = useState<{count: number, bestScore: number}>({count: 0, bestScore: 0});
   const [isCompressing, setIsCompressing] = useState(false);
+  const [duplicates, setDuplicates] = useState<{file: File, existingPhoto: any}[]>([]);
+  const [checkingDuplicates, setCheckingDuplicates] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -48,7 +51,7 @@ const PhotoUpload = () => {
     setIsDragging(false);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
 
@@ -65,11 +68,69 @@ const PhotoUpload = () => {
     });
 
     if (droppedFiles.length > 0) {
-      setFiles(droppedFiles);
+      await checkForDuplicates(droppedFiles);
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const checkForDuplicates = async (selectedFiles: File[]) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      // Guest users don't need duplicate check
+      setFiles(selectedFiles);
+      setDuplicates([]);
+      return;
+    }
+
+    setCheckingDuplicates(true);
+    const toastId = toast.loading("Checking for duplicates...");
+
+    try {
+      const foundDuplicates: {file: File, existingPhoto: any}[] = [];
+      const uniqueFiles: File[] = [];
+      const fileHashes = new Map<string, File>();
+
+      // Check for duplicates within the batch first
+      for (const file of selectedFiles) {
+        const hash = await generateFileHash(file);
+        
+        if (fileHashes.has(hash)) {
+          // Duplicate within batch
+          toast.warning(`Skipped duplicate in batch: ${file.name}`);
+          continue;
+        }
+        
+        fileHashes.set(hash, file);
+        
+        // Check against database
+        const { isDuplicate, existingPhoto } = await checkDuplicateHash(supabase, user.id, hash);
+        
+        if (isDuplicate) {
+          foundDuplicates.push({ file, existingPhoto });
+        } else {
+          uniqueFiles.push(file);
+        }
+      }
+
+      setDuplicates(foundDuplicates);
+      setFiles(uniqueFiles);
+
+      if (foundDuplicates.length > 0) {
+        toast.warning(`Found ${foundDuplicates.length} duplicate(s). They've been filtered out.`, { id: toastId });
+      } else {
+        toast.success(`No duplicates found! Ready to upload ${uniqueFiles.length} photo(s)`, { id: toastId });
+      }
+    } catch (error) {
+      console.error('Error checking duplicates:', error);
+      toast.error("Failed to check for duplicates. Proceeding with upload.", { id: toastId });
+      setFiles(selectedFiles);
+      setDuplicates([]);
+    } finally {
+      setCheckingDuplicates(false);
+    }
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const isFolder = e.target.hasAttribute('webkitdirectory');
       const selectedFiles = Array.from(e.target.files).filter((file) => {
@@ -89,7 +150,8 @@ const PhotoUpload = () => {
         toast.error("Maximum 20 photos per batch. Please select fewer files or use folder upload.");
         return;
       }
-      setFiles(selectedFiles);
+      
+      await checkForDuplicates(selectedFiles);
     }
   };
 
@@ -180,6 +242,9 @@ const PhotoUpload = () => {
           try {
             // Extract EXIF data
             const exifData = await extractExifData(file);
+            
+            // Generate file hash for duplicate detection
+            const fileHash = await generateFileHash(file);
             
             // Get image dimensions
             const img = new Image();
@@ -291,6 +356,7 @@ const PhotoUpload = () => {
                 external_id: fileName, // Use storage path as external ID for manual uploads
                 mime_type: file.type,
                 file_size: file.size,
+                file_hash: fileHash, // Add file hash for duplicate detection
                 // Dimensions and orientation
                 width,
                 height,
@@ -491,23 +557,69 @@ const PhotoUpload = () => {
       
       <ProviderConnectionModal open={showProviderModal} onOpenChange={setShowProviderModal} />
 
+      {/* Duplicates found notification */}
+      {duplicates.length > 0 && (
+        <Card className="p-6 bg-amber-950/20 border-amber-700/50">
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <Shield className="h-5 w-5 text-amber-500 mt-0.5" />
+              <div className="flex-1">
+                <h4 className="font-bold text-amber-400 uppercase tracking-wide">
+                  {duplicates.length} Duplicate{duplicates.length !== 1 ? "s" : ""} Detected
+                </h4>
+                <p className="text-sm text-amber-200/80 mt-1">
+                  These photos are already in your vault and have been filtered out automatically.
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+              {duplicates.slice(0, 8).map((dup, idx) => (
+                <div
+                  key={idx}
+                  className="relative aspect-square rounded-lg overflow-hidden bg-vault-black border-2 border-amber-700/50 opacity-50"
+                >
+                  <img
+                    src={URL.createObjectURL(dup.file)}
+                    alt={dup.file.name}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <div className="absolute inset-0 bg-amber-900/30 flex items-center justify-center">
+                    <span className="text-xs font-bold text-amber-300 bg-vault-black/80 px-2 py-1 rounded">
+                      DUPLICATE
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {duplicates.length > 8 && (
+              <p className="text-xs text-amber-300/70 text-center">
+                +{duplicates.length - 8} more duplicate{duplicates.length - 8 !== 1 ? "s" : ""}
+              </p>
+            )}
+          </div>
+        </Card>
+      )}
+
       {files.length > 0 && (
         <Card className="p-8 bg-vault-dark-gray border-vault-mid-gray">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <div>
               <h4 className="font-black text-xl text-vault-platinum uppercase tracking-wide">Ready for Analysis</h4>
               <p className="text-sm text-vault-light-gray mt-1">
-                {files.length} asset{files.length !== 1 ? "s" : ""} selected
+                {files.length} unique asset{files.length !== 1 ? "s" : ""} selected
+                {duplicates.length > 0 && ` • ${duplicates.length} duplicate${duplicates.length !== 1 ? "s" : ""} filtered`}
               </p>
             </div>
             <Button
               onClick={handleUpload}
               size="lg"
-              disabled={uploading}
+              disabled={uploading || checkingDuplicates}
               className="bg-vault-gold hover:bg-vault-gold/90 text-vault-black font-bold uppercase tracking-wide vault-glow-gold"
             >
               <Lock className="mr-2 h-5 w-5" />
-              {uploading ? "Analyzing..." : "Start Analysis"}
+              {checkingDuplicates ? "Checking..." : uploading ? "Analyzing..." : "Start Analysis"}
             </Button>
           </div>
 
