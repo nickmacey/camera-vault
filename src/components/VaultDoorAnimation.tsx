@@ -212,6 +212,19 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
           }`}
         />
       </div>
+
+      {/* VAULT text - appears as doors open */}
+      <div 
+        className={`absolute transition-all duration-700 delay-300 ${
+          stage === 'opening' 
+            ? 'opacity-100 scale-100' 
+            : 'opacity-0 scale-95'
+        }`}
+      >
+        <h1 className="text-8xl font-black tracking-tight text-[#D4AF37] font-mono">
+          VAULT
+        </h1>
+      </div>
     </div>
   );
 };
