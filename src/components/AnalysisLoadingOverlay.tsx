@@ -17,10 +17,27 @@ export const AnalysisLoadingOverlay = ({
 }: AnalysisLoadingOverlayProps) => {
   const { top10Photos, loading: photosLoading } = useTop10Photos();
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
   
   const backgroundPhotos = top10Photos.length > 0 
     ? top10Photos.slice(0, 5) // Use top 5 for rotation
     : [];
+
+  // Inspirational quotes about art and creativity
+  const quotes = [
+    "Every single day I wake up and commit to myself to focusing on what I can do today to get better.",
+    "The role of the artist is to ask questions, not answer them.",
+    "Art is about attention. Attention is about looking and listening.",
+    "The greatest works come from the simplest ideas.",
+    "If you create from your heart, nearly everything works; if from your head, almost nothing.",
+    "The work is never finished, only abandoned.",
+    "When you create, you become.",
+    "Trust the process. Stay present.",
+    "Great art picks up where nature ends.",
+    "The secret to creativity is knowing how to hide your sources.",
+    "Every artist was first an amateur.",
+    "Reduce to the maximum.",
+  ];
 
   useEffect(() => {
     if (!visible || backgroundPhotos.length === 0) return;
@@ -31,6 +48,17 @@ export const AnalysisLoadingOverlay = ({
 
     return () => clearInterval(interval);
   }, [visible, backgroundPhotos.length]);
+
+  // Rotate quotes every 4 seconds
+  useEffect(() => {
+    if (!visible) return;
+    
+    const quoteInterval = setInterval(() => {
+      setCurrentQuoteIndex((prev) => (prev + 1) % quotes.length);
+    }, 4000);
+
+    return () => clearInterval(quoteInterval);
+  }, [visible, quotes.length]);
 
   if (!visible) return null;
 
@@ -76,8 +104,8 @@ export const AnalysisLoadingOverlay = ({
         </div>
         
         {/* Status text */}
-        <h3 className="font-black text-3xl md:text-4xl text-white mb-3 animate-fade-in">
-          {isCompressing ? 'OPTIMIZING IMAGE' : 'DISCOVERING VALUE'}
+        <h3 className="font-black text-3xl md:text-4xl text-white mb-6 animate-fade-in min-h-[4rem] flex items-center justify-center transition-all duration-500">
+          {isCompressing ? 'OPTIMIZING IMAGE' : quotes[currentQuoteIndex]}
         </h3>
         
         <div className="flex items-center justify-center gap-2 mb-6">
