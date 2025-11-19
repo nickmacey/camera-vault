@@ -3,6 +3,7 @@ import { PhotoBackgroundCard } from "./PhotoBackgroundCard";
 import { useTop10Photos } from "@/hooks/useTop10Photos";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { calculateTierValue } from "@/lib/photoValue";
 
 export const CategoryShowcase = () => {
   const { vaultWorthy, highValue, top10Photos } = useTop10Photos();
@@ -63,9 +64,9 @@ export const CategoryShowcase = () => {
     return p.tier === 'archive' || score === null || score < 7.0;
   }).length;
   
-  const vaultWorthyValue = vaultWorthyCount * 150;
-  const highValueValue = highValueCount * 75;
-  const archiveValue = archiveCount * 25;
+  const vaultWorthyValue = calculateTierValue(vaultWorthyCount, 'elite');
+  const highValueValue = calculateTierValue(highValueCount, 'stars');
+  const archiveValue = calculateTierValue(archiveCount, 'archive');
 
   return (
     <section className="relative py-12 md:py-24 px-3 sm:px-4 md:px-12 overflow-hidden">
