@@ -153,6 +153,20 @@ export default {
             opacity: "0"
           }
         },
+        "flash-burst": {
+          "0%": {
+            transform: "scale(0)",
+            opacity: "1"
+          },
+          "50%": {
+            transform: "scale(8)",
+            opacity: "0.8"
+          },
+          "100%": {
+            transform: "scale(20)",
+            opacity: "0"
+          }
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
