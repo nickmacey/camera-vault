@@ -144,4 +144,13 @@
   .animate-glow {
     animation: glow 4s ease-in-out infinite;
   }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
 }
