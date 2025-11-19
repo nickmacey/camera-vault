@@ -28,6 +28,7 @@ interface SocialContentModalProps {
   content: SocialContent | null;
   onRegenerate: () => void;
   loading: boolean;
+  onSave?: (content: SocialContent) => void;
 }
 
 export const SocialContentModal = ({
@@ -36,6 +37,7 @@ export const SocialContentModal = ({
   content,
   onRegenerate,
   loading,
+  onSave,
 }: SocialContentModalProps) => {
   const [editedContent, setEditedContent] = useState<SocialContent | null>(null);
   const [copiedItem, setCopiedItem] = useState<string | null>(null);
@@ -62,6 +64,13 @@ export const SocialContentModal = ({
     
     const fullText = `${currentContent.captions.instagram}\n\n${allHashtags}`;
     copyToClipboard(fullText, "Instagram caption + tags");
+  };
+
+  const handleSave = () => {
+    if (currentContent && onSave && editedContent) {
+      onSave(editedContent);
+      onOpenChange(false);
+    }
   };
 
   if (!currentContent) return null;
