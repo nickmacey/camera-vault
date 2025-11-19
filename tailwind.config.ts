@@ -167,6 +167,28 @@ export default {
             opacity: "0"
           }
         },
+        "heartbeat": {
+          "0%": {
+            transform: "scale(1)",
+            opacity: "1"
+          },
+          "5%": {
+            transform: "scale(1.05)",
+            opacity: "0.9"
+          },
+          "10%": {
+            transform: "scale(1)",
+            opacity: "1"
+          },
+          "15%": {
+            transform: "scale(1.03)",
+            opacity: "0.95"
+          },
+          "20%, 100%": {
+            transform: "scale(1)",
+            opacity: "1"
+          }
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -178,6 +200,7 @@ export default {
         "lock-open": "lock-open 0.8s ease-out forwards",
         "color-shift": "color-shift 1s ease-in-out forwards",
         "particle-explode": "particle-explode 1.2s ease-out forwards",
+        "heartbeat": "heartbeat 1.5s ease-in-out infinite",
       },
     },
   },
