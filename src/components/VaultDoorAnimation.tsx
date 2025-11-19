@@ -6,26 +6,32 @@ interface VaultDoorAnimationProps {
 }
 
 export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
-  const [stage, setStage] = useState<'lock' | 'opening' | 'complete'>('lock');
+  const [stage, setStage] = useState<'lock' | 'unlocking' | 'opening' | 'complete'>('lock');
 
   useEffect(() => {
-    // Stage 1: Show lock for 1.2s
+    // Stage 1: Show lock for 1s
     const lockTimer = setTimeout(() => {
-      setStage('opening');
-    }, 1200);
+      setStage('unlocking');
+    }, 1000);
 
-    // Stage 2: Door opening animation for 1.5s
+    // Stage 2: Lock changes color and opens for 1.2s
+    const unlockTimer = setTimeout(() => {
+      setStage('opening');
+    }, 2200);
+
+    // Stage 3: Door opening animation for 1.5s
     const openTimer = setTimeout(() => {
       setStage('complete');
-    }, 2700);
+    }, 3700);
 
-    // Stage 3: Fade out and complete
+    // Stage 4: Fade out and complete
     const completeTimer = setTimeout(() => {
       onComplete();
-    }, 3400);
+    }, 4400);
 
     return () => {
       clearTimeout(lockTimer);
+      clearTimeout(unlockTimer);
       clearTimeout(openTimer);
       clearTimeout(completeTimer);
     };
@@ -37,34 +43,59 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
         stage === 'complete' ? 'opacity-0' : 'opacity-100'
       }`}
     >
-      {/* Lock Icon - Fades in then glows */}
+      {/* Lock Icon - Transitions through stages */}
       <div 
         className={`absolute transition-all duration-700 ${
-          stage === 'lock' 
+          stage === 'lock' || stage === 'unlocking'
             ? 'opacity-100 scale-100' 
             : 'opacity-0 scale-95'
         }`}
       >
         <div className="relative">
-          {/* Glow effect */}
-          <div className="absolute inset-0 animate-pulse">
+          {/* Glow effect - changes color during unlocking */}
+          <div className={`absolute inset-0 animate-pulse ${
+            stage === 'unlocking' ? 'animate-color-shift' : ''
+          }`}>
             <Lock 
-              className="w-32 h-32 text-[#D4AF37] blur-xl opacity-60" 
+              className={`w-32 h-32 blur-xl opacity-60 transition-colors duration-1000 ${
+                stage === 'unlocking' ? 'text-vault-green' : 'text-vault-gold'
+              }`}
               strokeWidth={1.5}
             />
           </div>
-          {/* Main lock */}
-          <Lock 
-            className="w-32 h-32 text-[#D4AF37] relative z-10" 
-            strokeWidth={1.5}
-          />
+          
+          {/* Lock body - stays in place */}
+          <div className="relative">
+            <svg
+              className={`w-32 h-32 relative z-10 transition-colors duration-1000 ${
+                stage === 'unlocking' ? 'text-vault-green' : 'text-vault-gold'
+              }`}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              {/* Lock body */}
+              <rect x="5" y="11" width="14" height="10" rx="2" ry="2" />
+              <circle cx="12" cy="16" r="1" />
+              
+              {/* Lock shackle - animates upward when unlocking */}
+              <path 
+                d="M7 11V7a5 5 0 0 1 10 0v4"
+                className={stage === 'unlocking' ? 'animate-lock-open' : ''}
+                style={{ transformOrigin: 'center top' }}
+              />
+            </svg>
+          </div>
         </div>
       </div>
 
       {/* Vault Door - Splits and opens */}
       <div 
         className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
-          stage === 'opening' ? 'opacity-100' : 'opacity-0'
+          stage === 'opening' || stage === 'complete' ? 'opacity-100' : 'opacity-0'
         }`}
       >
         {/* Left door */}

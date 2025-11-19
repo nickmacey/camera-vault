@@ -19,18 +19,11 @@ const App = () => {
   const [showAnimation, setShowAnimation] = useState(true);
   const [animationComplete, setAnimationComplete] = useState(false);
 
-  useEffect(() => {
-    // Check if animation has been shown this session
-    const hasSeenAnimation = sessionStorage.getItem('vaultDoorShown');
-    if (hasSeenAnimation) {
-      setShowAnimation(false);
-      setAnimationComplete(true);
-    }
-  }, []);
+  // Animation will show every time - no session storage check
 
   const handleAnimationComplete = () => {
-    sessionStorage.setItem('vaultDoorShown', 'true');
     setAnimationComplete(true);
+    setShowAnimation(false);
   };
 
   return (
