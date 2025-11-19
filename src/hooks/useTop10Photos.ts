@@ -106,8 +106,8 @@ export const useTop10Photos = () => {
     return 'neutral';
   };
 
-  const vaultWorthy = top10Photos.filter(p => p.score >= 8.5);
-  const highValue = top10Photos.filter(p => p.score >= 7.0 && p.score < 8.5);
+  const vaultWorthy = top10Photos.filter(p => p.score >= 8.0);
+  const highValue = top10Photos.filter(p => p.score >= 6.5 && p.score < 8.0);
 
   return {
     top10Photos,
