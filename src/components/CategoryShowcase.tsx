@@ -10,6 +10,13 @@ export const CategoryShowcase = () => {
   const [totalPhotos, setTotalPhotos] = useState(0);
   const [archivePhotosWithUrls, setArchivePhotosWithUrls] = useState<any[]>([]);
   
+  const scrollToGallery = () => {
+    const gallerySection = document.querySelector('[data-gallery-section]');
+    if (gallerySection) {
+      gallerySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+  
   useEffect(() => {
     const fetchAllPhotos = async () => {
       // Fetch ALL photos including those without scores
@@ -87,6 +94,7 @@ export const CategoryShowcase = () => {
             description="Your most valuable assets. Portfolio-ready and market-tested."
             previewPhotos={vaultWorthy.slice(0, 12).map(p => p.url)}
             variant="vault-worthy"
+            onClick={scrollToGallery}
           />
           
           {/* Stars (High Value) */}
@@ -100,6 +108,7 @@ export const CategoryShowcase = () => {
             description="Exceptional work with elite potential. Refine and elevate."
             previewPhotos={highValue.slice(0, 12).map(p => p.url)}
             variant="high-value"
+            onClick={scrollToGallery}
           />
           
           {/* Gems (Archive) */}
@@ -113,6 +122,7 @@ export const CategoryShowcase = () => {
             description="Explore and uncover diamonds in the rough waiting to shine."
             previewPhotos={archivePhotosWithUrls.map(p => p.url).filter(Boolean)}
             variant="archive"
+            onClick={scrollToGallery}
           />
         </div>
       </div>

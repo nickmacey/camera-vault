@@ -204,7 +204,7 @@ const Index = () => {
             <PhotoUpload />
           </TabsContent>
 
-          <TabsContent value="gallery" className="animate-fade-in">
+          <TabsContent value="gallery" className="animate-fade-in" data-gallery-section>
             <PhotoGallery />
           </TabsContent>
 
