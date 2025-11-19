@@ -73,8 +73,8 @@ export const usePhotoStats = () => {
 
       if (photos) {
         const total = photos.length;
-        const vault_worthy = photos.filter(p => p.tier === 'elite').length;
-        const high_value = photos.filter(p => p.tier === 'stars').length;
+        const vault_worthy = photos.filter(p => p.tier === 'vault-worthy').length;
+        const high_value = photos.filter(p => p.tier === 'high-value').length;
         const archive = photos.filter(p => p.tier === 'archive' || !p.tier).length;
         const top_10 = photos.filter(p => p.is_top_10).length;
         const favorites = photos.filter(p => p.is_favorite).length;

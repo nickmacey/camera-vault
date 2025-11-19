@@ -1,14 +1,14 @@
 import { Lock, TrendingUp, Archive, Sparkles, Gem, Star } from "lucide-react";
 import { PhotoBackgroundCard } from "./PhotoBackgroundCard";
-import { useTop10Photos } from "@/hooks/useTop10Photos";
+import { usePhotoStats } from "@/hooks/usePhotoStats";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateTierValue } from "@/lib/photoValue";
 
 export const CategoryShowcase = () => {
-  const { vaultWorthy, highValue, top10Photos } = useTop10Photos();
-  const [allPhotos, setAllPhotos] = useState<any[]>([]);
-  const [totalPhotos, setTotalPhotos] = useState(0);
+  const { stats } = usePhotoStats();
+  const [vaultWorthyPhotos, setVaultWorthyPhotos] = useState<any[]>([]);
+  const [highValuePhotos, setHighValuePhotos] = useState<any[]>([]);
   const [archivePhotosWithUrls, setArchivePhotosWithUrls] = useState<any[]>([]);
   
   const scrollToGallery = () => {
@@ -19,25 +19,17 @@ export const CategoryShowcase = () => {
   };
   
   useEffect(() => {
-    const fetchAllPhotos = async () => {
-      // Fetch ALL photos including those without scores
-      const { data, count } = await supabase
+    const fetchTierPhotos = async () => {
+      // Fetch vault-worthy photos
+      const { data: vaultData } = await supabase
         .from('photos')
-        .select('*', { count: 'exact' })
-        .order('overall_score', { ascending: false, nullsFirst: false });
-      
-      setAllPhotos(data || []);
-      setTotalPhotos(count || 0);
+        .select('*')
+        .eq('tier', 'vault-worthy')
+        .order('overall_score', { ascending: false, nullsFirst: false })
+        .limit(12);
 
-      // Get archive photos (tier='archive' OR score < 7.0 OR no score yet)
-      const archiveData = (data || []).filter(p => {
-        const score = p.overall_score;
-        return p.tier === 'archive' || score === null || score < 7.0;
-      });
-
-      // Generate signed URLs for archive photos
-      const archiveWithUrls = await Promise.all(
-        archiveData.slice(0, 12).map(async (photo) => {
+      const vaultWithUrls = await Promise.all(
+        (vaultData || []).map(async (photo) => {
           const { data: urlData } = await supabase.storage
             .from('photos')
             .createSignedUrl(photo.storage_path, 3600);
@@ -48,21 +40,59 @@ export const CategoryShowcase = () => {
           };
         })
       );
+      setVaultWorthyPhotos(vaultWithUrls);
 
+      // Fetch high-value photos
+      const { data: highData } = await supabase
+        .from('photos')
+        .select('*')
+        .eq('tier', 'high-value')
+        .order('overall_score', { ascending: false, nullsFirst: false })
+        .limit(12);
+
+      const highWithUrls = await Promise.all(
+        (highData || []).map(async (photo) => {
+          const { data: urlData } = await supabase.storage
+            .from('photos')
+            .createSignedUrl(photo.storage_path, 3600);
+          
+          return {
+            ...photo,
+            url: urlData?.signedUrl || ''
+          };
+        })
+      );
+      setHighValuePhotos(highWithUrls);
+
+      // Fetch archive photos
+      const { data: archiveData } = await supabase
+        .from('photos')
+        .select('*')
+        .or('tier.eq.archive,tier.is.null')
+        .order('overall_score', { ascending: false, nullsFirst: false })
+        .limit(12);
+
+      const archiveWithUrls = await Promise.all(
+        (archiveData || []).map(async (photo) => {
+          const { data: urlData } = await supabase.storage
+            .from('photos')
+            .createSignedUrl(photo.storage_path, 3600);
+          
+          return {
+            ...photo,
+            url: urlData?.signedUrl || ''
+          };
+        })
+      );
       setArchivePhotosWithUrls(archiveWithUrls);
     };
     
-    fetchAllPhotos();
+    fetchTierPhotos();
   }, []);
 
-  const vaultWorthyCount = vaultWorthy.length;
-  const highValueCount = highValue.length;
-  
-  // Calculate archive count - includes unscored photos
-  const archiveCount = allPhotos.filter(p => {
-    const score = p.overall_score;
-    return p.tier === 'archive' || score === null || score < 7.0;
-  }).length;
+  const vaultWorthyCount = stats.vault_worthy;
+  const highValueCount = stats.high_value;
+  const archiveCount = stats.archive;
   
   const vaultWorthyValue = calculateTierValue(vaultWorthyCount, 'elite');
   const highValueValue = calculateTierValue(highValueCount, 'stars');
@@ -86,28 +116,28 @@ export const CategoryShowcase = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
           {/* Elite (Vault Worthy) */}
           <PhotoBackgroundCard
-            photoUrl={vaultWorthy[0]?.url}
+            photoUrl={vaultWorthyPhotos[0]?.url}
             icon={Sparkles}
             title="ELITE"
             subtitle="Ready to Share"
             count={vaultWorthyCount}
             value={`$${vaultWorthyValue.toLocaleString()}`}
             description="Your most valuable assets. Portfolio-ready and market-tested."
-            previewPhotos={vaultWorthy.slice(0, 12).map(p => p.url)}
+            previewPhotos={vaultWorthyPhotos.slice(0, 12).map(p => p.url)}
             variant="vault-worthy"
             onClick={scrollToGallery}
           />
           
           {/* Stars (High Value) */}
           <PhotoBackgroundCard
-            photoUrl={highValue[0]?.url}
+            photoUrl={highValuePhotos[0]?.url}
             icon={Star}
             title="STARS"
             subtitle="Refine with AI"
             count={highValueCount}
             value={`$${highValueValue.toLocaleString()}`}
             description="Exceptional work with elite potential. Refine and elevate."
-            previewPhotos={highValue.slice(0, 12).map(p => p.url)}
+            previewPhotos={highValuePhotos.slice(0, 12).map(p => p.url)}
             variant="high-value"
             onClick={scrollToGallery}
           />
