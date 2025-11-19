@@ -170,23 +170,23 @@ export default {
         "heartbeat": {
           "0%": {
             transform: "scale(1)",
-            opacity: "1"
+            boxShadow: "0 0 60px hsla(var(--primary)/0.6)"
           },
           "5%": {
             transform: "scale(1.05)",
-            opacity: "0.9"
+            boxShadow: "0 0 100px hsla(var(--primary)/0.9), 0 0 150px hsla(var(--accent)/0.5)"
           },
           "10%": {
             transform: "scale(1)",
-            opacity: "1"
+            boxShadow: "0 0 60px hsla(var(--primary)/0.6)"
           },
           "15%": {
             transform: "scale(1.03)",
-            opacity: "0.95"
+            boxShadow: "0 0 85px hsla(var(--primary)/0.8), 0 0 120px hsla(var(--accent)/0.4)"
           },
           "20%, 100%": {
             transform: "scale(1)",
-            opacity: "1"
+            boxShadow: "0 0 60px hsla(var(--primary)/0.6)"
           }
         },
       },
