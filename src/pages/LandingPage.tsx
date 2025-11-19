@@ -590,7 +590,7 @@ export default function LandingPage() {
                 <Logo variant="full" size="sm" />
               </div>
               <p className="text-sm text-muted-foreground">
-                AI-powered photo management and monetization platform for photographers.
+                AI-powered photo management and monetization platform for photographers, amateurs, and creatives.
               </p>
             </div>
 
