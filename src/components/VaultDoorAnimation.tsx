@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Lock } from "lucide-react";
+import { SoundGenerator } from "@/lib/soundGenerator";
 
 interface VaultDoorAnimationProps {
   onComplete: () => void;
@@ -19,6 +20,16 @@ interface Particle {
 export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
   const [stage, setStage] = useState<'lock' | 'unlocking' | 'opening' | 'complete'>('lock');
   const [particles, setParticles] = useState<Particle[]>([]);
+  const soundGeneratorRef = useRef<SoundGenerator | null>(null);
+
+  // Initialize sound generator
+  useEffect(() => {
+    soundGeneratorRef.current = new SoundGenerator();
+    
+    return () => {
+      soundGeneratorRef.current?.close();
+    };
+  }, []);
 
   // Generate explosion particles when unlocking starts
   useEffect(() => {
@@ -46,14 +57,21 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
   }, [stage]);
 
   useEffect(() => {
+    // Play low hum immediately
+    soundGeneratorRef.current?.playLowHum(2);
+    
     // Stage 1: Show lock for 2s - build anticipation
     const lockTimer = setTimeout(() => {
       setStage('unlocking');
+      // Play explosion sound
+      soundGeneratorRef.current?.playExplosion();
     }, 2000);
 
     // Stage 2: Lock changes color and opens for 1.5s - slower explosion
     const unlockTimer = setTimeout(() => {
       setStage('opening');
+      // Play metallic clang
+      soundGeneratorRef.current?.playMetallicClang();
     }, 3500);
 
     // Stage 3: Door opening animation for 2s - more dramatic reveal
