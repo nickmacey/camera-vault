@@ -109,7 +109,7 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
             <Button 
               size="lg"
               onClick={onCTAClick}
-              className="group relative bg-gradient-to-r from-primary/50 via-accent/40 to-primary/50 backdrop-blur-sm hover:from-primary/60 hover:to-accent/50 font-black px-6 sm:px-10 md:px-16 py-4 sm:py-6 md:py-8 text-xs sm:text-sm md:text-xl rounded-full overflow-hidden shadow-[0_0_60px_hsla(var(--primary)/0.6)] hover:shadow-[0_0_100px_hsla(var(--primary)/0.9)] hover:scale-105 transition-all duration-500 border-2 border-primary/60 animate-pulse"
+              className="group relative bg-gradient-to-r from-primary/50 via-accent/40 to-primary/50 backdrop-blur-sm hover:from-primary/60 hover:to-accent/50 font-black px-6 sm:px-10 md:px-16 py-4 sm:py-6 md:py-8 text-xs sm:text-sm md:text-xl rounded-full overflow-hidden shadow-[0_0_60px_hsla(var(--primary)/0.6)] hover:shadow-[0_0_100px_hsla(var(--primary)/0.9)] hover:scale-105 transition-all duration-500 border-2 border-primary/60 animate-heartbeat"
             >
               <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
               <span className="relative z-10 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-glow font-black tracking-wider drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]" style={{ WebkitTextStroke: '1px hsla(var(--primary)/0.5)' }}>
@@ -197,7 +197,7 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
             <Button
             size="lg"
             onClick={onCTAClick}
-            className="group relative bg-gradient-to-r from-primary/50 via-accent/40 to-primary/50 backdrop-blur-sm hover:from-primary/60 hover:to-accent/50 font-black px-8 sm:px-12 md:px-16 py-6 md:py-8 text-sm sm:text-base md:text-xl rounded-full overflow-hidden shadow-[0_0_60px_hsla(var(--primary)/0.6)] hover:shadow-[0_0_100px_hsla(var(--primary)/0.9)] hover:scale-105 transition-all duration-500 border-2 border-primary/60 animate-pulse"
+            className="group relative bg-gradient-to-r from-primary/50 via-accent/40 to-primary/50 backdrop-blur-sm hover:from-primary/60 hover:to-accent/50 font-black px-8 sm:px-12 md:px-16 py-6 md:py-8 text-sm sm:text-base md:text-xl rounded-full overflow-hidden shadow-[0_0_60px_hsla(var(--primary)/0.6)] hover:shadow-[0_0_100px_hsla(var(--primary)/0.9)] hover:scale-105 transition-all duration-500 border-2 border-primary/60 animate-heartbeat"
           >
             <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
             <span className="relative z-10 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-glow font-black tracking-wider drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]" style={{ WebkitTextStroke: '1px hsla(var(--primary)/0.5)' }}>
