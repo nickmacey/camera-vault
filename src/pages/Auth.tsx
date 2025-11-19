@@ -27,7 +27,7 @@ const Auth = () => {
     // Check if user is already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate('/');
+        navigate('/app');
       }
     });
   }, [navigate]);
@@ -94,7 +94,7 @@ const Auth = () => {
           title: 'Welcome to the Vault!',
           description: 'Your account has been created successfully.',
         });
-        navigate('/');
+        navigate('/app');
       }
     } catch (error: any) {
       toast({
@@ -138,7 +138,7 @@ const Auth = () => {
           title: 'Welcome Back!',
           description: 'You have successfully signed in.',
         });
-        navigate('/');
+        navigate('/app');
       }
     } catch (error: any) {
       toast({
