@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import LandingPage from "./pages/LandingPage";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import GoogleCallback from "./pages/GoogleCallback";
@@ -41,11 +42,16 @@ const App = () => {
           <div className={`transition-opacity duration-700 ${animationComplete ? 'opacity-100' : 'opacity-0'}`}>
             <BrowserRouter>
               <Routes>
-                <Route path="/" element={<AuthGuard><Index /></AuthGuard>} />
+                {/* Public routes */}
+                <Route path="/" element={<LandingPage />} />
                 <Route path="/auth" element={<Auth />} />
-                <Route path="/auth/google/callback" element={<GoogleCallback />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/terms" element={<Terms />} />
+                
+                {/* App routes (protected) */}
+                <Route path="/app" element={<AuthGuard><Index /></AuthGuard>} />
+                <Route path="/auth/google/callback" element={<GoogleCallback />} />
+                
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
