@@ -133,6 +133,8 @@ export const Lightbox = ({ photo, photos, onClose, onNavigate, onWatermark }: Li
                 ? 'border-4 border-vault-gold shadow-[0_0_40px_rgba(212,175,55,0.4)]' 
                 : 'border border-white/20'
             }`}
+            loading="eager"
+            decoding="async"
           />
         </div>
 

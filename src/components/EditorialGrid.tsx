@@ -143,6 +143,8 @@ export const EditorialGrid = () => {
               src={layout.hero.url}
               alt={layout.hero.filename}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              loading="eager"
+              decoding="async"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
             
@@ -188,6 +190,8 @@ export const EditorialGrid = () => {
               src={photo.url}
               alt={photo.filename}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              loading="lazy"
+              decoding="async"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             
@@ -223,6 +227,8 @@ export const EditorialGrid = () => {
               src={photo.url}
               alt={photo.filename}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              loading="lazy"
+              decoding="async"
             />
             <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-500">
               <div className="text-center">
@@ -247,6 +253,8 @@ export const EditorialGrid = () => {
               src={photo.url}
               alt={photo.filename}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              loading="lazy"
+              decoding="async"
             />
             <div className="absolute bottom-2 right-2 bg-background/80 text-muted-foreground px-2 py-1 rounded text-xs font-mono">
               #{idx + 2 + layout.secondary.length + layout.tertiary.length}

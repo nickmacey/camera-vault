@@ -52,6 +52,8 @@ export const AnalysisLoadingOverlay = ({
                 src={photo.url}
                 alt=""
                 className="w-full h-full object-cover blur-2xl scale-110"
+                loading="lazy"
+                decoding="async"
               />
             </div>
           ))

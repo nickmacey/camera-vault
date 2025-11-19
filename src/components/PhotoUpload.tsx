@@ -7,11 +7,11 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import imageCompression from 'browser-image-compression';
 import { AnalysisLoadingOverlay } from "@/components/AnalysisLoadingOverlay";
 import { ProviderConnectionModal } from "@/components/ProviderConnectionModal";
 import { SignupPromptModal } from "@/components/SignupPromptModal";
 import { extractExifData, calculateOrientation, isValidImageFormat, isValidFileSize } from "@/lib/providers/manualUploadProvider";
+import { compressImage, getOptimalQuality } from "@/lib/imageOptimization";
 
 const PhotoUpload = () => {
   const navigate = useNavigate();
@@ -260,15 +260,12 @@ const PhotoUpload = () => {
               }
             }
 
-            // Generate thumbnail
-            const thumbnailOptions = {
+            // Generate thumbnail with optimal compression
+            const thumbnailFile = await compressImage(file, {
               maxSizeMB: 0.2,
               maxWidthOrHeight: 400,
-              useWebWorker: true,
-              fileType: 'image/jpeg'
-            };
-            
-            const thumbnailFile = await imageCompression(file, thumbnailOptions);
+              quality: getOptimalQuality(),
+            });
             
             // Upload original and thumbnail to storage
             const fileExt = file.name.split('.').pop();
@@ -469,6 +466,8 @@ const PhotoUpload = () => {
                   src={URL.createObjectURL(file)}
                   alt={file.name}
                   className="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
                 />
               </div>
             ))}

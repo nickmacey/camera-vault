@@ -142,6 +142,8 @@ export const PhotoDetailModal = ({ photo, open, onOpenChange }: PhotoDetailModal
                 src={photoUrl}
                 alt={photo.filename}
                 className="max-w-full max-h-[50vh] lg:max-h-[85vh] object-contain"
+                loading="eager"
+                decoding="async"
               />
               
               {/* Provider Badge */}
