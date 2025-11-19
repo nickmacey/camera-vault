@@ -115,6 +115,8 @@ export const SocialShareDialog = ({ photos, disabled }: SocialShareDialogProps) 
                 src={previewUrl} 
                 alt="Social grid preview" 
                 className="w-full h-full object-contain"
+                loading="lazy"
+                decoding="async"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">

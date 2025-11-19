@@ -88,7 +88,9 @@ const StatsBar = () => {
           <img 
             src={accentPhoto.url} 
             alt=""
-            className="w-full h-full object-cover blur-3xl scale-110" 
+            className="w-full h-full object-cover blur-3xl scale-110"
+            loading="lazy"
+            decoding="async"
           />
         </div>
       )}

@@ -78,6 +78,8 @@ export const PhotoBackgroundCard = ({
               className={`w-full h-full object-cover transition-all duration-1000 ${
                 isHovered ? 'opacity-30 scale-110 blur-sm' : 'opacity-15 scale-100 blur-[2px]'
               }`}
+              loading="lazy"
+              decoding="async"
             />
             <div className={`absolute inset-0 bg-gradient-to-br ${styles.gradient} transition-opacity duration-700`} />
           </>
@@ -170,6 +172,8 @@ export const PhotoBackgroundCard = ({
                     src={url}
                     alt=""
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                    decoding="async"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
                 </div>

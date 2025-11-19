@@ -113,6 +113,7 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
             src={heroBackground}
             alt="Hero background"
             className="w-full h-full object-cover"
+            loading="eager"
           />
         </div>
         
@@ -129,6 +130,8 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
                 src={photo.url}
                 alt={photo.filename}
                 className="w-full h-full object-cover blur-[2px] scale-110"
+                loading="lazy"
+                decoding="async"
               />
             </div>
           ))}
