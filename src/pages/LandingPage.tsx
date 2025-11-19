@@ -61,12 +61,12 @@ export default function LandingPage() {
 
           <h1 className="text-5xl md:text-7xl font-black text-foreground mb-6 uppercase tracking-tight leading-tight">
             Turn Your Camera Roll<br />
-            Into <span className="text-primary">Cash</span>
+            Into <span className="text-primary">Magic</span>
           </h1>
 
           <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-3xl mx-auto leading-relaxed">
             AI analyzes every photo, finds your hidden gems, and helps you sell prints.
-            <span className="text-foreground font-bold"> The difference between a camera roll and a career.</span>
+            <span className="text-foreground font-bold"> The difference between a camera roll and a treasure.</span>
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
@@ -558,7 +558,7 @@ export default function LandingPage() {
         <div className="container mx-auto max-w-4xl text-center">
           <h2 className="text-4xl md:text-5xl font-black text-foreground mb-6 uppercase">
             Ready to Unlock Your<br />
-            Photo <span className="text-primary">Goldmine</span>?
+            Photo <span className="text-primary">Magic</span>?
           </h2>
           <p className="text-xl text-muted-foreground mb-12">
             Join 1,000+ photographers who've discovered their hidden gems
