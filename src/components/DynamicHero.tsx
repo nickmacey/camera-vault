@@ -13,6 +13,7 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [scrollY, setScrollY] = useState(0);
   const [hasPhotos, setHasPhotos] = useState(false);
+  const [photoCount, setPhotoCount] = useState(0);
   const [backgroundSlide, setBackgroundSlide] = useState(0);
   const [featuredPhotos, setFeaturedPhotos] = useState<any[]>([]);
   const heroRef = useRef<HTMLElement>(null);
@@ -28,6 +29,14 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
   const userPhotos = [...vaultWorthy, ...highValue].slice(0, 10);
   const heroPhotos = hasPhotos && userPhotos.length > 0 ? userPhotos : featuredPhotos;
 
+  // Dynamic button text based on vault status
+  const getButtonText = () => {
+    if (!hasPhotos) return 'CONNECT YOUR PHOTOS';
+    if (photoCount < 10) return 'BUILD YOUR VAULT';
+    if (photoCount < 50) return 'LOAD YOUR VAULT';
+    return 'ADD MORE GEMS';
+  };
+
   // Check if user has any photos and load featured photos if needed
   useEffect(() => {
     const checkPhotos = async () => {
@@ -36,7 +45,9 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
         const { count } = await supabase
           .from('photos')
           .select('*', { count: 'exact', head: true });
-        const userHasPhotos = (count || 0) > 0;
+        const userPhotoCount = count || 0;
+        const userHasPhotos = userPhotoCount > 0;
+        setPhotoCount(userPhotoCount);
         setHasPhotos(userHasPhotos);
         
         // Load featured photos if user has no photos
@@ -140,7 +151,7 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
             >
               <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
               <span className="relative z-10 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-glow font-black tracking-wider drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]" style={{ WebkitTextStroke: '1px hsla(var(--primary)/0.5)' }}>
-                {hasPhotos ? 'LOAD YOUR VAULT' : 'CONNECT YOUR PHOTOS'}
+                {getButtonText()}
               </span>
             </Button>
           </div>
@@ -237,7 +248,7 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
           >
             <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
             <span className="relative z-10 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-glow font-black tracking-wider drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]" style={{ WebkitTextStroke: '1px hsla(var(--primary)/0.5)' }}>
-              {hasPhotos ? 'LOAD YOUR VAULT' : 'CONNECT YOUR PHOTOS'}
+              {getButtonText()}
             </span>
           </Button>
           </div>
