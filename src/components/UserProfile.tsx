@@ -1,13 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { User, Mail, LogOut, Shield, Image, Award, Star, Link as LinkIcon } from "lucide-react";
+import { User, Mail, LogOut, Shield, Image, Award, Star, Link as LinkIcon, Edit2, Save, X, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
+import { compressImage } from "@/lib/imageOptimization";
+import { z } from "zod";
+
+const nameSchema = z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters");
+const avatarSchema = z.instanceof(File).refine((file) => file.size <= 5 * 1024 * 1024, "Avatar must be less than 5MB");
 
 interface Profile {
   id: string;
@@ -47,6 +54,15 @@ export const UserProfile = () => {
     avg_score: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editedProfile, setEditedProfile] = useState({
+    first_name: "",
+    last_name: "",
+  });
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -69,6 +85,10 @@ export const UserProfile = () => {
 
       if (profileData) {
         setProfile(profileData);
+        setEditedProfile({
+          first_name: profileData.first_name,
+          last_name: profileData.last_name || "",
+        });
       }
 
       // Load connected providers
@@ -110,6 +130,123 @@ export const UserProfile = () => {
     }
   };
 
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      avatarSchema.parse(file);
+      
+      // Compress the image
+      const compressed = await compressImage(file, { maxSizeMB: 0.5, maxWidthOrHeight: 400 });
+      setAvatarFile(compressed);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(compressed);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: "Invalid file",
+          description: error.errors[0].message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to process image",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      // Validate inputs
+      nameSchema.parse(editedProfile.first_name);
+      
+      setSaving(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      let avatarUrl = profile?.avatar_url;
+
+      // Upload avatar if changed
+      if (avatarFile) {
+        const fileExt = avatarFile.name.split('.').pop();
+        const filePath = `${user.id}/avatar.${fileExt}`;
+
+        // Delete old avatar if exists
+        if (profile?.avatar_url) {
+          const oldPath = profile.avatar_url.split('/').pop();
+          if (oldPath) {
+            await supabase.storage.from('avatars').remove([`${user.id}/${oldPath}`]);
+          }
+        }
+
+        // Upload new avatar
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(filePath, avatarFile, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(filePath);
+
+        avatarUrl = publicUrl;
+      }
+
+      // Update profile
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          first_name: editedProfile.first_name,
+          last_name: editedProfile.last_name || null,
+          avatar_url: avatarUrl,
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      // Reload profile data
+      await loadUserData();
+      
+      setIsEditing(false);
+      setAvatarFile(null);
+      setAvatarPreview(null);
+      
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been updated successfully.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update profile",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditedProfile({
+      first_name: profile?.first_name || "",
+      last_name: profile?.last_name || "",
+    });
+    setAvatarFile(null);
+    setAvatarPreview(null);
+  };
+
   const handleSignOut = async () => {
     try {
       await supabase.auth.signOut();
@@ -140,33 +277,123 @@ export const UserProfile = () => {
       {/* User Info Card */}
       <Card className="border-2 border-vault-gold/20">
         <CardHeader>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <Avatar className="h-16 w-16 sm:h-20 sm:w-20 border-2 border-vault-gold">
-                <AvatarImage src={profile?.avatar_url || undefined} />
-                <AvatarFallback className="bg-vault-gold/20 text-vault-gold text-xl font-bold">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <CardTitle className="text-xl sm:text-2xl text-vault-gold">
-                  {profile?.first_name} {profile?.last_name || ''}
-                </CardTitle>
-                <CardDescription className="flex items-center gap-2 mt-1">
-                  <Mail className="h-4 w-4" />
-                  <span className="text-xs sm:text-sm break-all">{email}</span>
-                </CardDescription>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-4 w-full sm:w-auto">
+                <div className="relative">
+                  <Avatar className="h-16 w-16 sm:h-20 sm:w-20 border-2 border-vault-gold">
+                    <AvatarImage src={avatarPreview || profile?.avatar_url || undefined} />
+                    <AvatarFallback className="bg-vault-gold/20 text-vault-gold text-xl font-bold">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  {isEditing && (
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="absolute -bottom-1 -right-1 p-1.5 bg-vault-gold text-background rounded-full hover:bg-vault-gold/90 transition-colors shadow-lg"
+                      aria-label="Upload avatar"
+                    >
+                      <Upload className="h-3 w-3" />
+                    </button>
+                  )}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                  />
+                </div>
+                
+                {isEditing ? (
+                  <div className="flex-1 space-y-2 w-full">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <Label htmlFor="first_name" className="text-xs">First Name</Label>
+                        <Input
+                          id="first_name"
+                          value={editedProfile.first_name}
+                          onChange={(e) => setEditedProfile({ ...editedProfile, first_name: e.target.value })}
+                          placeholder="First name"
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="last_name" className="text-xs">Last Name</Label>
+                        <Input
+                          id="last_name"
+                          value={editedProfile.last_name}
+                          onChange={(e) => setEditedProfile({ ...editedProfile, last_name: e.target.value })}
+                          placeholder="Last name"
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                    </div>
+                    <CardDescription className="flex items-center gap-2 text-xs">
+                      <Mail className="h-3 w-3" />
+                      <span className="break-all">{email}</span>
+                    </CardDescription>
+                  </div>
+                ) : (
+                  <div>
+                    <CardTitle className="text-xl sm:text-2xl text-vault-gold">
+                      {profile?.first_name} {profile?.last_name || ''}
+                    </CardTitle>
+                    <CardDescription className="flex items-center gap-2 mt-1">
+                      <Mail className="h-4 w-4" />
+                      <span className="text-xs sm:text-sm break-all">{email}</span>
+                    </CardDescription>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex gap-2 w-full sm:w-auto">
+                {isEditing ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCancelEdit}
+                      disabled={saving}
+                      className="border-border hover:bg-muted flex-1 sm:flex-none"
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={handleSaveProfile}
+                      disabled={saving}
+                      className="bg-vault-gold text-background hover:bg-vault-gold/90 flex-1 sm:flex-none"
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {saving ? "Saving..." : "Save"}
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsEditing(true)}
+                      className="border-vault-gold/30 hover:bg-vault-gold/10 flex-1 sm:flex-none"
+                    >
+                      <Edit2 className="h-4 w-4 mr-2" />
+                      Edit Profile
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSignOut}
+                      className="border-vault-gold/30 hover:bg-vault-gold/10 flex-1 sm:flex-none"
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign Out
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleSignOut}
-              className="border-vault-gold/30 hover:bg-vault-gold/10 w-full sm:w-auto"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
           </div>
         </CardHeader>
       </Card>
