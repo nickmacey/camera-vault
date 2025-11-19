@@ -15,6 +15,7 @@ import { GoogleMap } from "./GoogleMap";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Tables } from "@/integrations/supabase/types";
+import { AnimatedScoreBar } from "./AnimatedScoreBar";
 
 type Photo = Tables<"photos">;
 
@@ -182,38 +183,26 @@ export const PhotoDetailModal = ({ photo, open, onOpenChange }: PhotoDetailModal
                     Score Analysis
                   </h3>
                   
-                  <div className="space-y-3">
-                    <div>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="text-muted-foreground">Technical Excellence</span>
-                        <span className="font-mono text-foreground">{photo.technical_score?.toFixed(1) || '0.0'}</span>
-                      </div>
-                      <Progress value={(photo.technical_score || 0) * 10} className="h-2" />
-                    </div>
+                  <div className="space-y-4">
+                    <AnimatedScoreBar
+                      score={photo.technical_score || 0}
+                      label="Technical Excellence"
+                    />
 
-                    <div>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="text-muted-foreground">Commercial Potential</span>
-                        <span className="font-mono text-foreground">{photo.commercial_score?.toFixed(1) || '0.0'}</span>
-                      </div>
-                      <Progress value={(photo.commercial_score || 0) * 10} className="h-2" />
-                    </div>
+                    <AnimatedScoreBar
+                      score={photo.commercial_score || 0}
+                      label="Commercial Potential"
+                    />
 
-                    <div>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="text-muted-foreground">Artistic Vision</span>
-                        <span className="font-mono text-foreground">{photo.artistic_score?.toFixed(1) || '0.0'}</span>
-                      </div>
-                      <Progress value={(photo.artistic_score || 0) * 10} className="h-2" />
-                    </div>
+                    <AnimatedScoreBar
+                      score={photo.artistic_score || 0}
+                      label="Artistic Vision"
+                    />
 
-                    <div>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="text-muted-foreground">Emotional Resonance</span>
-                        <span className="font-mono text-foreground">{photo.emotional_score?.toFixed(1) || '0.0'}</span>
-                      </div>
-                      <Progress value={(photo.emotional_score || 0) * 10} className="h-2" />
-                    </div>
+                    <AnimatedScoreBar
+                      score={photo.emotional_score || 0}
+                      label="Emotional Resonance"
+                    />
                   </div>
                 </div>
 
