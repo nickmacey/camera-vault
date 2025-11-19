@@ -80,6 +80,21 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
         stage === 'complete' ? 'opacity-0' : 'opacity-100'
       }`}
     >
+      {/* Bright Flash - Appears at moment of explosion */}
+      {stage === 'unlocking' && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div 
+            className="absolute rounded-full bg-white"
+            style={{
+              width: '20px',
+              height: '20px',
+              animation: 'flash-burst 0.4s ease-out forwards',
+              boxShadow: '0 0 60px 30px rgba(255, 255, 255, 0.9), 0 0 120px 60px rgba(212, 175, 55, 0.6)',
+            }}
+          />
+        </div>
+      )}
+
       {/* Particle Explosion - Appears during unlocking */}
       {stage === 'unlocking' && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -97,7 +112,7 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
                 width: `${particle.size}px`,
                 height: `${particle.size}px`,
                 animation: `particle-explode 1.2s ease-out forwards`,
-                animationDelay: `${particle.delay}s`,
+                animationDelay: `${particle.delay + 0.2}s`,
                 '--particle-x': `${particle.vx * 80}px`,
                 '--particle-y': `${particle.vy * 80}px`,
                 boxShadow: particle.type === 'spark' 
