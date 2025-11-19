@@ -59,7 +59,19 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
             .order('featured_order', { ascending: true });
           
           if (featured && featured.length > 0) {
-            setFeaturedPhotos(featured);
+            // Generate signed URLs for featured photos
+            const photosWithUrls = await Promise.all(
+              featured.map(async (photo) => {
+                const { data: urlData } = await supabase.storage
+                  .from('photos')
+                  .createSignedUrl(photo.storage_path, 3600);
+                return {
+                  ...photo,
+                  url: urlData?.signedUrl || '',
+                };
+              })
+            );
+            setFeaturedPhotos(photosWithUrls);
           }
         }
       } else {
@@ -71,7 +83,19 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
           .order('featured_order', { ascending: true });
         
         if (featured && featured.length > 0) {
-          setFeaturedPhotos(featured);
+          // Generate signed URLs for featured photos
+          const photosWithUrls = await Promise.all(
+            featured.map(async (photo) => {
+              const { data: urlData } = await supabase.storage
+                .from('photos')
+                .createSignedUrl(photo.storage_path, 3600);
+              return {
+                ...photo,
+                url: urlData?.signedUrl || '',
+              };
+            })
+          );
+          setFeaturedPhotos(photosWithUrls);
         }
       }
     };
