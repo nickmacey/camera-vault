@@ -16,6 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { AutoSyncSettings } from "@/components/AutoSyncSettings";
 import { UserProfile } from "@/components/UserProfile";
+import { FeaturedPhotosManager } from "@/components/FeaturedPhotosManager";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
@@ -228,11 +229,12 @@ const Index = () => {
             <div className="max-w-6xl mx-auto">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-vault-gold text-center mb-6 md:mb-8">VAULT SETTINGS</h2>
               <Tabs defaultValue="profile" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6">
+                <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 mb-6">
                   <TabsTrigger value="profile">Profile</TabsTrigger>
                   <TabsTrigger value="scoring">Scoring</TabsTrigger>
                   <TabsTrigger value="brand">Brand Voice</TabsTrigger>
                   <TabsTrigger value="sync">Auto-Sync</TabsTrigger>
+                  <TabsTrigger value="carousel">Carousel</TabsTrigger>
                 </TabsList>
                 <TabsContent value="profile" className="space-y-6">
                   <UserProfile />
@@ -286,6 +288,9 @@ const Index = () => {
                   </div>
                 </TabsContent>
                 <TabsContent value="sync"><AutoSyncSettings /></TabsContent>
+                <TabsContent value="carousel" className="space-y-6">
+                  <FeaturedPhotosManager />
+                </TabsContent>
               </Tabs>
             </div>
           </TabsContent>

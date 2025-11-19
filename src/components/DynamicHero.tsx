@@ -14,6 +14,7 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
   const [scrollY, setScrollY] = useState(0);
   const [hasPhotos, setHasPhotos] = useState(false);
   const [backgroundSlide, setBackgroundSlide] = useState(0);
+  const [featuredPhotos, setFeaturedPhotos] = useState<any[]>([]);
   const heroRef = useRef<HTMLElement>(null);
   
   // Multiple hero background variations that rotate
@@ -23,10 +24,11 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
     heroBackground,
   ];
   
-  // Combine vault-worthy and high-value photos for more variety
-  const heroPhotos = [...vaultWorthy, ...highValue].slice(0, 10);
+  // Use user's photos if they have any, otherwise use featured photos
+  const userPhotos = [...vaultWorthy, ...highValue].slice(0, 10);
+  const heroPhotos = hasPhotos && userPhotos.length > 0 ? userPhotos : featuredPhotos;
 
-  // Check if user has any photos
+  // Check if user has any photos and load featured photos if needed
   useEffect(() => {
     const checkPhotos = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -34,7 +36,32 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
         const { count } = await supabase
           .from('photos')
           .select('*', { count: 'exact', head: true });
-        setHasPhotos((count || 0) > 0);
+        const userHasPhotos = (count || 0) > 0;
+        setHasPhotos(userHasPhotos);
+        
+        // Load featured photos if user has no photos
+        if (!userHasPhotos) {
+          const { data: featured } = await supabase
+            .from('photos')
+            .select('*')
+            .eq('is_featured', true)
+            .order('featured_order', { ascending: true });
+          
+          if (featured && featured.length > 0) {
+            setFeaturedPhotos(featured);
+          }
+        }
+      } else {
+        // Not logged in - show featured photos
+        const { data: featured } = await supabase
+          .from('photos')
+          .select('*')
+          .eq('is_featured', true)
+          .order('featured_order', { ascending: true });
+        
+        if (featured && featured.length > 0) {
+          setFeaturedPhotos(featured);
+        }
       }
     };
     checkPhotos();
