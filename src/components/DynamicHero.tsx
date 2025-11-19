@@ -71,7 +71,7 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
     if (heroPhotos.length === 0) return;
     
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % heroPhotos.length);
+      setCurrentSlide((prev) => (prev - 1 + heroPhotos.length) % heroPhotos.length);
     }, 5000);
 
     return () => clearInterval(interval);
@@ -182,23 +182,32 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
         </div>
         
         {/* User Photos Layer */}
-        <div className="absolute inset-0" style={{ transform: `translateY(${bgParallaxOffset}px)` }}>
-          {heroPhotos.map((photo, index) => (
-            <div
-              key={photo.id}
-              className={`absolute inset-0 transition-opacity duration-[2000ms] ease-in-out ${
-                index === currentSlide ? 'opacity-30' : 'opacity-0'
-              }`}
-            >
-              <img 
-                src={photo.url}
-                alt={photo.filename}
-                className="w-full h-full object-cover blur-[2px] scale-110"
-                loading="lazy"
-                decoding="async"
-              />
-            </div>
-          ))}
+        <div className="absolute inset-0 overflow-hidden" style={{ transform: `translateY(${bgParallaxOffset}px)` }}>
+          {heroPhotos.map((photo, index) => {
+            const isActive = index === currentSlide;
+            const isPrev = index === (currentSlide + 1) % heroPhotos.length;
+            
+            return (
+              <div
+                key={photo.id}
+                className={`absolute inset-0 transition-all duration-[2000ms] ease-in-out ${
+                  isActive 
+                    ? 'opacity-30 translate-x-0' 
+                    : isPrev
+                    ? 'opacity-0 -translate-x-full'
+                    : 'opacity-0 translate-x-full'
+                }`}
+              >
+                <img 
+                  src={photo.url}
+                  alt={photo.filename}
+                  className="w-full h-full object-cover blur-[2px] scale-110"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+            );
+          })}
         </div>
         
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/60 to-background" />
