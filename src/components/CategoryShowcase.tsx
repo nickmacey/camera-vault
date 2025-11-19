@@ -58,6 +58,7 @@ export const CategoryShowcase = () => {
   
   const vaultWorthyValue = vaultWorthyCount * 150;
   const highValueValue = highValueCount * 75;
+  const archiveValue = archiveCount * 25;
 
   return (
     <section className="relative py-12 md:py-24 px-3 sm:px-4 md:px-12 overflow-hidden">
@@ -108,6 +109,7 @@ export const CategoryShowcase = () => {
             title="GEMS"
             subtitle="Hidden Talent"
             count={archiveCount}
+            value={`$${archiveValue.toLocaleString()}`}
             description="Explore and uncover diamonds in the rough waiting to shine."
             previewPhotos={archivePhotosWithUrls.map(p => p.url).filter(Boolean)}
             variant="archive"
