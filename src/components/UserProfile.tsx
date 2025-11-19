@@ -13,6 +13,8 @@ import { toast } from "@/hooks/use-toast";
 import { compressImage } from "@/lib/imageOptimization";
 import { z } from "zod";
 import { usePhotoStats } from "@/hooks/usePhotoStats";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { HeroPhotosManager } from "@/components/HeroPhotosManager";
 
 const nameSchema = z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters");
 const avatarSchema = z.instanceof(File).refine((file) => file.size <= 5 * 1024 * 1024, "Avatar must be less than 5MB");
@@ -237,9 +239,15 @@ export const UserProfile = () => {
     : "?";
 
   return (
-    <div className="space-y-6">
-      {/* User Info Card */}
-      <Card className="border-2 border-vault-gold/20">
+    <Tabs defaultValue="profile" className="space-y-6">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="profile">Profile & Stats</TabsTrigger>
+        <TabsTrigger value="hero">Hero Photos</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="profile" className="space-y-6">
+        {/* User Info Card */}
+        <Card className="border-2 border-vault-gold/20">
         <CardHeader>
           <div className="flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -403,6 +411,11 @@ export const UserProfile = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </TabsContent>
+
+      <TabsContent value="hero">
+        <HeroPhotosManager />
+      </TabsContent>
+    </Tabs>
   );
 };

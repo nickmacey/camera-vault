@@ -25,9 +25,15 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
     heroBackground,
   ];
   
-  // Use user's photos if they have any, otherwise use featured photos
+  const [heroSelectedPhotos, setHeroSelectedPhotos] = useState<any[]>([]);
+  
+  // Priority: User-selected hero photos > Top scored photos > Featured photos
   const userPhotos = [...vaultWorthy, ...highValue].slice(0, 10);
-  const heroPhotos = hasPhotos && userPhotos.length > 0 ? userPhotos : featuredPhotos;
+  const heroPhotos = hasPhotos && heroSelectedPhotos.length > 0 
+    ? heroSelectedPhotos 
+    : hasPhotos && userPhotos.length > 0 
+    ? userPhotos 
+    : featuredPhotos;
 
   // Dynamic button text based on vault status
   const getButtonText = () => {
@@ -37,7 +43,7 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
     return 'ADD MORE GEMS';
   };
 
-  // Check if user has any photos and load featured photos if needed
+  // Check if user has any photos and load hero/featured photos
   useEffect(() => {
     const checkPhotos = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -49,6 +55,29 @@ export const DynamicHero = ({ onCTAClick }: DynamicHeroProps) => {
         const userHasPhotos = userPhotoCount > 0;
         setPhotoCount(userPhotoCount);
         setHasPhotos(userHasPhotos);
+        
+        // Check for user-selected hero photos first
+        const { data: heroPhotos } = await supabase
+          .from('photos')
+          .select('*')
+          .eq('is_hero', true)
+          .order('hero_order', { ascending: true });
+        
+        if (heroPhotos && heroPhotos.length > 0) {
+          // Generate signed URLs for hero photos
+          const photosWithUrls = await Promise.all(
+            heroPhotos.map(async (photo) => {
+              const { data: urlData } = await supabase.storage
+                .from('photos')
+                .createSignedUrl(photo.storage_path, 3600);
+              return {
+                ...photo,
+                url: urlData?.signedUrl || '',
+              };
+            })
+          );
+          setHeroSelectedPhotos(photosWithUrls);
+        }
         
         // Load featured photos if user has no photos
         if (!userHasPhotos) {
