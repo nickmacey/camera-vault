@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Lock } from "lucide-react";
+import { Logo } from "./Logo";
 
 interface VaultDoorAnimationProps {
   onComplete: () => void;
@@ -263,19 +263,17 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
               stage === 'unlock' ? 'border-white' : 'border-vault-gold/40'
             }`}
           >
-            {/* Lock icon */}
+            {/* Logo icon */}
             <div 
               className={`relative transition-all duration-500 ${
                 stage === 'unlock' ? 'animate-pulse' : ''
               }`}
             >
-              <Lock 
-                className={`transition-all duration-500 ${
-                  stage === 'unlock' ? 'text-white drop-shadow-[0_0_30px_rgba(255,255,255,1)]' : 'text-vault-gold drop-shadow-[0_0_15px_rgba(212,175,55,0.7)]'
-                }`}
-                size={72}
-                strokeWidth={2.5}
-              />
+              <div className={`transition-all duration-500 ${
+                stage === 'unlock' ? '[filter:drop-shadow(0_0_30px_rgba(255,255,255,1))]' : '[filter:drop-shadow(0_0_15px_rgba(212,175,55,0.7))]'
+              }`}>
+                <Logo variant="icon" size="lg" />
+              </div>
               
               {/* Shimmer effect */}
               <div 
