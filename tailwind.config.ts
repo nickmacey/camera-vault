@@ -143,6 +143,16 @@ export default {
             filter: "hue-rotate(90deg) brightness(1.2)"
           },
         },
+        "particle-explode": {
+          "0%": {
+            transform: "translate(0, 0) scale(1)",
+            opacity: "1"
+          },
+          "100%": {
+            transform: "translate(var(--particle-x), var(--particle-y)) scale(0)",
+            opacity: "0"
+          }
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -153,6 +163,7 @@ export default {
         "float-up": "float-up 4s ease-out infinite",
         "lock-open": "lock-open 0.8s ease-out forwards",
         "color-shift": "color-shift 1s ease-in-out forwards",
+        "particle-explode": "particle-explode 1.2s ease-out forwards",
       },
     },
   },
