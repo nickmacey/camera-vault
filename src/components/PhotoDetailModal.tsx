@@ -206,14 +206,14 @@ export const PhotoDetailModal = ({ photo, open, onOpenChange }: PhotoDetailModal
                   </div>
                 </div>
 
-                {/* AI Analysis */}
+                {/* Vault Description */}
                 {photo.ai_analysis && (
                   <>
                     <Separator className="bg-vault-mid-gray" />
                     <div className="space-y-2 md:space-y-3">
                       <h3 className="text-xs md:text-sm font-bold uppercase tracking-wide text-vault-gold flex items-center gap-2">
                         <Sparkles className="h-4 w-4" />
-                        AI Analysis
+                        Vault Description
                       </h3>
                       <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
                         {photo.ai_analysis}
