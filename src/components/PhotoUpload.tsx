@@ -114,7 +114,11 @@ const PhotoUpload = () => {
       setFiles(uniqueFiles);
 
       if (foundDuplicates.length > 0) {
-        toast.warning(`Found ${foundDuplicates.length} duplicate(s). They've been filtered out.`, { id: toastId });
+        const duplicateNames = foundDuplicates.map(d => d.file.name).join(', ');
+        toast.warning(
+          `Found ${foundDuplicates.length} duplicate(s): ${duplicateNames.slice(0, 100)}${duplicateNames.length > 100 ? '...' : ''}`, 
+          { id: toastId, duration: 6000 }
+        );
       } else {
         toast.success(`No duplicates found! Ready to upload ${uniqueFiles.length} photo(s)`, { id: toastId });
       }
@@ -576,6 +580,29 @@ const PhotoUpload = () => {
                 {files.length} unique asset{files.length !== 1 ? "s" : ""} selected
                 {duplicates.length > 0 && ` • ${duplicates.length} duplicate${duplicates.length !== 1 ? "s" : ""} filtered`}
               </p>
+              {duplicates.length > 0 && (
+                <div className="mt-3 text-xs bg-vault-gold/10 border border-vault-gold/30 rounded-lg p-3 max-w-md">
+                  <p className="font-semibold text-vault-gold mb-2 flex items-center gap-2">
+                    <Shield className="h-4 w-4" />
+                    Duplicates Prevented
+                  </p>
+                  <ul className="space-y-1 max-h-24 overflow-y-auto text-vault-light-gray/90">
+                    {duplicates.map((dup, idx) => (
+                      <li key={idx} className="flex items-start gap-1">
+                        <span className="text-vault-gold">•</span>
+                        <span className="flex-1">
+                          <span className="font-medium">{dup.file.name}</span>
+                          {dup.existingPhoto && (
+                            <span className="text-vault-light-gray/60 block text-[10px]">
+                              Already in vault ({new Date(dup.existingPhoto.created_at).toLocaleDateString()})
+                            </span>
+                          )}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
             <Button
               onClick={handleUpload}
