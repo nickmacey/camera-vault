@@ -1,5 +1,5 @@
-import { Lock } from "lucide-react";
 import { useEffect, useState } from "react";
+import vaultLogo from "@/assets/vault-logo.png";
 
 interface AnimatedLockIconProps {
   size?: number;
@@ -94,12 +94,13 @@ export const AnimatedLockIcon = ({ size = 64, className = "" }: AnimatedLockIcon
       <div className="relative rounded-full p-1 bg-gradient-to-br from-vault-gold via-vault-gold/80 to-vault-gold/50 animate-pulse"
            style={{ animationDuration: '4s' }}>
         <div className="rounded-full bg-vault-black p-6 border-2 border-vault-gold/30">
-          {/* Lock icon with subtle animations */}
+          {/* Logo with subtle animations */}
           <div className="relative animate-[scale-in_0.5s_ease-out]">
-            <Lock 
-              className="text-vault-gold drop-shadow-[0_0_10px_rgba(212,175,55,0.5)] transition-transform duration-300 hover:scale-110" 
-              size={size}
-              strokeWidth={2.5}
+            <img 
+              src={vaultLogo}
+              alt="VAULT Logo"
+              className="drop-shadow-[0_0_10px_rgba(212,175,55,0.5)] transition-transform duration-300 hover:scale-110" 
+              style={{ width: `${size}px`, height: `${size}px` }}
             />
             
             {/* Shimmer effect overlay */}
