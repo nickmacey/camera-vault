@@ -232,6 +232,7 @@ const PhotoUpload = () => {
       if (!user) throw new Error("Not authenticated");
 
       let successCount = 0;
+      let failedCount = 0;
       const batchSize = 3; // Process 3 files concurrently
       
       for (let i = 0; i < files.length; i += batchSize) {
@@ -295,7 +296,8 @@ const PhotoUpload = () => {
                   reader.readAsDataURL(file);
                 });
 
-                const { data: analysisData, error: analysisError } = await supabase.functions.invoke('analyze-photo-claude', {
+                // Add 60 second timeout to prevent hanging
+                const analysisPromise = supabase.functions.invoke('analyze-photo-claude', {
                   body: { 
                     imageBase64: base64,
                     userSettings: settingsData ? {
@@ -306,6 +308,15 @@ const PhotoUpload = () => {
                     } : undefined
                   }
                 });
+
+                const timeoutPromise = new Promise((_, reject) => 
+                  setTimeout(() => reject(new Error('Analysis timeout - skipping photo')), 60000)
+                );
+
+                const { data: analysisData, error: analysisError } = await Promise.race([
+                  analysisPromise,
+                  timeoutPromise
+                ]) as any;
                 
                 setIsCompressing(false); // Clear compression indicator after analysis
 
@@ -319,8 +330,9 @@ const PhotoUpload = () => {
                   aiAnalysis = analysisData.ai_analysis;
                 }
               } catch (error) {
-                console.error('AI analysis failed:', error);
+                console.error(`AI analysis failed for ${file.name}:`, error);
                 setIsCompressing(false);
+                // Continue with upload even if analysis fails
               }
             }
 
@@ -386,6 +398,8 @@ const PhotoUpload = () => {
             successCount++;
           } catch (error) {
             console.error(`Failed to upload ${file.name}:`, error);
+            failedCount++;
+            // Continue with next photo instead of stopping
           }
         }));
         
@@ -393,7 +407,11 @@ const PhotoUpload = () => {
         toast.loading(`Uploading... ${Math.min(i + batchSize, files.length)}/${files.length}`, { id: toastId });
       }
 
-      toast.success(`Successfully uploaded ${successCount} photo(s)!`, { id: toastId });
+      if (failedCount > 0) {
+        toast.success(`Uploaded ${successCount} photo(s). ${failedCount} failed and were skipped.`, { id: toastId, duration: 6000 });
+      } else {
+        toast.success(`Successfully uploaded ${successCount} photo(s)!`, { id: toastId });
+      }
       setFiles([]);
       setUploadProgress({ current: 0, total: 0 });
       
