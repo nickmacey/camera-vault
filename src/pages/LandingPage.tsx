@@ -589,11 +589,8 @@ export default function LandingPage() {
               <p className="text-base text-muted-foreground max-w-sm leading-relaxed">
                 AI-powered photo intelligence for photographers and creatives.
               </p>
-              <div className="flex items-center gap-2 text-xs text-vault-gold font-medium">
-                <span className="inline-block w-1.5 h-1.5 bg-vault-gold rounded-full animate-pulse" />
-                Your Photos. Your Fortune.
-              </div>
             </div>
+
 
             {/* Product Links */}
             <div className="space-y-5">
