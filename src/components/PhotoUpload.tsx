@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Lock, Shield, Link2, FolderOpen } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Lock, Shield, Link2, FolderOpen, Image as ImageIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -26,6 +26,8 @@ const PhotoUpload = () => {
   const [isCompressing, setIsCompressing] = useState(false);
   const [duplicates, setDuplicates] = useState<{file: File, existingPhoto: any}[]>([]);
   const [checkingDuplicates, setCheckingDuplicates] = useState(false);
+  const [thumbnailUrls, setThumbnailUrls] = useState<Map<string, string>>(new Map());
+  const analysisReadyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -38,6 +40,13 @@ const PhotoUpload = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Cleanup thumbnail URLs on unmount
+  useEffect(() => {
+    return () => {
+      thumbnailUrls.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [thumbnailUrls]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -113,6 +122,14 @@ const PhotoUpload = () => {
       setDuplicates(foundDuplicates);
       setFiles(uniqueFiles);
 
+      // Generate thumbnail URLs for preview
+      const newThumbnailUrls = new Map<string, string>();
+      uniqueFiles.forEach(file => {
+        const url = URL.createObjectURL(file);
+        newThumbnailUrls.set(file.name, url);
+      });
+      setThumbnailUrls(newThumbnailUrls);
+
       if (foundDuplicates.length > 0) {
         const duplicateNames = foundDuplicates.map(d => d.file.name).join(', ');
         toast.warning(
@@ -121,6 +138,13 @@ const PhotoUpload = () => {
         );
       } else {
         toast.success(`No duplicates found! Ready to upload ${uniqueFiles.length} photo(s)`, { id: toastId });
+      }
+
+      // Auto-scroll to analysis section after duplicate check
+      if (uniqueFiles.length > 0) {
+        setTimeout(() => {
+          analysisReadyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 300);
       }
     } catch (error) {
       console.error('Error checking duplicates:', error);
@@ -590,7 +614,7 @@ const PhotoUpload = () => {
       )}
 
       {files.length > 0 && (
-        <Card className="p-8 bg-vault-dark-gray border-vault-mid-gray">
+        <Card ref={analysisReadyRef} className="p-8 bg-vault-dark-gray border-vault-mid-gray">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <div>
               <h4 className="font-black text-xl text-vault-platinum uppercase tracking-wide">Ready for Analysis</h4>
@@ -639,13 +663,19 @@ const PhotoUpload = () => {
                 key={idx}
                 className="relative aspect-square rounded-lg overflow-hidden bg-vault-black border-2 border-vault-mid-gray hover:border-vault-gold vault-transition"
               >
-                <img
-                  src={URL.createObjectURL(file)}
-                  alt={file.name}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                  decoding="async"
-                />
+                {thumbnailUrls.has(file.name) ? (
+                  <img
+                    src={thumbnailUrls.get(file.name)}
+                    alt={file.name}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-vault-light-gray">
+                    <ImageIcon className="h-8 w-8" />
+                  </div>
+                )}
               </div>
             ))}
           </div>
