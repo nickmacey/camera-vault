@@ -65,7 +65,7 @@ export default function LandingPage() {
           </h1>
 
           <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-3xl mx-auto leading-relaxed">
-            AI analyzes every photo, finds your hidden gems, and helps you sell prints.
+            AI finds your best photos and helps you share them.
             <span className="text-foreground font-bold"> The difference between a camera roll and a treasure.</span>
           </p>
 
