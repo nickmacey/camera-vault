@@ -1,4 +1,4 @@
-import { Lock } from "lucide-react";
+import vaultLogo from "@/assets/vault-logo.png";
 
 interface LogoProps {
   variant?: "full" | "icon" | "wordmark";
@@ -18,8 +18,8 @@ export function Logo({ variant = "full", size = "md", animated = false }: LogoPr
   if (variant === "icon") {
     return (
       <div className={`relative ${animated ? 'group' : ''}`}>
-        <div className={`${sizeClasses.icon} rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary ${animated ? 'group-hover:rotate-45 transition-transform duration-500' : ''}`}>
-          <Lock className={`${sizeClasses.iconInner} text-primary`} />
+        <div className={`${sizeClasses.icon} flex items-center justify-center ${animated ? 'group-hover:rotate-45 transition-transform duration-500' : ''}`}>
+          <img src={vaultLogo} alt="VAULT Logo" className="w-full h-full object-contain" />
         </div>
       </div>
     );
