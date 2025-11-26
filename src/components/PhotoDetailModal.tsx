@@ -93,7 +93,7 @@ export const PhotoDetailModal = ({ photo, open, onOpenChange, onPhotoDeleted }: 
       setSocialModalOpen(true);
 
       // Save to database
-      await supabase
+      const { error: updateError } = await supabase
         .from('photos')
         .update({
           social_title: data.title,
@@ -104,6 +104,16 @@ export const PhotoDetailModal = ({ photo, open, onOpenChange, onPhotoDeleted }: 
           alt_text: data.altText,
         })
         .eq('id', photo.id);
+
+      if (updateError) throw updateError;
+
+      // Refresh the photo data to show saved content
+      onPhotoDeleted?.();
+
+      toast({
+        title: "Social Content Generated",
+        description: "Your content has been saved and is ready to use!",
+      });
 
     } catch (error) {
       console.error('Error generating social content:', error);
