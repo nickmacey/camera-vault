@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Logo } from "./Logo";
+import { SoundGenerator } from "@/lib/soundGenerator";
 
 interface VaultDoorAnimationProps {
   onComplete: () => void;
@@ -23,6 +24,15 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
   const [particles, setParticles] = useState<Particle[]>([]);
   const [orbitingParticles, setOrbitingParticles] = useState<Particle[]>([]);
   const [cameraFlash, setCameraFlash] = useState(false);
+  const soundGeneratorRef = useRef<SoundGenerator | null>(null);
+
+  // Initialize sound generator
+  useEffect(() => {
+    soundGeneratorRef.current = new SoundGenerator();
+    return () => {
+      soundGeneratorRef.current?.close();
+    };
+  }, []);
 
   // Generate orbiting particles
   useEffect(() => {
@@ -90,6 +100,7 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
     // Camera flash before door opening - 4.7s
     const flashTimer = setTimeout(() => {
       setCameraFlash(true);
+      soundGeneratorRef.current?.playCameraShutter();
     }, 4700);
 
     // Stage 4: Door opening - 2s
@@ -297,23 +308,44 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
                 }}
               />
               
-              {/* Camera flash on center circle */}
+              {/* Camera flash on center circle - Cascading waves */}
               {cameraFlash && (
-                <div 
-                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-                  style={{
-                    width: '40px',
-                    height: '40px',
-                  }}
-                >
+                <>
+                  {/* Central flash point */}
                   <div 
-                    className="absolute inset-0 rounded-full bg-white"
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
                     style={{
-                      animation: 'camera-flash 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards',
-                      boxShadow: '0 0 40px 20px rgba(255, 255, 255, 1), 0 0 80px 40px rgba(255, 255, 255, 0.8), 0 0 120px 60px rgba(212, 175, 55, 0.6)',
+                      width: '40px',
+                      height: '40px',
                     }}
-                  />
-                </div>
+                  >
+                    <div 
+                      className="absolute inset-0 rounded-full bg-white"
+                      style={{
+                        animation: 'camera-flash 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+                        boxShadow: '0 0 60px 30px rgba(255, 255, 255, 1), 0 0 120px 60px rgba(255, 255, 255, 0.9), 0 0 180px 90px rgba(212, 175, 55, 0.7)',
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Cascading waves expanding from center */}
+                  {[0, 1, 2, 3, 4].map((wave) => (
+                    <div
+                      key={wave}
+                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-4"
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        borderColor: wave < 2 ? 'rgba(255, 255, 255, 0.9)' : 'rgba(212, 175, 55, 0.8)',
+                        animation: `flash-wave-${wave} 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards`,
+                        animationDelay: `${wave * 0.05}s`,
+                        boxShadow: wave < 2 
+                          ? '0 0 40px rgba(255, 255, 255, 0.8), inset 0 0 30px rgba(255, 255, 255, 0.5)'
+                          : '0 0 30px rgba(212, 175, 55, 0.6), inset 0 0 20px rgba(212, 175, 55, 0.4)',
+                      }}
+                    />
+                  ))}
+                </>
               )}
             </div>
           </div>
@@ -454,11 +486,66 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
             opacity: 0;
           }
           20% {
-            transform: scale(1.5);
+            transform: scale(1.8);
             opacity: 1;
           }
           100% {
-            transform: scale(3);
+            transform: scale(4);
+            opacity: 0;
+          }
+        }
+        
+        @keyframes flash-wave-0 {
+          0% {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+          }
+          100% {
+            transform: translate(-50%, -50%) scale(25);
+            opacity: 0;
+          }
+        }
+        
+        @keyframes flash-wave-1 {
+          0% {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 0.9;
+          }
+          100% {
+            transform: translate(-50%, -50%) scale(30);
+            opacity: 0;
+          }
+        }
+        
+        @keyframes flash-wave-2 {
+          0% {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 0.8;
+          }
+          100% {
+            transform: translate(-50%, -50%) scale(35);
+            opacity: 0;
+          }
+        }
+        
+        @keyframes flash-wave-3 {
+          0% {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 0.6;
+          }
+          100% {
+            transform: translate(-50%, -50%) scale(40);
+            opacity: 0;
+          }
+        }
+        
+        @keyframes flash-wave-4 {
+          0% {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 0.4;
+          }
+          100% {
+            transform: translate(-50%, -50%) scale(45);
             opacity: 0;
           }
         }

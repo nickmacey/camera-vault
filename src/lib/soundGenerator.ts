@@ -183,6 +183,58 @@ export class SoundGenerator {
     rumble.stop(now + duration);
   }
 
+  // Camera shutter click sound
+  playCameraShutter() {
+    const now = this.audioContext.currentTime;
+    
+    // Create sharp click sounds for shutter
+    const createClick = (startTime: number, frequency: number, volume: number) => {
+      const osc = this.audioContext.createOscillator();
+      const gain = this.audioContext.createGain();
+      
+      osc.frequency.setValueAtTime(frequency, startTime);
+      osc.frequency.exponentialRampToValueAtTime(frequency * 0.5, startTime + 0.02);
+      osc.type = 'square';
+      
+      // Very sharp attack and decay
+      gain.gain.setValueAtTime(volume, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.05);
+      
+      osc.connect(gain);
+      gain.connect(this.audioContext.destination);
+      
+      osc.start(startTime);
+      osc.stop(startTime + 0.05);
+    };
+    
+    // Opening shutter sound (quick succession of clicks)
+    createClick(now, 2000, 0.3);
+    createClick(now + 0.015, 1800, 0.25);
+    createClick(now + 0.03, 1600, 0.2);
+    
+    // Closing shutter sound (slightly delayed)
+    createClick(now + 0.08, 1900, 0.28);
+    createClick(now + 0.095, 1700, 0.23);
+    createClick(now + 0.11, 1500, 0.18);
+    
+    // Add mechanical whir/wind sound
+    const whir = this.audioContext.createOscillator();
+    const whirGain = this.audioContext.createGain();
+    
+    whir.frequency.setValueAtTime(400, now);
+    whir.frequency.linearRampToValueAtTime(200, now + 0.15);
+    whir.type = 'sawtooth';
+    
+    whirGain.gain.setValueAtTime(0.15, now);
+    whirGain.gain.linearRampToValueAtTime(0, now + 0.15);
+    
+    whir.connect(whirGain);
+    whirGain.connect(this.audioContext.destination);
+    
+    whir.start(now);
+    whir.stop(now + 0.15);
+  }
+
   // Create a simple reverb buffer
   private createReverbBuffer(): AudioBuffer {
     const rate = this.audioContext.sampleRate;
