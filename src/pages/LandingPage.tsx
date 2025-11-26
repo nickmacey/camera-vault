@@ -30,16 +30,10 @@ export default function LandingPage() {
           
           <div className="flex items-center gap-4">
             <Button 
-              variant="ghost" 
-              onClick={() => navigate('/auth')}
-            >
-              Sign In
-            </Button>
-            <Button 
               onClick={() => navigate('/auth')}
               className="font-bold"
             >
-              Start Free Trial
+              Sign In
             </Button>
           </div>
         </div>
