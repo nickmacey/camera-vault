@@ -66,7 +66,6 @@ export default function LandingPage() {
 
           <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-3xl mx-auto leading-relaxed">
             AI finds your best photos and helps you share them.
-            <span className="text-foreground font-bold"> The difference between a camera roll and a treasure.</span>
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
