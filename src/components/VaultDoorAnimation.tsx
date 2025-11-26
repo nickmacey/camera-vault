@@ -22,6 +22,7 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
   const [stage, setStage] = useState<'initial' | 'gathering' | 'unlock' | 'opening' | 'complete'>('initial');
   const [particles, setParticles] = useState<Particle[]>([]);
   const [orbitingParticles, setOrbitingParticles] = useState<Particle[]>([]);
+  const [cameraFlash, setCameraFlash] = useState(false);
 
   // Generate orbiting particles
   useEffect(() => {
@@ -83,15 +84,26 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
 
     // Stage 3: Unlock with burst - 1.5s
     const unlockTimer = setTimeout(() => {
-      setStage('opening');
-    }, 5000);
+      setStage('unlock');
+    }, 3500);
+
+    // Camera flash before door opening - 4.7s
+    const flashTimer = setTimeout(() => {
+      setCameraFlash(true);
+    }, 4700);
 
     // Stage 4: Door opening - 2s
     const openTimer = setTimeout(() => {
+      setStage('opening');
+      setCameraFlash(false);
+    }, 5000);
+
+    // Stage 5: Complete - 7s
+    const stageCompleteTimer = setTimeout(() => {
       setStage('complete');
     }, 7000);
 
-    // Stage 5: Fade and complete
+    // Stage 6: Fade and complete
     const completeTimer = setTimeout(() => {
       onComplete();
     }, 7800);
@@ -100,7 +112,9 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
       clearTimeout(initialTimer);
       clearTimeout(gatherTimer);
       clearTimeout(unlockTimer);
+      clearTimeout(flashTimer);
       clearTimeout(openTimer);
+      clearTimeout(stageCompleteTimer);
       clearTimeout(completeTimer);
     };
   }, [onComplete]);
@@ -282,6 +296,25 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
                   animation: stage === 'gathering' ? 'shimmer-slide 2s ease-in-out infinite' : 'none',
                 }}
               />
+              
+              {/* Camera flash on center circle */}
+              {cameraFlash && (
+                <div 
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                  }}
+                >
+                  <div 
+                    className="absolute inset-0 rounded-full bg-white"
+                    style={{
+                      animation: 'camera-flash 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+                      boxShadow: '0 0 40px 20px rgba(255, 255, 255, 1), 0 0 80px 40px rgba(255, 255, 255, 0.8), 0 0 120px 60px rgba(212, 175, 55, 0.6)',
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -412,6 +445,21 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
           }
           100% {
             transform: translateX(100%);
+          }
+        }
+        
+        @keyframes camera-flash {
+          0% {
+            transform: scale(0.5);
+            opacity: 0;
+          }
+          20% {
+            transform: scale(1.5);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(3);
+            opacity: 0;
           }
         }
       `}</style>
