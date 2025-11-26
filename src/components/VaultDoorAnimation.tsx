@@ -97,27 +97,27 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
       setStage('unlock');
     }, 3500);
 
-    // Camera flash before door opening - 4.7s
+    // Camera flash before door opening - 4.5s (earlier for more drama)
     const flashTimer = setTimeout(() => {
       setCameraFlash(true);
       soundGeneratorRef.current?.playCameraShutter();
-    }, 4700);
+    }, 4500);
 
-    // Stage 4: Door opening - 2s
+    // Stage 4: Door opening - delayed for flash to complete
     const openTimer = setTimeout(() => {
       setStage('opening');
       setCameraFlash(false);
-    }, 5000);
+    }, 5500);
 
-    // Stage 5: Complete - 7s
+    // Stage 5: Complete - 7.5s (adjusted for longer flash)
     const stageCompleteTimer = setTimeout(() => {
       setStage('complete');
-    }, 7000);
+    }, 7500);
 
     // Stage 6: Fade and complete
     const completeTimer = setTimeout(() => {
       onComplete();
-    }, 7800);
+    }, 8300);
 
     return () => {
       clearTimeout(initialTimer);
@@ -322,7 +322,7 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
                     <div 
                       className="absolute inset-0 rounded-full bg-white"
                       style={{
-                        animation: 'camera-flash 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+                        animation: 'camera-flash 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards',
                         boxShadow: '0 0 60px 30px rgba(255, 255, 255, 1), 0 0 120px 60px rgba(255, 255, 255, 0.9), 0 0 180px 90px rgba(212, 175, 55, 0.7)',
                       }}
                     />
@@ -337,8 +337,8 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
                         width: '40px',
                         height: '40px',
                         borderColor: wave < 2 ? 'rgba(255, 255, 255, 0.9)' : 'rgba(212, 175, 55, 0.8)',
-                        animation: `flash-wave-${wave} 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards`,
-                        animationDelay: `${wave * 0.05}s`,
+                        animation: `flash-wave-${wave} 1s cubic-bezier(0.4, 0, 0.2, 1) forwards`,
+                        animationDelay: `${wave * 0.08}s`,
                         boxShadow: wave < 2 
                           ? '0 0 40px rgba(255, 255, 255, 0.8), inset 0 0 30px rgba(255, 255, 255, 0.5)'
                           : '0 0 30px rgba(212, 175, 55, 0.6), inset 0 0 20px rgba(212, 175, 55, 0.4)',
