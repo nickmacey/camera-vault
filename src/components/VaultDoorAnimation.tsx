@@ -97,27 +97,28 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
       setStage('unlock');
     }, 3500);
 
-    // Camera flash before door opening - 4.5s (earlier for more drama)
+    // Brief pause after unlock before flash - 4.2s
+    // Camera flash (with dramatic pause before) - 4.8s
     const flashTimer = setTimeout(() => {
       setCameraFlash(true);
       soundGeneratorRef.current?.playCameraShutter();
-    }, 4500);
+    }, 4800);
 
-    // Stage 4: Door opening - delayed for flash to complete
+    // Stage 4: Door opening - delayed for flash to complete + pause after
     const openTimer = setTimeout(() => {
       setStage('opening');
       setCameraFlash(false);
-    }, 5500);
+    }, 6800);
 
-    // Stage 5: Complete - 7.5s (adjusted for longer flash)
+    // Stage 5: Complete - adjusted for longer pauses and flash
     const stageCompleteTimer = setTimeout(() => {
       setStage('complete');
-    }, 7500);
+    }, 8800);
 
     // Stage 6: Fade and complete
     const completeTimer = setTimeout(() => {
       onComplete();
-    }, 8300);
+    }, 9600);
 
     return () => {
       clearTimeout(initialTimer);
@@ -322,7 +323,7 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
                     <div 
                       className="absolute inset-0 rounded-full bg-white"
                       style={{
-                        animation: 'camera-flash 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+                        animation: 'camera-flash 1.5s cubic-bezier(0.22, 0, 0.18, 1) forwards',
                         boxShadow: '0 0 60px 30px rgba(255, 255, 255, 1), 0 0 120px 60px rgba(255, 255, 255, 0.9), 0 0 180px 90px rgba(212, 175, 55, 0.7)',
                       }}
                     />
@@ -337,8 +338,8 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
                         width: '40px',
                         height: '40px',
                         borderColor: wave < 2 ? 'rgba(255, 255, 255, 0.9)' : 'rgba(212, 175, 55, 0.8)',
-                        animation: `flash-wave-${wave} 1s cubic-bezier(0.4, 0, 0.2, 1) forwards`,
-                        animationDelay: `${wave * 0.08}s`,
+                        animation: `flash-wave-${wave} 1.6s cubic-bezier(0.22, 0, 0.18, 1) forwards`,
+                        animationDelay: `${wave * 0.12}s`,
                         boxShadow: wave < 2 
                           ? '0 0 40px rgba(255, 255, 255, 0.8), inset 0 0 30px rgba(255, 255, 255, 0.5)'
                           : '0 0 30px rgba(212, 175, 55, 0.6), inset 0 0 20px rgba(212, 175, 55, 0.4)',
@@ -485,12 +486,16 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
             transform: scale(0.5);
             opacity: 0;
           }
-          20% {
-            transform: scale(1.8);
+          15% {
+            transform: scale(1.2);
+            opacity: 0.8;
+          }
+          35% {
+            transform: scale(2);
             opacity: 1;
           }
           100% {
-            transform: scale(4);
+            transform: scale(5);
             opacity: 0;
           }
         }
