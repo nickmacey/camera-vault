@@ -83,9 +83,24 @@ const PhotoUpload = () => {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
-      // Guest users don't need duplicate check
+      // Guest users don't need duplicate check but still need thumbnails
       setFiles(selectedFiles);
       setDuplicates([]);
+      
+      // Generate thumbnail URLs for preview
+      const newThumbnailUrls = new Map<string, string>();
+      selectedFiles.forEach(file => {
+        const url = URL.createObjectURL(file);
+        newThumbnailUrls.set(file.name, url);
+      });
+      setThumbnailUrls(newThumbnailUrls);
+      
+      // Auto-scroll to analysis section
+      if (selectedFiles.length > 0) {
+        setTimeout(() => {
+          analysisReadyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 300);
+      }
       return;
     }
 
@@ -485,9 +500,7 @@ const PhotoUpload = () => {
                   id="folder-upload"
                   className="hidden"
                   accept="image/*"
-                  multiple
-                  webkitdirectory=""
-                  directory=""
+                  {...({ webkitdirectory: "", directory: "", multiple: true } as any)}
                   onChange={handleFileSelect}
                 />
                 
