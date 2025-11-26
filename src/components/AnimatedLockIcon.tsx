@@ -16,7 +16,7 @@ interface Particle {
   type: 'float' | 'sparkle';
 }
 
-export const AnimatedLockIcon = ({ size = 64, className = "" }: AnimatedLockIconProps) => {
+export const AnimatedLockIcon = ({ size = 192, className = "" }: AnimatedLockIconProps) => {
   const [particles, setParticles] = useState<Particle[]>([]);
 
   // Generate particles on mount
@@ -90,24 +90,18 @@ export const AnimatedLockIcon = ({ size = 64, className = "" }: AnimatedLockIcon
       <div className="absolute inset-0 rounded-full bg-vault-gold/30 blur-xl" />
       <div className="absolute inset-0 rounded-full bg-vault-gold/20 blur-2xl scale-125" />
       
-      {/* Main circular border with gradient */}
-      <div className="relative rounded-full p-1 bg-gradient-to-br from-vault-gold via-vault-gold/80 to-vault-gold/50 animate-pulse"
-           style={{ animationDuration: '4s' }}>
-        <div className="rounded-full bg-vault-black p-6 border-2 border-vault-gold/30">
-          {/* Logo with subtle animations */}
-          <div className="relative animate-[scale-in_0.5s_ease-out]">
-            <img 
-              src={vaultLogo}
-              alt="VAULT Logo"
-              className="drop-shadow-[0_0_10px_rgba(212,175,55,0.5)] transition-transform duration-300 hover:scale-110" 
-              style={{ width: `${size}px`, height: `${size}px` }}
-            />
-            
-            {/* Shimmer effect overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 animate-[slide-in-right_3s_ease-in-out_infinite]" 
-                 style={{ animationDelay: '1s' }} />
-          </div>
-        </div>
+      {/* Logo with subtle animations */}
+      <div className="relative animate-[scale-in_0.5s_ease-out]">
+        <img 
+          src={vaultLogo}
+          alt="VAULT Logo"
+          className="drop-shadow-[0_0_20px_rgba(212,175,55,0.6)] transition-transform duration-300 hover:scale-110" 
+          style={{ width: `${size}px`, height: `${size}px` }}
+        />
+        
+        {/* Shimmer effect overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 animate-[slide-in-right_3s_ease-in-out_infinite]" 
+             style={{ animationDelay: '1s' }} />
       </div>
       
       {/* Corner highlights */}

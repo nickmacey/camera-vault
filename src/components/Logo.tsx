@@ -8,9 +8,9 @@ interface LogoProps {
 
 export function Logo({ variant = "full", size = "md", animated = false }: LogoProps) {
   const sizes = {
-    sm: { icon: "h-6 w-6", iconInner: "h-4 w-4", text: "text-xl", tagline: "text-xs" },
-    md: { icon: "h-8 w-8", iconInner: "h-5 w-5", text: "text-3xl", tagline: "text-sm" },
-    lg: { icon: "h-12 w-12", iconInner: "h-7 w-7", text: "text-5xl", tagline: "text-base" }
+    sm: { icon: "h-18 w-18", iconInner: "h-12 w-12", text: "text-xl", tagline: "text-xs" },
+    md: { icon: "h-24 w-24", iconInner: "h-15 w-15", text: "text-3xl", tagline: "text-sm" },
+    lg: { icon: "h-36 w-36", iconInner: "h-21 w-21", text: "text-5xl", tagline: "text-base" }
   };
 
   const sizeClasses = sizes[size];
