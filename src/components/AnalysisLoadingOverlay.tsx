@@ -136,9 +136,7 @@ export const AnalysisLoadingOverlay = ({
           <p className="text-xs text-vault-light-gray leading-relaxed">
             {isCompressing 
               ? "Large images are automatically compressed to ensure fast, reliable analysis while preserving quality."
-              : backgroundPhotos.length > 0 
-                ? "Your previous best work rotates in the background while we discover your next vault-worthy assets."
-                : "AI is evaluating composition, technical quality, commercial appeal, and emotional impact."}
+              : "AI is evaluating composition, technical quality, commercial appeal, and emotional impact."}
           </p>
         </div>
         
