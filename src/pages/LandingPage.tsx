@@ -229,7 +229,7 @@ export default function LandingPage() {
               How It Works
             </h2>
             <p className="text-xl text-muted-foreground">
-              From camera roll chaos to organized cash flow in 4 simple steps
+              Four simple steps to organized photos
             </p>
           </div>
 
@@ -241,7 +241,7 @@ export default function LandingPage() {
               <div className="text-4xl font-black text-primary mb-2">1</div>
               <h3 className="text-lg font-bold text-foreground mb-2 uppercase">Upload Photos</h3>
               <p className="text-sm text-muted-foreground">
-                Drag & drop folders or connect Google Photos. Bulk upload up to 70,000 photos.
+                Drag & drop or connect Google Photos. Unlimited uploads.
               </p>
             </Card>
 
@@ -252,7 +252,7 @@ export default function LandingPage() {
               <div className="text-4xl font-black text-primary mb-2">2</div>
               <h3 className="text-lg font-bold text-foreground mb-2 uppercase">AI Analyzes</h3>
               <p className="text-sm text-muted-foreground">
-                Every photo scored on technical quality, commercial value, artistic merit, emotional impact.
+                Every photo scored on quality, commercial value, artistry, and emotion.
               </p>
             </Card>
 
@@ -263,7 +263,7 @@ export default function LandingPage() {
               <div className="text-4xl font-black text-primary mb-2">3</div>
               <h3 className="text-lg font-bold text-foreground mb-2 uppercase">See Your Best</h3>
               <p className="text-sm text-muted-foreground">
-                Photos auto-organized into Elite, Stars, and Gems tiers. Find hidden winners instantly.
+                Auto-organized into Elite, Stars, and Gems tiers. Find winners instantly.
               </p>
             </Card>
 
@@ -274,7 +274,7 @@ export default function LandingPage() {
               <div className="text-4xl font-black text-primary mb-2">4</div>
               <h3 className="text-lg font-bold text-foreground mb-2 uppercase">Start Sharing</h3>
               <p className="text-sm text-muted-foreground">
-                Seamless integrations with Google Photos, social platforms, and more. Share your magic effortlessly.
+                Connect to Google Photos and social platforms. Share effortlessly.
               </p>
             </Card>
           </div>
@@ -289,7 +289,7 @@ export default function LandingPage() {
               Everything You Need
             </h2>
             <p className="text-xl text-muted-foreground">
-              Professional photo management + monetization in one platform
+              Manage and share your photos in one place
             </p>
           </div>
 
@@ -298,7 +298,7 @@ export default function LandingPage() {
               <Sparkles className="h-10 w-10 text-primary mb-4" />
               <h3 className="text-xl font-bold text-foreground mb-2 uppercase">AI Photo Scoring</h3>
               <p className="text-muted-foreground">
-                4-dimensional analysis reveals your best work. Technical, commercial, artistic, emotional scores.
+                AI scores every photo across quality, commercial value, artistry, and emotion.
               </p>
             </Card>
 
@@ -306,7 +306,7 @@ export default function LandingPage() {
               <Shield className="h-10 w-10 text-primary mb-4" />
               <h3 className="text-xl font-bold text-foreground mb-2 uppercase">Smart Organization</h3>
               <p className="text-muted-foreground">
-                Elite/Stars/Gems tiers, smart filters, instant search. Find any photo in seconds.
+                Auto-organized tiers, smart filters, instant search. Find anything fast.
               </p>
             </Card>
 
@@ -314,7 +314,7 @@ export default function LandingPage() {
               <DollarSign className="h-10 w-10 text-primary mb-4" />
               <h3 className="text-xl font-bold text-foreground mb-2 uppercase">Print Store</h3>
               <p className="text-muted-foreground">
-                Built-in storefront with automatic fulfillment. No inventory, no shipping, just profit.
+                Built-in storefront with automatic fulfillment. No inventory, no hassle.
               </p>
             </Card>
 
@@ -322,7 +322,7 @@ export default function LandingPage() {
               <Zap className="h-10 w-10 text-primary mb-4" />
               <h3 className="text-xl font-bold text-foreground mb-2 uppercase">Social Captions</h3>
               <p className="text-muted-foreground">
-                AI-generated captions for Instagram, LinkedIn, Twitter. Complete with hashtags.
+                AI-generated captions for all platforms with hashtags included.
               </p>
             </Card>
 
@@ -330,7 +330,7 @@ export default function LandingPage() {
               <Lock className="h-10 w-10 text-primary mb-4" />
               <h3 className="text-xl font-bold text-foreground mb-2 uppercase">Watermarking</h3>
               <p className="text-muted-foreground">
-                Custom watermarks with batch application. Protect your work before sharing.
+                Custom watermarks with batch processing. Protect your work.
               </p>
             </Card>
 
@@ -338,7 +338,7 @@ export default function LandingPage() {
               <TrendingUp className="h-10 w-10 text-primary mb-4" />
               <h3 className="text-xl font-bold text-foreground mb-2 uppercase">Analytics</h3>
               <p className="text-muted-foreground">
-                Track best sellers, revenue trends, customer insights. Data-driven decisions.
+                Track sales, trends, and insights. Make data-driven decisions.
               </p>
             </Card>
           </div>
@@ -503,7 +503,7 @@ export default function LandingPage() {
                 ))}
               </div>
               <p className="text-muted-foreground mb-4">
-                "VAULT found 50 photos in my archive worth $5K+ I had completely forgotten about. Paid for itself in the first week."
+                "Found $5K worth of forgotten photos in my archive. Paid for itself in week one."
               </p>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary/20" />
@@ -521,7 +521,7 @@ export default function LandingPage() {
                 ))}
               </div>
               <p className="text-muted-foreground mb-4">
-                "The AI analysis taught me more about composition than 3 years of YouTube tutorials. Now I know exactly what makes my photos work."
+                "Learned more about composition from the AI than years of tutorials. Game changer."
               </p>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary/20" />
@@ -539,7 +539,7 @@ export default function LandingPage() {
                 ))}
               </div>
               <p className="text-muted-foreground mb-4">
-                "Set up my print store in 5 minutes. Made $3,200 in my first month selling prints I didn't know people wanted."
+                "Print store setup in 5 minutes. Made $3,200 my first month."
               </p>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary/20" />
@@ -590,7 +590,7 @@ export default function LandingPage() {
                 <Logo variant="full" size="sm" />
               </div>
               <p className="text-sm text-muted-foreground">
-                AI-powered photo management and monetization platform for photographers, amateurs, and creatives.
+                AI-powered photo management for photographers and creatives.
               </p>
             </div>
 
