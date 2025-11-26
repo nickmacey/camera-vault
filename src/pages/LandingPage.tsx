@@ -575,48 +575,65 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border py-12 px-4">
-        <div className="container mx-auto">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <div className="mb-4">
-                <Logo variant="full" size="sm" />
+      <footer className="relative border-t border-border/40 py-20 px-4 overflow-hidden">
+        {/* Subtle background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-background/50 pointer-events-none" />
+        
+        <div className="container mx-auto relative">
+          <div className="grid lg:grid-cols-[2fr_1fr_1fr_1fr] md:grid-cols-2 gap-12 mb-16">
+            {/* Brand Section */}
+            <div className="space-y-6">
+              <div className="inline-block">
+                <Logo variant="full" size="md" />
               </div>
-              <p className="text-sm text-muted-foreground">
-                AI-powered photo management for photographers and creatives.
+              <p className="text-base text-muted-foreground max-w-sm leading-relaxed">
+                AI-powered photo intelligence for photographers and creatives.
               </p>
-            </div>
-
-            <div>
-              <h4 className="text-sm font-bold text-foreground uppercase mb-4">Product</h4>
-              <div className="space-y-2">
-                <a href="#" className="block text-sm text-muted-foreground hover:text-primary transition-colors">Features</a>
-                <a href="#" className="block text-sm text-muted-foreground hover:text-primary transition-colors">Pricing</a>
-                <a href="#" className="block text-sm text-muted-foreground hover:text-primary transition-colors">API</a>
+              <div className="flex items-center gap-2 text-xs text-vault-gold font-medium">
+                <span className="inline-block w-1.5 h-1.5 bg-vault-gold rounded-full animate-pulse" />
+                Your Photos. Your Fortune.
               </div>
             </div>
 
-            <div>
-              <h4 className="text-sm font-bold text-foreground uppercase mb-4">Company</h4>
-              <div className="space-y-2">
-                <a href="#" className="block text-sm text-muted-foreground hover:text-primary transition-colors">About</a>
-                <a href="#" className="block text-sm text-muted-foreground hover:text-primary transition-colors">Blog</a>
-                <a href="/privacy" className="block text-sm text-muted-foreground hover:text-primary transition-colors">Privacy</a>
-              </div>
+            {/* Product Links */}
+            <div className="space-y-5">
+              <h4 className="text-sm font-bold text-vault-gold uppercase tracking-wider">Product</h4>
+              <nav className="space-y-3">
+                <a href="#" className="block text-sm text-muted-foreground hover:text-foreground hover:translate-x-1 transition-all duration-200">Features</a>
+                <a href="#" className="block text-sm text-muted-foreground hover:text-foreground hover:translate-x-1 transition-all duration-200">Pricing</a>
+                <a href="#" className="block text-sm text-muted-foreground hover:text-foreground hover:translate-x-1 transition-all duration-200">API</a>
+              </nav>
             </div>
 
-            <div>
-              <h4 className="text-sm font-bold text-foreground uppercase mb-4">Support</h4>
-              <div className="space-y-2">
-                <a href="#" className="block text-sm text-muted-foreground hover:text-primary transition-colors">Help Center</a>
-                <a href="#" className="block text-sm text-muted-foreground hover:text-primary transition-colors">Contact</a>
-                <a href="#" className="block text-sm text-muted-foreground hover:text-primary transition-colors">Status</a>
-              </div>
+            {/* Company Links */}
+            <div className="space-y-5">
+              <h4 className="text-sm font-bold text-vault-gold uppercase tracking-wider">Company</h4>
+              <nav className="space-y-3">
+                <a href="#" className="block text-sm text-muted-foreground hover:text-foreground hover:translate-x-1 transition-all duration-200">About</a>
+                <a href="#" className="block text-sm text-muted-foreground hover:text-foreground hover:translate-x-1 transition-all duration-200">Blog</a>
+                <a href="/privacy" className="block text-sm text-muted-foreground hover:text-foreground hover:translate-x-1 transition-all duration-200">Privacy</a>
+              </nav>
+            </div>
+
+            {/* Support Links */}
+            <div className="space-y-5">
+              <h4 className="text-sm font-bold text-vault-gold uppercase tracking-wider">Support</h4>
+              <nav className="space-y-3">
+                <a href="#" className="block text-sm text-muted-foreground hover:text-foreground hover:translate-x-1 transition-all duration-200">Help Center</a>
+                <a href="#" className="block text-sm text-muted-foreground hover:text-foreground hover:translate-x-1 transition-all duration-200">Contact</a>
+                <a href="#" className="block text-sm text-muted-foreground hover:text-foreground hover:translate-x-1 transition-all duration-200">Status</a>
+              </nav>
             </div>
           </div>
 
-          <div className="border-t border-border pt-8 text-center text-sm text-muted-foreground">
-            © 2025 VAULT. All rights reserved.
+          {/* Copyright */}
+          <div className="border-t border-border/30 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-sm text-muted-foreground/70">
+              © 2025 VAULT. All rights reserved.
+            </p>
+            <p className="text-xs text-muted-foreground/50">
+              No Credit Card Required • 7-Day Free Trial • Cancel Anytime
+            </p>
           </div>
         </div>
       </footer>
