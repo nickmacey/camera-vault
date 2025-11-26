@@ -81,7 +81,7 @@ export default function LandingPage() {
               onClick={() => navigate('/auth')}
               className="font-bold h-14 px-8 text-lg"
             >
-              Start Free 7-Day Trial
+              Unlock Your Vault
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
@@ -569,7 +569,7 @@ export default function LandingPage() {
               onClick={() => navigate('/auth')}
               className="font-bold h-16 px-12 text-xl"
             >
-              Start Free 7-Day Trial
+              Unlock Your Vault
               <ArrowRight className="ml-2 h-6 w-6" />
             </Button>
           </div>
