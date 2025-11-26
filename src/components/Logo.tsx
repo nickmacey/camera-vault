@@ -1,4 +1,4 @@
-import vaultLogo from "@/assets/vault-logo.png";
+// Logo uses inline SVG, no image import needed
 
 interface LogoProps {
   variant?: "full" | "icon" | "wordmark";
@@ -19,7 +19,44 @@ export function Logo({ variant = "full", size = "md", animated = false }: LogoPr
     return (
       <div className={`relative ${animated ? 'group' : ''}`}>
         <div className={`${sizeClasses.icon} flex items-center justify-center ${animated ? 'group-hover:rotate-45 transition-transform duration-500' : ''}`}>
-          <img src={vaultLogo} alt="VAULT Logo" className="w-full h-full object-contain" />
+          <svg
+            viewBox="0 0 100 100"
+            className="w-full h-full text-vault-gold"
+          >
+            <circle
+              cx="50"
+              cy="50"
+              r="40"
+              stroke="currentColor"
+              strokeWidth="4"
+              fill="none"
+            />
+            <rect
+              x="32"
+              y="42"
+              width="36"
+              height="28"
+              rx="4"
+              stroke="currentColor"
+              strokeWidth="4"
+              fill="none"
+            />
+            <circle
+              cx="50"
+              cy="56"
+              r="6"
+              stroke="currentColor"
+              strokeWidth="4"
+              fill="none"
+            />
+            <path
+              d="M38 42v-6a12 12 0 0 1 24 0v6"
+              stroke="currentColor"
+              strokeWidth="4"
+              fill="none"
+              strokeLinecap="round"
+            />
+          </svg>
         </div>
       </div>
     );

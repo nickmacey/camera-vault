@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import vaultLogo from "@/assets/vault-logo.png";
+// Animated lock icon uses inline SVG, no image import needed
 
 interface AnimatedLockIconProps {
   size?: number;
@@ -92,16 +92,49 @@ export const AnimatedLockIcon = ({ size = 192, className = "" }: AnimatedLockIco
       
       {/* Logo with subtle animations */}
       <div className="relative animate-[scale-in_0.5s_ease-out]">
-        <img 
-          src={vaultLogo}
-          alt="VAULT Logo"
-          className="drop-shadow-[0_0_20px_rgba(212,175,55,0.6)] transition-transform duration-300 hover:scale-110" 
-          style={{ width: `${size}px`, height: `${size}px` }}
-        />
-        
-        {/* Shimmer effect overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 animate-[slide-in-right_3s_ease-in-out_infinite]" 
-             style={{ animationDelay: '1s' }} />
+          <svg
+            viewBox="0 0 100 100"
+            className="text-vault-gold drop-shadow-[0_0_20px_rgba(212,175,55,0.6)] transition-transform duration-300 hover:scale-110"
+            style={{ width: `${size}px`, height: `${size}px` }}
+          >
+            <circle
+              cx="50"
+              cy="50"
+              r="40"
+              stroke="currentColor"
+              strokeWidth="4"
+              fill="none"
+            />
+            <rect
+              x="32"
+              y="42"
+              width="36"
+              height="28"
+              rx="4"
+              stroke="currentColor"
+              strokeWidth="4"
+              fill="none"
+            />
+            <circle
+              cx="50"
+              cy="56"
+              r="6"
+              stroke="currentColor"
+              strokeWidth="4"
+              fill="none"
+            />
+            <path
+              d="M38 42v-6a12 12 0 0 1 24 0v6"
+              stroke="currentColor"
+              strokeWidth="4"
+              fill="none"
+              strokeLinecap="round"
+            />
+          </svg>
+          
+          {/* Shimmer effect overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 animate-[slide-in-right_3s_ease-in-out_infinite]" 
+               style={{ animationDelay: '1s' }} />
       </div>
       
       {/* Corner highlights */}
