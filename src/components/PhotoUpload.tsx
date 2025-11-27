@@ -14,7 +14,7 @@ import { compressImage, getOptimalQuality } from "@/lib/imageOptimization";
 import { generateFileHash, checkDuplicateHash } from "@/lib/fileHash";
 import { FloatingUploadProgress } from "@/components/FloatingUploadProgress";
 import { useUpload } from "@/contexts/UploadContext";
-import { convertHeicFiles, isHeicFile } from "@/lib/heicConverter";
+import { convertHeicFiles, isHeicFile, type ConversionResult } from "@/lib/heicConverter";
 
 const PhotoUpload = () => {
   const navigate = useNavigate();
@@ -97,13 +97,22 @@ const PhotoUpload = () => {
       const conversionToastId = toast.loading(`Converting ${heicCount} HEIC file(s) to JPEG...`);
       
       try {
-        filesToProcess = await convertHeicFiles(selectedFiles, (current, total, file) => {
+        const result = await convertHeicFiles(selectedFiles, (current, total, file) => {
           setHeicProgress({ current, total, file });
         });
-        toast.success(`Converted ${heicCount} HEIC file(s) to JPEG`, { id: conversionToastId });
+        filesToProcess = result.convertedFiles;
+        
+        if (result.failedFiles.length > 0) {
+          toast.warning(
+            `${result.failedFiles.length} HEIC file(s) failed to convert: ${result.failedFiles.slice(0, 3).join(', ')}${result.failedFiles.length > 3 ? '...' : ''}`,
+            { id: conversionToastId, duration: 5000 }
+          );
+        } else {
+          toast.success(`Converted ${heicCount} HEIC file(s) to JPEG`, { id: conversionToastId });
+        }
       } catch (error) {
         console.error('HEIC conversion error:', error);
-        toast.error('Some HEIC files failed to convert', { id: conversionToastId });
+        toast.error('HEIC conversion failed', { id: conversionToastId });
       } finally {
         setIsConvertingHeic(false);
       }
