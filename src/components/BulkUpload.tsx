@@ -94,7 +94,7 @@ export function BulkUpload() {
   const folderInputRef = useRef<HTMLInputElement>(null);
   const shouldPauseRef = useRef(false);
   const { toast } = useToast();
-  const { startUpload: startUploadContext, updateStats: updateUploadStats, setMinimized, cancelUpload: cancelUploadContext, shouldCancel, finishUpload: finishUploadContext } = useUpload();
+  const { startUpload: startUploadContext, setMinimized, cancelUpload: cancelUploadContext, shouldCancel, finishUpload: finishUploadContext } = useUpload();
 
   const BATCH_SIZE = 10;
   const BATCH_DELAY = 500;
@@ -558,105 +558,20 @@ export function BulkUpload() {
       return;
     }
 
-    log('=== STARTING UPLOAD ===');
+    log('=== STARTING UPLOAD (delegating to context) ===');
     log('Total files:', files.length);
-    log('Batch size:', BATCH_SIZE);
     
     setStatus('running');
-    shouldPauseRef.current = false;
-    const startTime = Date.now();
-    setStats(prev => ({ ...prev, startTime }));
     
-    startUploadContext(files.length);
-
-    for (let i = 0; i < files.length; i += BATCH_SIZE) {
-      // Check for pause or cancel
-      if (shouldPauseRef.current || shouldCancel()) {
-        log('Upload stopped by user');
-        if (shouldCancel()) {
-          setStatus('cancelled');
-        } else {
-          setStatus('paused');
-        }
-        return;
-      }
-
-      const batch = files.slice(i, i + BATCH_SIZE);
-      log(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}, files ${i + 1}-${Math.min(i + BATCH_SIZE, files.length)}`);
-      
-      const results = await Promise.allSettled(
-        batch.map(async (file) => {
-          // Check cancel before each file
-          if (shouldCancel()) {
-            return { result: 'skipped' as const, error: 'Cancelled by user' };
-          }
-          
-          setStats(prev => ({ ...prev, currentFile: file.name }));
-          updateUploadStats({ currentFile: file.name });
-          
-          return await processFileWithRetry(file, MAX_RETRIES);
-        })
-      );
-      
-      // Check if cancelled during batch processing
-      if (shouldCancel()) {
-        log('Upload cancelled during batch');
-        setStatus('cancelled');
-        return;
-      }
-      
-      results.forEach((result, idx) => {
-        const file = batch[idx];
-        
-        if (result.status === 'fulfilled') {
-          const { result: fileResult, error } = result.value;
-          
-          setStats(prev => ({
-            ...prev,
-            processed: prev.processed + 1,
-            successful: fileResult === 'success' ? prev.successful + 1 : prev.successful,
-            skipped: fileResult === 'skipped' ? prev.skipped + 1 : prev.skipped,
-            failed: fileResult === 'failed' ? prev.failed + 1 : prev.failed,
-            errors: fileResult === 'failed' && error 
-              ? [...prev.errors, { filename: file.name, error }]
-              : prev.errors
-          }));
-        } else {
-          setStats(prev => ({
-            ...prev,
-            processed: prev.processed + 1,
-            failed: prev.failed + 1,
-            errors: [...prev.errors, { 
-              filename: file.name, 
-              error: result.reason?.message || 'Unknown error' 
-            }]
-          }));
-        }
-      });
-
-      setStats(prev => {
-        updateUploadStats({
-          processed: prev.processed,
-          successful: prev.successful,
-          failed: prev.failed,
-          vaultWorthy: prev.vaultWorthy,
-          currentFile: prev.currentFile,
-          startTime: prev.startTime
-        });
-        return prev;
-      });
-
-      await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
-    }
-
-    log('=== UPLOAD COMPLETE ===');
-    log('Final stats:', stats);
-    setStatus('complete');
-    setStats(prev => ({ ...prev, currentFile: '' }));
+    // Delegate to context which handles the upload even after navigation
+    startUploadContext(files, filters);
+    
+    // Minimize after starting so user can navigate
+    setMinimized(true);
     
     toast({
-      title: "Upload complete!",
-      description: `${stats.successful} photos analyzed and added to your vault`
+      title: "Upload started",
+      description: `Processing ${files.length} photos in background. You can continue browsing.`
     });
   };
 
