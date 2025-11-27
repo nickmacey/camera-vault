@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useUpload } from '@/contexts/UploadContext';
 import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
@@ -5,15 +6,26 @@ import { Button } from '@/components/ui/button';
 import { 
   Minimize2, 
   Maximize2, 
-  Upload, 
   CheckCircle2,
   Lock,
-  X
+  X,
+  Loader2,
+  Image as ImageIcon
 } from 'lucide-react';
 import { AnimatedLockIcon } from './AnimatedLockIcon';
 
 export function FloatingUploadProgress() {
   const { isUploading, isMinimized, stats, toggleMinimize, finishUpload } = useUpload();
+  const [dots, setDots] = useState('');
+
+  // Animated dots for "Processing..." text
+  useEffect(() => {
+    if (!isUploading) return;
+    const interval = setInterval(() => {
+      setDots(prev => prev.length >= 3 ? '' : prev + '.');
+    }, 500);
+    return () => clearInterval(interval);
+  }, [isUploading]);
 
   if (!isUploading) return null;
 
@@ -22,6 +34,7 @@ export function FloatingUploadProgress() {
   const timeRemaining = stats.processed > 0 
     ? Math.floor((timeElapsed / stats.processed) * (stats.total - stats.processed))
     : 0;
+  const isComplete = stats.processed === stats.total && stats.total > 0;
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -39,14 +52,20 @@ export function FloatingUploadProgress() {
         >
           <div className="flex items-center gap-3">
             <div className="relative">
-              <AnimatedLockIcon className="w-6 h-6 text-vault-gold" />
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-vault-green rounded-full animate-pulse" />
+              {isComplete ? (
+                <CheckCircle2 className="w-6 h-6 text-vault-green" />
+              ) : (
+                <>
+                  <AnimatedLockIcon className="w-6 h-6 text-vault-gold" />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-vault-green rounded-full animate-pulse" />
+                </>
+              )}
             </div>
-            <div className="flex flex-col min-w-[120px]">
+            <div className="flex flex-col min-w-[140px]">
               <div className="text-xs text-vault-platinum font-medium">
-                Processing {stats.processed}/{stats.total}
+                {isComplete ? 'Complete!' : `Processing ${stats.processed}/${stats.total}`}
               </div>
-              <Progress value={progress} className="h-1 mt-1" />
+              <Progress value={progress} className="h-1.5 mt-1" />
             </div>
             <Button
               variant="ghost"
@@ -68,14 +87,28 @@ export function FloatingUploadProgress() {
   // Expanded view - detailed progress
   return (
     <div className="fixed bottom-4 right-4 z-50 animate-fade-in w-full max-w-md mx-4 sm:mx-0">
-      <Card className="bg-gradient-to-br from-vault-dark-gray/98 to-black/98 backdrop-blur-xl border-vault-gold/40 shadow-2xl">
+      <Card className="bg-gradient-to-br from-vault-dark-gray/98 to-black/98 backdrop-blur-xl border-vault-gold/40 shadow-2xl overflow-hidden">
+        {/* Animated top border */}
+        {!isComplete && (
+          <div className="h-1 bg-vault-dark-gray overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-vault-gold via-vault-gold/50 to-vault-gold animate-pulse"
+              style={{ width: `${progress}%`, transition: 'width 0.3s ease-out' }}
+            />
+          </div>
+        )}
+        
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-vault-gold/20">
           <div className="flex items-center gap-3">
-            <AnimatedLockIcon className="w-6 h-6 text-vault-gold animate-pulse" />
+            {isComplete ? (
+              <CheckCircle2 className="w-6 h-6 text-vault-green" />
+            ) : (
+              <Loader2 className="w-6 h-6 text-vault-gold animate-spin" />
+            )}
             <div>
               <h3 className="text-vault-platinum font-semibold text-sm">
-                Analyzing Photos
+                {isComplete ? 'Analysis Complete!' : `Analyzing Photos${dots}`}
               </h3>
               <p className="text-vault-light-gray text-xs">
                 {stats.processed} of {stats.total} complete
@@ -103,16 +136,25 @@ export function FloatingUploadProgress() {
               className="h-3"
             />
             <div className="flex justify-between text-xs text-vault-light-gray">
-              <span>{Math.round(progress)}%</span>
-              <span>{timeRemaining > 0 ? `~${formatTime(timeRemaining)} left` : 'Calculating...'}</span>
+              <span className="font-medium">{Math.round(progress)}%</span>
+              <span>
+                {isComplete 
+                  ? `Completed in ${formatTime(timeElapsed)}` 
+                  : timeRemaining > 0 
+                    ? `~${formatTime(timeRemaining)} remaining` 
+                    : 'Calculating...'}
+              </span>
             </div>
           </div>
 
           {/* Current File */}
-          {stats.currentFile && (
+          {stats.currentFile && !isComplete && (
             <div className="bg-black/30 rounded-lg p-3 border border-vault-gold/10">
-              <div className="text-xs text-vault-light-gray mb-1">Processing:</div>
-              <div className="text-sm text-vault-platinum truncate">
+              <div className="flex items-center gap-2 text-xs text-vault-light-gray mb-1">
+                <ImageIcon className="w-3 h-3" />
+                <span>Now processing:</span>
+              </div>
+              <div className="text-sm text-vault-platinum truncate font-medium">
                 {stats.currentFile}
               </div>
             </div>
@@ -129,20 +171,18 @@ export function FloatingUploadProgress() {
             <div className="bg-vault-gold/10 border border-vault-gold/30 rounded-lg p-2 text-center">
               <Lock className="w-4 h-4 text-vault-gold mx-auto mb-1" />
               <div className="text-lg font-bold text-vault-gold">{stats.vaultWorthy}</div>
-              <div className="text-[10px] text-vault-light-gray">Vault</div>
+              <div className="text-[10px] text-vault-light-gray">Vault-Worthy</div>
             </div>
             
-            {stats.failed > 0 && (
-              <div className="bg-vault-red/10 border border-vault-red/30 rounded-lg p-2 text-center">
-                <X className="w-4 h-4 text-vault-red mx-auto mb-1" />
-                <div className="text-lg font-bold text-vault-red">{stats.failed}</div>
-                <div className="text-[10px] text-vault-light-gray">Failed</div>
-              </div>
-            )}
+            <div className={`${stats.failed > 0 ? 'bg-vault-red/10 border-vault-red/30' : 'bg-vault-mid-gray/20 border-vault-mid-gray/30'} border rounded-lg p-2 text-center`}>
+              <X className={`w-4 h-4 ${stats.failed > 0 ? 'text-vault-red' : 'text-vault-mid-gray'} mx-auto mb-1`} />
+              <div className={`text-lg font-bold ${stats.failed > 0 ? 'text-vault-red' : 'text-vault-mid-gray'}`}>{stats.failed}</div>
+              <div className="text-[10px] text-vault-light-gray">Failed</div>
+            </div>
           </div>
 
           {/* Complete Button (shown when done) */}
-          {stats.processed === stats.total && stats.total > 0 && (
+          {isComplete && (
             <Button
               onClick={finishUpload}
               className="w-full bg-vault-gold hover:bg-vault-gold/90 text-black font-semibold"

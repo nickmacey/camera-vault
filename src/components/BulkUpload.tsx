@@ -814,12 +814,16 @@ export function BulkUpload() {
       {status === 'scanning' && (
         <Card className="p-6 border-vault-mid-gray bg-card">
           <div className="text-center space-y-4">
-            <div className="mx-auto w-16 h-16 rounded-full bg-vault-gold/10 flex items-center justify-center">
-              <Search className="h-8 w-8 text-vault-gold animate-pulse" />
+            <div className="mx-auto w-16 h-16 rounded-full bg-vault-gold/10 flex items-center justify-center relative">
+              <Search className="h-8 w-8 text-vault-gold" />
+              <div className="absolute inset-0 rounded-full border-2 border-vault-gold/30 border-t-vault-gold animate-spin" />
             </div>
             <div>
               <h3 className="text-xl font-bold text-vault-platinum">Scanning folder...</h3>
               <p className="text-vault-light-gray">Analyzing files and checking for duplicates</p>
+              <p className="text-xs text-vault-gold mt-2 animate-pulse">
+                This may take a moment for large folders
+              </p>
             </div>
           </div>
         </Card>
@@ -935,8 +939,11 @@ export function BulkUpload() {
             </div>
 
             {stats.currentFile && (
-              <div className="bg-vault-dark-gray rounded-lg p-4">
-                <p className="text-xs text-vault-light-gray mb-1">Currently analyzing:</p>
+              <div className="bg-vault-dark-gray rounded-lg p-4 border border-vault-gold/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full bg-vault-gold animate-pulse" />
+                  <p className="text-xs text-vault-light-gray">Currently analyzing:</p>
+                </div>
                 <p className="text-sm text-vault-platinum font-medium truncate">
                   {stats.currentFile}
                 </p>
