@@ -92,7 +92,7 @@ export function BulkUpload() {
   const folderInputRef = useRef<HTMLInputElement>(null);
   const shouldPauseRef = useRef(false);
   const { toast } = useToast();
-  const { startUpload: startUploadContext, updateStats: updateUploadStats, setMinimized } = useUpload();
+  const { startUpload: startUploadContext, updateStats: updateUploadStats, setMinimized, cancelUpload: cancelUploadContext, shouldCancel, finishUpload: finishUploadContext } = useUpload();
 
   const BATCH_SIZE = 10;
   const BATCH_DELAY = 500;
@@ -548,9 +548,14 @@ export function BulkUpload() {
     startUploadContext(files.length);
 
     for (let i = 0; i < files.length; i += BATCH_SIZE) {
-      if (shouldPauseRef.current) {
-        log('Upload paused by user');
-        setStatus('paused');
+      // Check for pause or cancel
+      if (shouldPauseRef.current || shouldCancel()) {
+        log('Upload stopped by user');
+        if (shouldCancel()) {
+          setStatus('cancelled');
+        } else {
+          setStatus('paused');
+        }
         return;
       }
 
@@ -559,12 +564,24 @@ export function BulkUpload() {
       
       const results = await Promise.allSettled(
         batch.map(async (file) => {
+          // Check cancel before each file
+          if (shouldCancel()) {
+            return { result: 'skipped' as const, error: 'Cancelled by user' };
+          }
+          
           setStats(prev => ({ ...prev, currentFile: file.name }));
           updateUploadStats({ currentFile: file.name });
           
           return await processFileWithRetry(file, MAX_RETRIES);
         })
       );
+      
+      // Check if cancelled during batch processing
+      if (shouldCancel()) {
+        log('Upload cancelled during batch');
+        setStatus('cancelled');
+        return;
+      }
       
       results.forEach((result, idx) => {
         const file = batch[idx];
@@ -643,9 +660,13 @@ export function BulkUpload() {
     log('Cancel requested');
     shouldPauseRef.current = true;
     setStatus('cancelled');
+    
+    // Also cancel the context to update FloatingUploadProgress
+    cancelUploadContext();
+    
     toast({
       title: "Upload cancelled",
-      description: `${stats.successful} photos were processed before cancellation`
+      description: `${stats.successful} photos were processed before cancellation. ${stats.total - stats.processed} remaining files were not uploaded.`
     });
   };
 
