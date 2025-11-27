@@ -92,11 +92,17 @@ const PhotoUpload = () => {
       setFiles(selectedFiles);
       setDuplicates([]);
       
-      // Generate thumbnail URLs for preview
+      // Generate thumbnail URLs for preview (only for browser-supported formats)
+      // HEIC files can't be displayed natively in browsers
+      const browserSupportedFormats = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
       const newThumbnailUrls = new Map<string, string>();
       selectedFiles.forEach(file => {
-        const url = URL.createObjectURL(file);
-        newThumbnailUrls.set(file.name, url);
+        const isBrowserSupported = browserSupportedFormats.includes(file.type.toLowerCase());
+        if (isBrowserSupported) {
+          const url = URL.createObjectURL(file);
+          newThumbnailUrls.set(file.name, url);
+        }
+        // HEIC and other unsupported formats will show fallback placeholder
       });
       setThumbnailUrls(newThumbnailUrls);
       
@@ -142,11 +148,16 @@ const PhotoUpload = () => {
       setDuplicates(foundDuplicates);
       setFiles(uniqueFiles);
 
-      // Generate thumbnail URLs for preview
+      // Generate thumbnail URLs for preview (only for browser-supported formats)
+      // HEIC files can't be displayed natively in browsers
+      const browserSupportedFormats = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
       const newThumbnailUrls = new Map<string, string>();
       uniqueFiles.forEach(file => {
-        const url = URL.createObjectURL(file);
-        newThumbnailUrls.set(file.name, url);
+        const isBrowserSupported = browserSupportedFormats.includes(file.type.toLowerCase());
+        if (isBrowserSupported) {
+          const url = URL.createObjectURL(file);
+          newThumbnailUrls.set(file.name, url);
+        }
       });
       setThumbnailUrls(newThumbnailUrls);
 
@@ -289,7 +300,6 @@ const PhotoUpload = () => {
     // Authenticated flow - full upload and save
     setUploading(true);
     setUploadProgress({ current: 0, total: files.length });
-    const toastId = toast.loading(`Uploading ${files.length} photo(s)...`);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -302,7 +312,7 @@ const PhotoUpload = () => {
       for (let i = 0; i < files.length; i += batchSize) {
         // Check for cancellation before each batch
         if (cancelRef.current) {
-          toast.info(`Upload cancelled after ${successCount} photos`, { id: toastId });
+          toast.info(`Upload cancelled after ${successCount} photos`);
           break;
         }
         
@@ -476,14 +486,13 @@ const PhotoUpload = () => {
           }
         }));
         
-        // Update progress toast
-        toast.loading(`Uploading... ${Math.min(i + batchSize, files.length)}/${files.length}`, { id: toastId });
+        // Progress is shown in overlay, no need for toast
       }
 
       if (failedCount > 0) {
-        toast.success(`Uploaded ${successCount} photo(s). ${failedCount} failed and were skipped.`, { id: toastId, duration: 6000 });
-      } else {
-        toast.success(`Successfully uploaded ${successCount} photo(s)!`, { id: toastId });
+        toast.success(`Uploaded ${successCount} photo(s). ${failedCount} failed and were skipped.`, { duration: 6000 });
+      } else if (!cancelRef.current) {
+        toast.success(`Successfully uploaded ${successCount} photo(s)!`);
       }
       setFiles([]);
       setUploadProgress({ current: 0, total: 0 });
@@ -491,7 +500,7 @@ const PhotoUpload = () => {
       // Trigger a page refresh to update gallery
       window.location.reload();
     } catch (error: any) {
-      toast.error(error.message || "Upload failed", { id: toastId });
+      toast.error(error.message || "Upload failed");
     } finally {
       setUploading(false);
       setIsCompressing(false);
@@ -709,26 +718,35 @@ const PhotoUpload = () => {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {files.map((file, idx) => (
-              <div
-                key={idx}
-                className="relative aspect-square rounded-lg overflow-hidden bg-vault-black border-2 border-vault-mid-gray hover:border-vault-gold vault-transition"
-              >
-                {thumbnailUrls.has(file.name) ? (
-                  <img
-                    src={thumbnailUrls.get(file.name)}
-                    alt={file.name}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-vault-light-gray">
-                    <ImageIcon className="h-8 w-8" />
-                  </div>
-                )}
-              </div>
-            ))}
+            {files.map((file, idx) => {
+              const isHeic = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
+              return (
+                <div
+                  key={idx}
+                  className="relative aspect-square rounded-lg overflow-hidden bg-vault-black border-2 border-vault-mid-gray hover:border-vault-gold vault-transition"
+                >
+                  {thumbnailUrls.has(file.name) ? (
+                    <img
+                      src={thumbnailUrls.get(file.name)}
+                      alt={file.name}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-vault-light-gray p-2">
+                      <ImageIcon className="h-8 w-8 mb-2 text-vault-gold/50" />
+                      <span className="text-[10px] text-center truncate w-full px-1">
+                        {file.name}
+                      </span>
+                      {isHeic && (
+                        <span className="text-[8px] text-vault-gold/70 mt-1">HEIC</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </Card>
       )}
