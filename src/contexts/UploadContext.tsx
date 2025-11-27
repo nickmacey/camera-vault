@@ -5,7 +5,7 @@ import { convertHeicToJpeg, isHeicFile } from '@/lib/heicConverter';
 import imageCompression from 'browser-image-compression';
 import { toast } from 'sonner';
 
-const VAULT_WORTHY_THRESHOLD = 7.0;
+const DEFAULT_THRESHOLD = 7.0;
 
 interface UploadStats {
   total: number;
@@ -66,6 +66,24 @@ export function UploadProvider({ children }: { children: ReactNode }) {
     currentFile: '',
     startTime: 0,
   });
+
+  // Fetch user's quality threshold setting
+  const getUserThreshold = async (): Promise<number> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return DEFAULT_THRESHOLD;
+      
+      const { data } = await supabase
+        .from('user_settings')
+        .select('vault_quality_threshold')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      return data?.vault_quality_threshold ?? DEFAULT_THRESHOLD;
+    } catch {
+      return DEFAULT_THRESHOLD;
+    }
+  };
 
   const shouldCancel = () => cancelRef.current;
 
@@ -136,7 +154,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const processFile = async (file: File, filters: FilterOptions): Promise<'success' | 'skipped' | 'rejected' | 'failed'> => {
+  const processFile = async (file: File, filters: FilterOptions, threshold: number): Promise<'success' | 'skipped' | 'rejected' | 'failed'> => {
     try {
       // Convert HEIC to JPEG if needed
       let processedFile = file;
@@ -186,13 +204,13 @@ export function UploadProvider({ children }: { children: ReactNode }) {
         return 'failed';
       }
 
-      // CHECK IF VAULT-WORTHY (score >= 7.0)
-      if (analysis.score < VAULT_WORTHY_THRESHOLD) {
-        log(`REJECTED (score ${analysis.score} < ${VAULT_WORTHY_THRESHOLD}):`, processedFile.name);
+      // CHECK IF VAULT-WORTHY (score >= threshold)
+      if (analysis.score < threshold) {
+        log(`REJECTED (score ${analysis.score} < ${threshold}):`, processedFile.name);
         return 'rejected';
       }
 
-      log(`VAULT-WORTHY (score ${analysis.score}):`, processedFile.name);
+      log(`VAULT-WORTHY (score ${analysis.score} >= ${threshold}):`, processedFile.name);
 
       // Only now upload to storage since it passed the quality threshold
       const compressedFile = await compressImage(processedFile);
@@ -247,11 +265,12 @@ export function UploadProvider({ children }: { children: ReactNode }) {
   const processFileWithRetry = async (
     file: File, 
     filters: FilterOptions,
+    threshold: number,
     maxRetries: number = MAX_RETRIES
   ): Promise<{ result: 'success' | 'skipped' | 'rejected' | 'failed', error?: string }> => {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        const result = await processFile(file, filters);
+        const result = await processFile(file, filters, threshold);
         return { result };
       } catch (error: any) {
         if (attempt === maxRetries) {
@@ -270,8 +289,6 @@ export function UploadProvider({ children }: { children: ReactNode }) {
       return;
     }
     
-    log('=== STARTING UPLOAD (analyze-first mode) ===', files.length, 'files');
-    log(`Quality threshold: ${VAULT_WORTHY_THRESHOLD}+`);
     processingRef.current = true;
     setIsUploading(true);
     setIsMinimized(false);
@@ -292,6 +309,11 @@ export function UploadProvider({ children }: { children: ReactNode }) {
 
     // Run the upload loop asynchronously
     (async () => {
+      // Fetch user's quality threshold
+      const threshold = await getUserThreshold();
+      log('=== STARTING UPLOAD (analyze-first mode) ===', files.length, 'files');
+      log(`Quality threshold: ${threshold}+`);
+      
       let processed = 0;
       let successful = 0;
       let failed = 0;
@@ -313,7 +335,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
           
           setStats(prev => ({ ...prev, currentFile: file.name }));
           
-          const { result: fileResult } = await processFileWithRetry(file, filters);
+          const { result: fileResult } = await processFileWithRetry(file, filters, threshold);
           
           processed++;
           if (fileResult === 'success') {
