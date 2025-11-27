@@ -19,11 +19,13 @@ import {
   TrendingUp,
   Search,
   FileCheck,
-  Minimize2
+  Minimize2,
+  RefreshCw
 } from 'lucide-react';
 import { AnimatedLockIcon } from './AnimatedLockIcon';
 import { useUpload } from '@/contexts/UploadContext';
 import { generateFileHash, checkDuplicateHash } from '@/lib/fileHash';
+import { convertHeicToJpeg, isHeicFile } from '@/lib/heicConverter';
 
 interface UploadStats {
   total: number;
@@ -333,30 +335,43 @@ export function BulkUpload() {
 
   const processFile = async (file: File): Promise<'success' | 'skipped' | 'failed'> => {
     try {
-      log('Processing file:', file.name);
+      // Convert HEIC to JPEG if needed
+      let processedFile = file;
+      if (isHeicFile(file)) {
+        log('Converting HEIC file:', file.name);
+        try {
+          processedFile = await convertHeicToJpeg(file);
+          log('HEIC converted successfully:', processedFile.name);
+        } catch (convError) {
+          log('HEIC conversion failed, skipping:', file.name, convError);
+          return 'failed';
+        }
+      }
       
-      if (filters.skipSmallFiles && file.size < filters.minFileSize * 1024) {
-        log('Skipped (too small):', file.name);
+      log('Processing file:', processedFile.name);
+      
+      if (filters.skipSmallFiles && processedFile.size < filters.minFileSize * 1024) {
+        log('Skipped (too small):', processedFile.name);
         return 'skipped';
       }
 
       if (filters.skipScreenshots && 
-          (file.name.toLowerCase().includes('screenshot') || 
-           file.name.toLowerCase().includes('screen shot') ||
-           file.name.toLowerCase().includes('screen_shot'))) {
-        log('Skipped (screenshot):', file.name);
+          (processedFile.name.toLowerCase().includes('screenshot') || 
+           processedFile.name.toLowerCase().includes('screen shot') ||
+           processedFile.name.toLowerCase().includes('screen_shot'))) {
+        log('Skipped (screenshot):', processedFile.name);
         return 'skipped';
       }
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const fileHash = await generateFileHash(file);
+      const fileHash = await generateFileHash(processedFile);
       
       if (filters.skipExisting) {
         const { isDuplicate } = await checkDuplicateHash(supabase, user.id, fileHash);
         if (isDuplicate) {
-          log('Skipped (duplicate):', file.name);
+          log('Skipped (duplicate):', processedFile.name);
           return 'skipped';
         }
       }
@@ -374,9 +389,9 @@ export function BulkUpload() {
         emotional_weight: 50
       };
 
-      const compressedFile = await compressImage(file);
+      const compressedFile = await compressImage(processedFile);
 
-      const filePath = `${user.id}/${Date.now()}_${file.name}`;
+      const filePath = `${user.id}/${Date.now()}_${processedFile.name}`;
       log('Uploading to storage:', filePath);
       
       const { error: uploadError } = await supabase.storage
@@ -408,7 +423,7 @@ export function BulkUpload() {
       const analysisResponse = await supabase.functions.invoke('analyze-photo', {
         body: { 
           imageBase64: base64,
-          filename: file.name
+          filename: processedFile.name
         }
       });
 
@@ -426,7 +441,7 @@ export function BulkUpload() {
           await new Promise(resolve => setTimeout(resolve, 60000));
           
           const retry = await supabase.functions.invoke('analyze-photo', {
-            body: { imageBase64: base64, filename: file.name }
+            body: { imageBase64: base64, filename: processedFile.name }
           });
           
           if (retry.data) {
@@ -473,7 +488,7 @@ export function BulkUpload() {
           provider: 'manual_upload',
           storage_path: filePath,
           filename: suggestedName,
-          mime_type: file.type,
+          mime_type: processedFile.type,
           file_size: compressedFile.size,
           file_hash: fileHash,
           width: dimensions.width,
@@ -496,7 +511,7 @@ export function BulkUpload() {
         [tier]: prev[tier] + 1
       }));
 
-      log('SUCCESS:', file.name, 'Score:', score);
+      log('SUCCESS:', processedFile.name, 'Score:', score);
       return 'success';
 
     } catch (error: any) {
