@@ -101,7 +101,10 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
     // Camera flash (with dramatic pause before) - 4.8s
     const flashTimer = setTimeout(() => {
       setCameraFlash(true);
-      soundGeneratorRef.current?.playCameraShutter();
+      // Delay sound slightly to sync with visual flash peak (at ~15% of animation = 0.225s)
+      setTimeout(() => {
+        soundGeneratorRef.current?.playCameraShutter();
+      }, 200);
     }, 4800);
 
     // Stage 4: Door opening - delayed for flash to complete + pause after
