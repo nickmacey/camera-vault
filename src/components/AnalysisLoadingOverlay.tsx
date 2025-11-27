@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
 import { useTop10Photos } from "@/hooks/useTop10Photos";
-import { Lock, Sparkles } from "lucide-react";
+import { Lock, Sparkles, Minimize2, StopCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface AnalysisLoadingOverlayProps {
   currentPhoto: number;
   totalPhotos: number;
   visible: boolean;
   isCompressing?: boolean;
+  onCancel?: () => void;
+  onMinimize?: () => void;
 }
 
 export const AnalysisLoadingOverlay = ({
@@ -14,6 +17,8 @@ export const AnalysisLoadingOverlay = ({
   totalPhotos,
   visible,
   isCompressing = false,
+  onCancel,
+  onMinimize,
 }: AnalysisLoadingOverlayProps) => {
   const { top10Photos, loading: photosLoading } = useTop10Photos();
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
@@ -161,6 +166,30 @@ export const AnalysisLoadingOverlay = ({
             ))}
           </div>
         )}
+        
+        {/* Action buttons */}
+        <div className="mt-8 flex justify-center gap-3">
+          {onMinimize && (
+            <Button
+              variant="outline"
+              onClick={onMinimize}
+              className="border-vault-gold/30 text-vault-platinum hover:bg-vault-gold/10 hover:text-vault-gold"
+            >
+              <Minimize2 className="h-4 w-4 mr-2" />
+              Minimize
+            </Button>
+          )}
+          {onCancel && (
+            <Button
+              variant="outline"
+              onClick={onCancel}
+              className="border-red-500/50 text-red-400 hover:bg-red-500/10 hover:border-red-500"
+            >
+              <StopCircle className="h-4 w-4 mr-2" />
+              Cancel Upload
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

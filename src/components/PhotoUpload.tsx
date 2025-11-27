@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Lock, Shield, Link2, FolderOpen, Image as ImageIcon } from "lucide-react";
+import { Lock, Shield, Link2, FolderOpen, Image as ImageIcon, StopCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,6 +12,8 @@ import { SignupPromptModal } from "@/components/SignupPromptModal";
 import { extractExifData, calculateOrientation, isValidImageFormat, isValidFileSize } from "@/lib/providers/manualUploadProvider";
 import { compressImage, getOptimalQuality } from "@/lib/imageOptimization";
 import { generateFileHash, checkDuplicateHash } from "@/lib/fileHash";
+import { FloatingUploadProgress } from "@/components/FloatingUploadProgress";
+import { useUpload } from "@/contexts/UploadContext";
 
 const PhotoUpload = () => {
   const navigate = useNavigate();
@@ -27,7 +29,10 @@ const PhotoUpload = () => {
   const [duplicates, setDuplicates] = useState<{file: File, existingPhoto: any}[]>([]);
   const [checkingDuplicates, setCheckingDuplicates] = useState(false);
   const [thumbnailUrls, setThumbnailUrls] = useState<Map<string, string>>(new Map());
+  const [isMinimized, setIsMinimized] = useState(false);
   const analysisReadyRef = useRef<HTMLDivElement>(null);
+  const cancelRef = useRef(false);
+  const { isUploading: isGlobalUploading } = useUpload();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -196,8 +201,22 @@ const PhotoUpload = () => {
     }
   };
 
+  const handleCancel = () => {
+    cancelRef.current = true;
+    setUploading(false);
+    setIsCompressing(false);
+    setIsMinimized(false);
+    toast.info("Upload cancelled");
+  };
+
+  const handleMinimize = () => {
+    setIsMinimized(true);
+  };
+
   const handleUpload = async () => {
     if (files.length === 0) return;
+    
+    cancelRef.current = false; // Reset cancel flag
     
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -212,6 +231,12 @@ const PhotoUpload = () => {
         let analyzedCount = 0;
 
         for (const file of files) {
+          // Check for cancellation
+          if (cancelRef.current) {
+            toast.info(`Cancelled after ${analyzedCount} photos`, { id: toastId });
+            break;
+          }
+          
           setUploadProgress({ current: analyzedCount + 1, total: files.length });
           
           // Check if file is large (>4MB) and set compression indicator
@@ -275,9 +300,18 @@ const PhotoUpload = () => {
       const batchSize = 3; // Process 3 files concurrently
       
       for (let i = 0; i < files.length; i += batchSize) {
+        // Check for cancellation before each batch
+        if (cancelRef.current) {
+          toast.info(`Upload cancelled after ${successCount} photos`, { id: toastId });
+          break;
+        }
+        
         const batch = files.slice(i, i + batchSize);
         
         await Promise.all(batch.map(async (file, batchIndex) => {
+          // Skip if cancelled
+          if (cancelRef.current) return;
+          
           const fileIndex = i + batchIndex;
           setUploadProgress({ current: fileIndex + 1, total: files.length });
           
@@ -703,9 +737,52 @@ const PhotoUpload = () => {
       <AnalysisLoadingOverlay
         currentPhoto={uploadProgress.current}
         totalPhotos={uploadProgress.total}
-        visible={uploading}
+        visible={uploading && !isMinimized}
         isCompressing={isCompressing}
+        onCancel={handleCancel}
+        onMinimize={handleMinimize}
       />
+      
+      {/* Minimized progress indicator */}
+      {uploading && isMinimized && (
+        <div 
+          className="fixed bottom-4 right-4 z-50 cursor-pointer animate-fade-in"
+          onClick={() => setIsMinimized(false)}
+        >
+          <Card className="bg-vault-dark-gray/95 backdrop-blur-lg border-vault-gold/30 p-4 shadow-2xl hover:scale-105 transition-transform">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="w-8 h-8 border-2 border-vault-gold/30 border-t-vault-gold rounded-full animate-spin" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Lock className="h-3 w-3 text-vault-gold" />
+                </div>
+              </div>
+              <div className="flex flex-col min-w-[120px]">
+                <div className="text-xs text-vault-platinum font-medium">
+                  {uploadProgress.current}/{uploadProgress.total} photos
+                </div>
+                <div className="w-full h-1.5 bg-vault-mid-gray rounded-full mt-1 overflow-hidden">
+                  <div 
+                    className="h-full bg-vault-gold transition-all duration-300"
+                    style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+                  />
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCancel();
+                }}
+              >
+                <StopCircle className="h-4 w-4" />
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
       
       {/* Signup prompt for guest users */}
       <SignupPromptModal 
