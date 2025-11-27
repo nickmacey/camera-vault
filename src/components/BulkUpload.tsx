@@ -151,10 +151,17 @@ export function BulkUpload() {
       size: f.size
     })));
     
+    // Check both MIME type and file extension for image detection
+    // HEIC files often have empty MIME type in browsers
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.heif', '.bmp', '.tiff', '.tif'];
     const imageFiles = selectedFiles.filter(file => {
-      const isImage = file.type.startsWith('image/');
+      const hasImageMime = file.type.startsWith('image/');
+      const extension = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
+      const hasImageExtension = imageExtensions.includes(extension);
+      const isImage = hasImageMime || hasImageExtension;
+      
       if (!isImage) {
-        log('Filtered out non-image:', file.name, 'type:', file.type);
+        log('Filtered out non-image:', file.name, 'type:', file.type, 'ext:', extension);
       }
       return isImage;
     });

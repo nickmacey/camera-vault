@@ -84,10 +84,20 @@ export function calculateOrientation(width: number, height: number): 'portrait' 
   return 'square';
 }
 
-// Validate file format
+// Validate file format - check both MIME type and extension
+// HEIC files often have empty MIME type in browsers
 export function isValidImageFormat(file: File): boolean {
   const caps = manualUploadProvider.getCapabilities();
-  return caps.supportedFormats.includes(file.type);
+  
+  // Check MIME type
+  if (caps.supportedFormats.includes(file.type)) {
+    return true;
+  }
+  
+  // Also check file extension for HEIC and other formats
+  const extension = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
+  const validExtensions = ['.jpg', '.jpeg', '.png', '.heic', '.heif', '.webp'];
+  return validExtensions.includes(extension);
 }
 
 // Validate file size
