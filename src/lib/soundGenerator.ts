@@ -183,56 +183,115 @@ export class SoundGenerator {
     rumble.stop(now + duration);
   }
 
-  // Camera shutter click sound
+  // Camera shutter click sound - realistic mechanical shutter
   playCameraShutter() {
     const now = this.audioContext.currentTime;
     
-    // Create sharp click sounds for shutter
-    const createClick = (startTime: number, frequency: number, volume: number) => {
-      const osc = this.audioContext.createOscillator();
+    // Create the characteristic "ka-chik" camera sound
+    
+    // First click - mirror slap (the "ka" part)
+    const createMirrorSlap = (startTime: number) => {
+      // Sharp transient noise burst
+      const bufferSize = Math.floor(this.audioContext.sampleRate * 0.03);
+      const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+      const data = buffer.getChannelData(0);
+      
+      for (let i = 0; i < bufferSize; i++) {
+        // Exponential decay noise
+        const envelope = Math.exp(-i / (bufferSize * 0.1));
+        data[i] = (Math.random() * 2 - 1) * envelope;
+      }
+      
+      const noise = this.audioContext.createBufferSource();
+      noise.buffer = buffer;
+      
+      // Bandpass filter for that metallic click quality
+      const bandpass = this.audioContext.createBiquadFilter();
+      bandpass.type = 'bandpass';
+      bandpass.frequency.setValueAtTime(3000, startTime);
+      bandpass.Q.setValueAtTime(2, startTime);
+      
       const gain = this.audioContext.createGain();
+      gain.gain.setValueAtTime(0.5, startTime);
       
-      osc.frequency.setValueAtTime(frequency, startTime);
-      osc.frequency.exponentialRampToValueAtTime(frequency * 0.5, startTime + 0.02);
-      osc.type = 'square';
+      noise.connect(bandpass);
+      bandpass.connect(gain);
+      gain.connect(this.audioContext.destination);
       
-      // Very sharp attack and decay
-      gain.gain.setValueAtTime(volume, startTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.05);
+      noise.start(startTime);
+    };
+    
+    // Second click - shutter curtain (the "chik" part)
+    const createShutterCurtain = (startTime: number) => {
+      // Slightly longer, more resonant click
+      const bufferSize = Math.floor(this.audioContext.sampleRate * 0.05);
+      const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+      const data = buffer.getChannelData(0);
+      
+      for (let i = 0; i < bufferSize; i++) {
+        // Two-stage decay for that distinctive "chik" sound
+        const t = i / this.audioContext.sampleRate;
+        const envelope = Math.exp(-t * 80) * 0.7 + Math.exp(-t * 30) * 0.3;
+        data[i] = (Math.random() * 2 - 1) * envelope;
+      }
+      
+      const noise = this.audioContext.createBufferSource();
+      noise.buffer = buffer;
+      
+      // Higher frequency bandpass for the crisp "chik"
+      const bandpass = this.audioContext.createBiquadFilter();
+      bandpass.type = 'bandpass';
+      bandpass.frequency.setValueAtTime(4500, startTime);
+      bandpass.Q.setValueAtTime(3, startTime);
+      
+      // Add a subtle resonant tone
+      const tone = this.audioContext.createOscillator();
+      tone.frequency.setValueAtTime(2200, startTime);
+      tone.frequency.exponentialRampToValueAtTime(800, startTime + 0.04);
+      tone.type = 'sine';
+      
+      const toneGain = this.audioContext.createGain();
+      toneGain.gain.setValueAtTime(0.15, startTime);
+      toneGain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.04);
+      
+      const noiseGain = this.audioContext.createGain();
+      noiseGain.gain.setValueAtTime(0.6, startTime);
+      
+      noise.connect(bandpass);
+      bandpass.connect(noiseGain);
+      noiseGain.connect(this.audioContext.destination);
+      
+      tone.connect(toneGain);
+      toneGain.connect(this.audioContext.destination);
+      
+      noise.start(startTime);
+      tone.start(startTime);
+      tone.stop(startTime + 0.05);
+    };
+    
+    // Mechanical body resonance
+    const createBodyResonance = (startTime: number) => {
+      const osc = this.audioContext.createOscillator();
+      osc.frequency.setValueAtTime(180, startTime);
+      osc.frequency.exponentialRampToValueAtTime(100, startTime + 0.1);
+      osc.type = 'sine';
+      
+      const gain = this.audioContext.createGain();
+      gain.gain.setValueAtTime(0.08, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.1);
       
       osc.connect(gain);
       gain.connect(this.audioContext.destination);
       
       osc.start(startTime);
-      osc.stop(startTime + 0.05);
+      osc.stop(startTime + 0.1);
     };
     
-    // Opening shutter sound (quick succession of clicks)
-    createClick(now, 2000, 0.3);
-    createClick(now + 0.015, 1800, 0.25);
-    createClick(now + 0.03, 1600, 0.2);
-    
-    // Closing shutter sound (slightly delayed)
-    createClick(now + 0.08, 1900, 0.28);
-    createClick(now + 0.095, 1700, 0.23);
-    createClick(now + 0.11, 1500, 0.18);
-    
-    // Add mechanical whir/wind sound
-    const whir = this.audioContext.createOscillator();
-    const whirGain = this.audioContext.createGain();
-    
-    whir.frequency.setValueAtTime(400, now);
-    whir.frequency.linearRampToValueAtTime(200, now + 0.15);
-    whir.type = 'sawtooth';
-    
-    whirGain.gain.setValueAtTime(0.15, now);
-    whirGain.gain.linearRampToValueAtTime(0, now + 0.15);
-    
-    whir.connect(whirGain);
-    whirGain.connect(this.audioContext.destination);
-    
-    whir.start(now);
-    whir.stop(now + 0.15);
+    // Execute the shutter sequence: "ka-chik"
+    createMirrorSlap(now);
+    createBodyResonance(now);
+    createShutterCurtain(now + 0.06); // Brief delay for the "chik"
+    createBodyResonance(now + 0.06);
   }
 
   // Create a simple reverb buffer
