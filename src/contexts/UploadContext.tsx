@@ -5,11 +5,14 @@ import { convertHeicToJpeg, isHeicFile } from '@/lib/heicConverter';
 import imageCompression from 'browser-image-compression';
 import { toast } from 'sonner';
 
+const VAULT_WORTHY_THRESHOLD = 7.0;
+
 interface UploadStats {
   total: number;
   processed: number;
   successful: number;
   failed: number;
+  rejected: number; // Photos that didn't meet quality threshold
   vaultWorthy: number;
   currentFile: string;
   startTime: number;
@@ -43,9 +46,9 @@ const log = (...args: any[]) => {
   if (DEBUG) console.log('[UploadContext]', ...args);
 };
 
-const BATCH_SIZE = 10;
-const BATCH_DELAY = 500;
-const MAX_RETRIES = 3;
+const BATCH_SIZE = 5; // Smaller batches for analysis-first approach
+const BATCH_DELAY = 1000;
+const MAX_RETRIES = 2;
 
 export function UploadProvider({ children }: { children: ReactNode }) {
   const [isUploading, setIsUploading] = useState(false);
@@ -58,6 +61,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
     processed: 0,
     successful: 0,
     failed: 0,
+    rejected: 0,
     vaultWorthy: 0,
     currentFile: '',
     startTime: 0,
@@ -80,7 +84,59 @@ export function UploadProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const processFile = async (file: File, filters: FilterOptions): Promise<'success' | 'skipped' | 'failed'> => {
+  // Analyze photo FIRST before deciding to upload
+  const analyzePhoto = async (file: File): Promise<{ score: number; description: string; suggestedName: string } | null> => {
+    try {
+      const compressedFile = await compressImage(file);
+      
+      // Convert to base64 for analysis
+      const reader = new FileReader();
+      const base64 = await new Promise<string>((resolve, reject) => {
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          resolve(result.split(',')[1]);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(compressedFile);
+      });
+
+      log('Analyzing photo:', file.name);
+      const analysisResponse = await supabase.functions.invoke('analyze-photo', {
+        body: { imageBase64: base64, filename: file.name }
+      });
+
+      if (analysisResponse.error) {
+        if (analysisResponse.error.message?.includes('429')) {
+          log('Rate limit hit, pausing 60 seconds');
+          toast.warning('Rate limit reached. Pausing for 60 seconds...');
+          await new Promise(resolve => setTimeout(resolve, 60000));
+          
+          const retry = await supabase.functions.invoke('analyze-photo', {
+            body: { imageBase64: base64, filename: file.name }
+          });
+          if (retry.data) {
+            return {
+              score: retry.data.score || 0,
+              description: retry.data.description || '',
+              suggestedName: retry.data.suggestedName || file.name.replace(/\.[^/.]+$/, '')
+            };
+          }
+        }
+        throw new Error(analysisResponse.error.message || 'Analysis failed');
+      }
+
+      return {
+        score: analysisResponse.data?.score || 0,
+        description: analysisResponse.data?.description || '',
+        suggestedName: analysisResponse.data?.suggestedName || file.name.replace(/\.[^/.]+$/, '')
+      };
+    } catch (error) {
+      log('Analysis error:', error);
+      return null;
+    }
+  };
+
+  const processFile = async (file: File, filters: FilterOptions): Promise<'success' | 'skipped' | 'rejected' | 'failed'> => {
     try {
       // Convert HEIC to JPEG if needed
       let processedFile = file;
@@ -94,7 +150,9 @@ export function UploadProvider({ children }: { children: ReactNode }) {
         }
       }
       
+      // Apply filters first
       if (filters.skipSmallFiles && processedFile.size < filters.minFileSize * 1024) {
+        log('Skipped (too small):', processedFile.name);
         return 'skipped';
       }
 
@@ -102,6 +160,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
           (processedFile.name.toLowerCase().includes('screenshot') || 
            processedFile.name.toLowerCase().includes('screen shot') ||
            processedFile.name.toLowerCase().includes('screen_shot'))) {
+        log('Skipped (screenshot):', processedFile.name);
         return 'skipped';
       }
 
@@ -113,10 +172,29 @@ export function UploadProvider({ children }: { children: ReactNode }) {
       if (filters.skipExisting) {
         const { isDuplicate } = await checkDuplicateHash(supabase, user.id, fileHash);
         if (isDuplicate) {
+          log('Skipped (duplicate):', processedFile.name);
           return 'skipped';
         }
       }
 
+      // ANALYZE FIRST - before uploading
+      log('Analyzing before upload:', processedFile.name);
+      const analysis = await analyzePhoto(processedFile);
+      
+      if (!analysis) {
+        log('Analysis failed:', processedFile.name);
+        return 'failed';
+      }
+
+      // CHECK IF VAULT-WORTHY (score >= 7.0)
+      if (analysis.score < VAULT_WORTHY_THRESHOLD) {
+        log(`REJECTED (score ${analysis.score} < ${VAULT_WORTHY_THRESHOLD}):`, processedFile.name);
+        return 'rejected';
+      }
+
+      log(`VAULT-WORTHY (score ${analysis.score}):`, processedFile.name);
+
+      // Only now upload to storage since it passed the quality threshold
       const compressedFile = await compressImage(processedFile);
       const filePath = `${user.id}/${Date.now()}_${processedFile.name}`;
       
@@ -125,45 +203,6 @@ export function UploadProvider({ children }: { children: ReactNode }) {
         .upload(filePath, compressedFile);
 
       if (uploadError) throw uploadError;
-
-      // Convert to base64 for analysis
-      const reader = new FileReader();
-      const base64 = await new Promise<string>((resolve, reject) => {
-        reader.onloadend = () => {
-          const result = reader.result as string;
-          resolve(result.split(',')[1]);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(compressedFile);
-      });
-
-      // Call analysis
-      let analysisData = null;
-      const analysisResponse = await supabase.functions.invoke('analyze-photo', {
-        body: { imageBase64: base64, filename: processedFile.name }
-      });
-
-      if (analysisResponse.error) {
-        if (analysisResponse.error.message?.includes('429')) {
-          log('Rate limit hit, pausing 60 seconds');
-          toast.warning('Rate limit reached. Pausing for 60 seconds...');
-          await new Promise(resolve => setTimeout(resolve, 60000));
-          
-          const retry = await supabase.functions.invoke('analyze-photo', {
-            body: { imageBase64: base64, filename: processedFile.name }
-          });
-          if (retry.data) analysisData = retry.data;
-          else throw new Error('Rate limit exceeded');
-        } else {
-          throw new Error(analysisResponse.error.message || 'Analysis failed');
-        }
-      } else {
-        analysisData = analysisResponse.data;
-      }
-
-      const score = analysisData?.score || 0;
-      const description = analysisData?.description || '';
-      const suggestedName = analysisData?.suggestedName || file.name.replace(/\.[^/.]+$/, '');
 
       // Get dimensions
       const img = new Image();
@@ -183,15 +222,15 @@ export function UploadProvider({ children }: { children: ReactNode }) {
           user_id: user.id,
           provider: 'manual_upload',
           storage_path: filePath,
-          filename: suggestedName,
+          filename: analysis.suggestedName,
           mime_type: processedFile.type,
           file_size: compressedFile.size,
           file_hash: fileHash,
           width: dimensions.width,
           height: dimensions.height,
           orientation,
-          score,
-          description,
+          score: analysis.score,
+          description: analysis.description,
           analyzed_at: new Date().toISOString(),
           status: 'new'
         });
@@ -209,7 +248,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
     file: File, 
     filters: FilterOptions,
     maxRetries: number = MAX_RETRIES
-  ): Promise<{ result: 'success' | 'skipped' | 'failed', error?: string }> => {
+  ): Promise<{ result: 'success' | 'skipped' | 'rejected' | 'failed', error?: string }> => {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         const result = await processFile(file, filters);
@@ -231,7 +270,8 @@ export function UploadProvider({ children }: { children: ReactNode }) {
       return;
     }
     
-    log('=== STARTING UPLOAD ===', files.length, 'files');
+    log('=== STARTING UPLOAD (analyze-first mode) ===', files.length, 'files');
+    log(`Quality threshold: ${VAULT_WORTHY_THRESHOLD}+`);
     processingRef.current = true;
     setIsUploading(true);
     setIsMinimized(false);
@@ -244,6 +284,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
       processed: 0,
       successful: 0,
       failed: 0,
+      rejected: 0,
       vaultWorthy: 0,
       currentFile: '',
       startTime,
@@ -254,6 +295,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
       let processed = 0;
       let successful = 0;
       let failed = 0;
+      let rejected = 0;
       let vaultWorthy = 0;
 
       for (let i = 0; i < files.length; i += BATCH_SIZE) {
@@ -265,51 +307,49 @@ export function UploadProvider({ children }: { children: ReactNode }) {
         const batch = files.slice(i, i + BATCH_SIZE);
         log(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}`);
         
-        const results = await Promise.allSettled(
-          batch.map(async (file) => {
-            if (cancelRef.current) {
-              return { result: 'skipped' as const, error: 'Cancelled' };
-            }
-            
-            setStats(prev => ({ ...prev, currentFile: file.name }));
-            return await processFileWithRetry(file, filters);
-          })
-        );
-        
-        if (cancelRef.current) break;
-        
-        results.forEach((result) => {
+        // Process one at a time within batch for better rate limit handling
+        for (const file of batch) {
+          if (cancelRef.current) break;
+          
+          setStats(prev => ({ ...prev, currentFile: file.name }));
+          
+          const { result: fileResult } = await processFileWithRetry(file, filters);
+          
           processed++;
-          if (result.status === 'fulfilled') {
-            const { result: fileResult } = result.value;
-            if (fileResult === 'success') {
-              successful++;
-              // Check if it's vault worthy (we'd need score from processFile)
-            } else if (fileResult === 'failed') {
-              failed++;
-            }
-          } else {
+          if (fileResult === 'success') {
+            successful++;
+            vaultWorthy++;
+          } else if (fileResult === 'rejected') {
+            rejected++;
+          } else if (fileResult === 'failed') {
             failed++;
           }
-        });
+          // 'skipped' doesn't increment failed, rejected, or successful
 
-        setStats(prev => ({
-          ...prev,
-          processed,
-          successful,
-          failed,
-          vaultWorthy,
-        }));
+          setStats(prev => ({
+            ...prev,
+            processed,
+            successful,
+            failed,
+            rejected,
+            vaultWorthy,
+          }));
+        }
 
         await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
       }
 
       log('=== UPLOAD COMPLETE ===');
+      log(`Results: ${successful} vault-worthy, ${rejected} rejected, ${failed} failed`);
       setStats(prev => ({ ...prev, currentFile: '' }));
       processingRef.current = false;
       
       if (!cancelRef.current) {
-        toast.success(`Upload complete! ${successful} photos analyzed`);
+        if (successful > 0) {
+          toast.success(`${successful} vault-worthy photo${successful > 1 ? 's' : ''} added! ${rejected > 0 ? `(${rejected} didn't make the cut)` : ''}`);
+        } else if (rejected > 0) {
+          toast.info(`No photos met the vault-worthy threshold (7.0+). ${rejected} photo${rejected > 1 ? 's' : ''} analyzed.`);
+        }
       }
     })();
   }, []);
@@ -330,7 +370,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
     cancelRef.current = true;
     setIsCancelled(true);
     setStats(prev => ({ ...prev, currentFile: '' }));
-    toast.info(`Upload cancelled. ${stats.successful} photos were processed.`);
+    toast.info(`Upload cancelled. ${stats.successful} photos were added to your vault.`);
   };
 
   const toggleMinimize = () => {
