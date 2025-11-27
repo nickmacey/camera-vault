@@ -176,23 +176,17 @@ export function FloatingUploadProgress() {
           )}
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-3 gap-2">
-            <div className="bg-vault-green/10 border border-vault-green/30 rounded-lg p-2 text-center">
-              <CheckCircle2 className="w-4 h-4 text-vault-green mx-auto mb-1" />
-              <div className="text-lg font-bold text-vault-green">{stats.successful}</div>
-              <div className="text-[10px] text-vault-light-gray">Success</div>
-            </div>
-            
+          <div className="grid grid-cols-2 gap-2">
             <div className="bg-vault-gold/10 border border-vault-gold/30 rounded-lg p-2 text-center">
               <Lock className="w-4 h-4 text-vault-gold mx-auto mb-1" />
               <div className="text-lg font-bold text-vault-gold">{stats.vaultWorthy}</div>
               <div className="text-[10px] text-vault-light-gray">Vault-Worthy</div>
             </div>
             
-            <div className={`${stats.failed > 0 ? 'bg-vault-red/10 border-vault-red/30' : 'bg-vault-mid-gray/20 border-vault-mid-gray/30'} border rounded-lg p-2 text-center`}>
-              <X className={`w-4 h-4 ${stats.failed > 0 ? 'text-vault-red' : 'text-vault-mid-gray'} mx-auto mb-1`} />
-              <div className={`text-lg font-bold ${stats.failed > 0 ? 'text-vault-red' : 'text-vault-mid-gray'}`}>{stats.failed}</div>
-              <div className="text-[10px] text-vault-light-gray">Failed</div>
+            <div className="bg-vault-mid-gray/20 border border-vault-mid-gray/30 rounded-lg p-2 text-center">
+              <X className="w-4 h-4 text-vault-mid-gray mx-auto mb-1" />
+              <div className="text-lg font-bold text-vault-mid-gray">{(stats as any).rejected || 0}</div>
+              <div className="text-[10px] text-vault-light-gray">Didn't Make Cut</div>
             </div>
           </div>
 
