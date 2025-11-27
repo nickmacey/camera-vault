@@ -500,7 +500,11 @@ const PhotoUpload = () => {
                   id="folder-upload"
                   className="hidden"
                   accept="image/*"
-                  {...({ webkitdirectory: "", directory: "", multiple: true } as any)}
+                  multiple
+                  /* @ts-ignore */
+                  webkitdirectory=""
+                  /* @ts-ignore */
+                  directory=""
                   onChange={handleFileSelect}
                 />
                 
