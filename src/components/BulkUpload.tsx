@@ -59,14 +59,10 @@ interface ScanResults {
 
 type UploadStatus = 'idle' | 'scanning' | 'scanned' | 'running' | 'paused' | 'complete' | 'cancelled';
 
-// ============================================================================
-// PHASE 1 IMPROVEMENTS:
-// - Image compression before upload (reduces memory by 70%)
-// - Retry logic with exponential backoff (handles network failures)
-// - Increased batch size from 5 to 10 (2x faster)
-// - Better error handling with Promise.allSettled
-// - Reduced delays between batches (500ms instead of 1000ms)
-// ============================================================================
+const DEBUG = true;
+const log = (...args: any[]) => {
+  if (DEBUG) console.log('[BulkUpload]', ...args);
+};
 
 export function BulkUpload() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -98,36 +94,89 @@ export function BulkUpload() {
   const { toast } = useToast();
   const { startUpload: startUploadContext, updateStats: updateUploadStats, setMinimized } = useUpload();
 
-  // PHASE 1: Optimized batch size - increased from 5 to 10
   const BATCH_SIZE = 10;
-  const BATCH_DELAY = 500; // Reduced from 1000ms
+  const BATCH_DELAY = 500;
   const MAX_RETRIES = 3;
 
   useEffect(() => {
+    log('Component mounted');
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsAuthenticated(!!session);
+      log('Auth status:', !!session);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsAuthenticated(!!session);
+      log('Auth changed:', !!session);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (folderInputRef.current) {
+      log('Folder input ref connected:', {
+        hasWebkitDirectory: folderInputRef.current.hasAttribute('webkitdirectory'),
+        hasDirectory: folderInputRef.current.hasAttribute('directory'),
+        multiple: folderInputRef.current.multiple,
+        accept: folderInputRef.current.accept
+      });
+    } else {
+      log('ERROR: Folder input ref is NULL');
+    }
+  }, [folderInputRef.current]);
+
   const handleFolderSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(e.target.files || []);
-    const imageFiles = selectedFiles.filter(file => file.type.startsWith('image/'));
+    log('=== FOLDER SELECT TRIGGERED ===');
+    log('Event target:', e.target);
+    log('Files object:', e.target.files);
+    log('Files length:', e.target.files?.length);
+    
+    const filesList = e.target.files;
+    if (!filesList || filesList.length === 0) {
+      log('ERROR: No files received from input');
+      toast({
+        title: "No files selected",
+        description: "Please select a folder with files",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const selectedFiles = Array.from(filesList);
+    log('Total files selected:', selectedFiles.length);
+    log('First 5 files:', selectedFiles.slice(0, 5).map(f => ({
+      name: f.name,
+      type: f.type,
+      size: f.size
+    })));
+    
+    const imageFiles = selectedFiles.filter(file => {
+      const isImage = file.type.startsWith('image/');
+      if (!isImage) {
+        log('Filtered out non-image:', file.name, 'type:', file.type);
+      }
+      return isImage;
+    });
+    
+    log('Image files after filter:', imageFiles.length);
+    log('First 5 image files:', imageFiles.slice(0, 5).map(f => ({
+      name: f.name,
+      type: f.type,
+      size: f.size
+    })));
     
     if (imageFiles.length === 0) {
+      log('ERROR: No image files found after filtering');
       toast({
         title: "No images found",
-        description: "Please select a folder containing image files",
+        description: "Please select a folder containing image files (JPG, PNG, etc.)",
         variant: "destructive"
       });
       return;
     }
     
+    log('SUCCESS: Setting files:', imageFiles.length);
     setFiles(imageFiles);
     setScanResults(null);
     setStats({
@@ -150,9 +199,42 @@ export function BulkUpload() {
     });
   }, [toast]);
 
-  const scanFolder = async () => {
-    if (files.length === 0) return;
+  const handleButtonClick = () => {
+    log('=== SELECT FOLDER BUTTON CLICKED ===');
+    log('Folder input ref exists?', !!folderInputRef.current);
+    
+    if (!folderInputRef.current) {
+      log('ERROR: Folder input ref is null!');
+      toast({
+        title: "Error",
+        description: "Folder input not initialized. Please refresh the page.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    log('Triggering click on input element');
+    try {
+      folderInputRef.current.click();
+      log('Click triggered successfully');
+    } catch (error) {
+      log('ERROR clicking input:', error);
+      toast({
+        title: "Error",
+        description: "Failed to open folder selector. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
 
+  const scanFolder = async () => {
+    if (files.length === 0) {
+      log('Scan aborted: no files');
+      return;
+    }
+
+    log('=== STARTING FOLDER SCAN ===');
+    log('Total files to scan:', files.length);
     setStatus('scanning');
     
     let totalSize = 0;
@@ -161,6 +243,7 @@ export function BulkUpload() {
     let smallFiles = 0;
     
     const { data: { user } } = await supabase.auth.getUser();
+    log('User for scan:', user?.id);
     
     for (const file of files) {
       totalSize += file.size;
@@ -189,7 +272,7 @@ export function BulkUpload() {
     
     const validFiles = files.length - duplicates - screenshots - smallFiles;
     const estimatedCost = validFiles * 0.002;
-    const estimatedTime = Math.ceil((validFiles * 3) / 60); // minutes
+    const estimatedTime = Math.ceil((validFiles * 3) / 60);
     
     const results: ScanResults = {
       totalFiles: files.length,
@@ -202,6 +285,7 @@ export function BulkUpload() {
       estimatedTime
     };
     
+    log('Scan results:', results);
     setScanResults(results);
     setStatus('scanned');
     
@@ -220,31 +304,32 @@ export function BulkUpload() {
     return isDuplicate;
   };
 
-  // PHASE 1: NEW - Image compression function
   const compressImage = async (file: File): Promise<File> => {
     try {
+      log('Compressing:', file.name, 'Size:', (file.size / 1024 / 1024).toFixed(2), 'MB');
       const options = {
-        maxSizeMB: 1, // Maximum file size in MB
-        maxWidthOrHeight: 1920, // Maximum dimensions
-        useWebWorker: true, // Use web worker for better performance
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
         fileType: file.type as any
       };
       
       const compressedFile = await imageCompression(file, options);
-      console.log(`Compressed ${file.name}: ${(file.size / 1024 / 1024).toFixed(2)}MB -> ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`);
+      log(`Compressed ${file.name}: ${(file.size / 1024 / 1024).toFixed(2)}MB -> ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`);
       
       return compressedFile;
     } catch (error) {
-      console.warn('Compression failed, using original file:', error);
-      return file; // Fallback to original if compression fails
+      log('Compression failed for', file.name, '- using original:', error);
+      return file;
     }
   };
 
-  // PHASE 1: IMPROVED - Process file with compression and better error handling
   const processFile = async (file: File): Promise<'success' | 'skipped' | 'failed'> => {
     try {
-      // Apply filters
+      log('Processing file:', file.name);
+      
       if (filters.skipSmallFiles && file.size < filters.minFileSize * 1024) {
+        log('Skipped (too small):', file.name);
         return 'skipped';
       }
 
@@ -252,21 +337,23 @@ export function BulkUpload() {
           (file.name.toLowerCase().includes('screenshot') || 
            file.name.toLowerCase().includes('screen shot') ||
            file.name.toLowerCase().includes('screen_shot'))) {
+        log('Skipped (screenshot):', file.name);
         return 'skipped';
       }
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Generate file hash for duplicate detection
       const fileHash = await generateFileHash(file);
       
       if (filters.skipExisting) {
         const { isDuplicate } = await checkDuplicateHash(supabase, user.id, fileHash);
-        if (isDuplicate) return 'skipped';
+        if (isDuplicate) {
+          log('Skipped (duplicate):', file.name);
+          return 'skipped';
+        }
       }
 
-      // Get user settings
       const { data: settings } = await supabase
         .from('user_settings')
         .select('*')
@@ -280,22 +367,25 @@ export function BulkUpload() {
         emotional_weight: 50
       };
 
-      // PHASE 1: NEW - Compress image before upload to reduce memory usage
       const compressedFile = await compressImage(file);
 
-      // Upload to storage (using compressed file)
       const filePath = `${user.id}/${Date.now()}_${file.name}`;
+      log('Uploading to storage:', filePath);
+      
       const { error: uploadError } = await supabase.storage
         .from('photos')
         .upload(filePath, compressedFile);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        log('Storage upload error:', uploadError);
+        throw uploadError;
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('photos')
         .getPublicUrl(filePath);
 
-      // Convert compressed file to base64 for analysis
+      log('Converting to base64 for analysis');
       const reader = new FileReader();
       const base64 = await new Promise<string>((resolve, reject) => {
         reader.onloadend = () => {
@@ -306,7 +396,7 @@ export function BulkUpload() {
         reader.readAsDataURL(compressedFile);
       });
 
-      // Analyze photo with improved error handling
+      log('Calling analyze-photo function');
       let analysisData = null;
       const analysisResponse = await supabase.functions.invoke('analyze-photo', {
         body: { 
@@ -319,6 +409,7 @@ export function BulkUpload() {
         let errorMsg = 'Analysis failed';
         
         if (analysisResponse.error.message?.includes('429') || analysisResponse.error.message?.includes('rate limit')) {
+          log('Rate limit hit, pausing 60 seconds');
           errorMsg = 'Rate limit reached. Pausing for 60 seconds...';
           toast({
             title: "Rate Limit",
@@ -327,7 +418,6 @@ export function BulkUpload() {
           });
           await new Promise(resolve => setTimeout(resolve, 60000));
           
-          // Retry once
           const retry = await supabase.functions.invoke('analyze-photo', {
             body: { imageBase64: base64, filename: file.name }
           });
@@ -354,7 +444,7 @@ export function BulkUpload() {
       const description = analysisData?.description || '';
       const suggestedName = analysisData?.suggestedName || file.name.replace(/\.[^/.]+$/, '');
 
-      // Get image dimensions from compressed file
+      log('Getting image dimensions');
       const img = new Image();
       const dimensions = await new Promise<{width: number, height: number}>((resolve, reject) => {
         img.onload = () => resolve({ width: img.width, height: img.height });
@@ -362,14 +452,13 @@ export function BulkUpload() {
         img.src = URL.createObjectURL(compressedFile);
       });
 
-      // Clean up object URL to free memory
       URL.revokeObjectURL(img.src);
 
       const orientation = dimensions.width > dimensions.height ? 'landscape'
                         : dimensions.width < dimensions.height ? 'portrait'
                         : 'square';
 
-      // Save to database with score field
+      log('Saving to database');
       const { error: dbError } = await supabase
         .from('photos')
         .insert({
@@ -378,7 +467,7 @@ export function BulkUpload() {
           storage_path: filePath,
           filename: suggestedName,
           mime_type: file.type,
-          file_size: compressedFile.size, // Use compressed file size
+          file_size: compressedFile.size,
           file_hash: fileHash,
           width: dimensions.width,
           height: dimensions.height,
@@ -389,24 +478,26 @@ export function BulkUpload() {
           status: 'new'
         });
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        log('Database error:', dbError);
+        throw dbError;
+      }
 
-      // Update tier stats based on score
       const tier = score >= 8 ? 'vaultWorthy' : score >= 6.5 ? 'highValue' : 'archive';
       setStats(prev => ({
         ...prev,
         [tier]: prev[tier] + 1
       }));
 
+      log('SUCCESS:', file.name, 'Score:', score);
       return 'success';
 
     } catch (error: any) {
-      console.error('File processing error:', error);
+      log('ERROR processing file:', file.name, error);
       return 'failed';
     }
   };
 
-  // PHASE 1: NEW - Retry logic with exponential backoff
   const processFileWithRetry = async (
     file: File, 
     maxRetries: number = MAX_RETRIES
@@ -419,16 +510,15 @@ export function BulkUpload() {
         const isLastAttempt = attempt === maxRetries;
         
         if (isLastAttempt) {
-          console.error(`Failed after ${maxRetries} attempts:`, file.name, error);
+          log(`Failed after ${maxRetries} attempts:`, file.name, error);
           return { 
             result: 'failed', 
             error: error.message || 'Unknown error'
           };
         }
         
-        // Exponential backoff: 2s, 4s, 8s
         const delay = Math.pow(2, attempt) * 1000;
-        console.log(`Retry ${attempt}/${maxRetries} for ${file.name} in ${delay}ms...`);
+        log(`Retry ${attempt}/${maxRetries} for ${file.name} in ${delay}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
@@ -436,7 +526,6 @@ export function BulkUpload() {
     return { result: 'failed', error: 'Max retries exceeded' };
   };
 
-  // PHASE 1: IMPROVED - Better batch processing with Promise.allSettled
   const startUpload = async () => {
     if (files.length === 0) {
       toast({
@@ -447,25 +536,27 @@ export function BulkUpload() {
       return;
     }
 
+    log('=== STARTING UPLOAD ===');
+    log('Total files:', files.length);
+    log('Batch size:', BATCH_SIZE);
+    
     setStatus('running');
     shouldPauseRef.current = false;
     const startTime = Date.now();
     setStats(prev => ({ ...prev, startTime }));
     
-    // Initialize global upload context
     startUploadContext(files.length);
 
-    // Process files in batches of 10 (increased from 5)
     for (let i = 0; i < files.length; i += BATCH_SIZE) {
       if (shouldPauseRef.current) {
+        log('Upload paused by user');
         setStatus('paused');
         return;
       }
 
       const batch = files.slice(i, i + BATCH_SIZE);
+      log(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}, files ${i + 1}-${Math.min(i + BATCH_SIZE, files.length)}`);
       
-      // PHASE 1: Use Promise.allSettled for better error handling
-      // This ensures one failed photo doesn't stop the entire batch
       const results = await Promise.allSettled(
         batch.map(async (file) => {
           setStats(prev => ({ ...prev, currentFile: file.name }));
@@ -475,7 +566,6 @@ export function BulkUpload() {
         })
       );
       
-      // Process results and update stats
       results.forEach((result, idx) => {
         const file = batch[idx];
         
@@ -493,7 +583,6 @@ export function BulkUpload() {
               : prev.errors
           }));
         } else {
-          // Promise was rejected
           setStats(prev => ({
             ...prev,
             processed: prev.processed + 1,
@@ -506,7 +595,6 @@ export function BulkUpload() {
         }
       });
 
-      // Sync to global context (batch update instead of per-file)
       setStats(prev => {
         updateUploadStats({
           processed: prev.processed,
@@ -519,10 +607,11 @@ export function BulkUpload() {
         return prev;
       });
 
-      // PHASE 1: Reduced delay from 1000ms to 500ms
       await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
     }
 
+    log('=== UPLOAD COMPLETE ===');
+    log('Final stats:', stats);
     setStatus('complete');
     setStats(prev => ({ ...prev, currentFile: '' }));
     
@@ -533,10 +622,12 @@ export function BulkUpload() {
   };
 
   const pauseUpload = () => {
+    log('Pause requested');
     shouldPauseRef.current = true;
   };
 
   const resumeUpload = () => {
+    log('Resume requested');
     const remainingFiles = files.slice(stats.processed);
     setFiles(remainingFiles);
     setStats(prev => ({ 
@@ -549,6 +640,7 @@ export function BulkUpload() {
   };
 
   const cancelUpload = () => {
+    log('Cancel requested');
     shouldPauseRef.current = true;
     setStatus('cancelled');
     toast({
@@ -558,6 +650,7 @@ export function BulkUpload() {
   };
 
   const resetUpload = () => {
+    log('Reset requested');
     setFiles([]);
     setScanResults(null);
     setStatus('idle');
@@ -599,7 +692,7 @@ export function BulkUpload() {
     return (
       <Card className="p-8 border-vault-mid-gray bg-card">
         <div className="text-center space-y-4">
-          <AnimatedLockIcon size={80} />
+          <AnimatedLockIcon locked={true} />
           <h3 className="text-xl font-bold text-vault-platinum">Authentication Required</h3>
           <p className="text-vault-light-gray">
             Please sign in to use bulk upload
@@ -618,6 +711,11 @@ export function BulkUpload() {
             <p className="text-vault-light-gray">
               Upload and analyze entire folders of photos at once
             </p>
+            {DEBUG && (
+              <p className="text-xs text-yellow-500 mt-2">
+                🐛 Debug mode enabled - Check browser console for detailed logs
+              </p>
+            )}
           </div>
 
           <div className="space-y-4">
@@ -669,13 +767,17 @@ export function BulkUpload() {
               <input
                 ref={folderInputRef}
                 type="file"
-                {...({ webkitdirectory: "", directory: "", multiple: true } as any)}
+                /* @ts-ignore */
+                webkitdirectory=""
+                /* @ts-ignore */
+                directory=""
+                multiple
                 onChange={handleFolderSelect}
                 className="hidden"
                 accept="image/*"
               />
               <Button
-                onClick={() => folderInputRef.current?.click()}
+                onClick={handleButtonClick}
                 disabled={status === 'running' || status === 'scanning'}
                 className="w-full bg-vault-gold hover:bg-[#C4A037] text-background"
               >
