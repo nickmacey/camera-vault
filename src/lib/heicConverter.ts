@@ -44,38 +44,50 @@ export async function convertHeicToJpeg(file: File): Promise<File> {
   }
 }
 
+export interface ConversionResult {
+  convertedFiles: File[];
+  failedFiles: string[];
+}
+
 /**
  * Convert multiple HEIC files to JPEG with progress callback
+ * Returns both converted files and list of failed file names
  */
 export async function convertHeicFiles(
   files: File[],
   onProgress?: (converted: number, total: number, currentFile: string) => void
-): Promise<File[]> {
+): Promise<ConversionResult> {
   const heicFiles = files.filter(isHeicFile);
   const nonHeicFiles = files.filter(f => !isHeicFile(f));
   
   if (heicFiles.length === 0) {
-    return files; // No HEIC files to convert
+    return { convertedFiles: files, failedFiles: [] };
   }
 
   console.log(`[HEIC] Converting ${heicFiles.length} HEIC files...`);
   
   const convertedFiles: File[] = [];
+  const failedFiles: string[] = [];
   
   for (let i = 0; i < heicFiles.length; i++) {
     const file = heicFiles[i];
-    onProgress?.(i, heicFiles.length, file.name);
+    onProgress?.(i + 1, heicFiles.length, file.name);
     
     try {
       const converted = await convertHeicToJpeg(file);
       convertedFiles.push(converted);
     } catch (error) {
-      console.error(`[HEIC] Skipping ${file.name} due to conversion error`);
-      // Skip failed conversions but continue with others
+      console.error(`[HEIC] Skipping ${file.name} due to conversion error:`, error);
+      failedFiles.push(file.name);
     }
   }
 
   onProgress?.(heicFiles.length, heicFiles.length, 'Complete');
   
-  return [...nonHeicFiles, ...convertedFiles];
+  console.log(`[HEIC] Conversion complete: ${convertedFiles.length} succeeded, ${failedFiles.length} failed`);
+  
+  return { 
+    convertedFiles: [...nonHeicFiles, ...convertedFiles], 
+    failedFiles 
+  };
 }
