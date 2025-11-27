@@ -356,6 +356,7 @@ export type Database = {
           tone: string
           updated_at: string
           user_id: string
+          vault_quality_threshold: number
         }
         Insert: {
           artistic_weight?: number
@@ -373,6 +374,7 @@ export type Database = {
           tone?: string
           updated_at?: string
           user_id: string
+          vault_quality_threshold?: number
         }
         Update: {
           artistic_weight?: number
@@ -390,6 +392,7 @@ export type Database = {
           tone?: string
           updated_at?: string
           user_id?: string
+          vault_quality_threshold?: number
         }
         Relationships: []
       }

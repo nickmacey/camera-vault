@@ -25,6 +25,7 @@ interface UserSettings {
   commercial_weight: number;
   artistic_weight: number;
   emotional_weight: number;
+  vault_quality_threshold: number;
   tone: string;
   style: string;
   personality: string[];
@@ -41,6 +42,7 @@ const Index = () => {
     commercial_weight: 80,
     artistic_weight: 60,
     emotional_weight: 50,
+    vault_quality_threshold: 7.0,
     tone: 'poetic',
     style: 'observer',
     personality: ['reflective'],
@@ -227,16 +229,46 @@ const Index = () => {
                   <UserProfile />
                 </TabsContent>
                 <TabsContent value="scoring" className="space-y-6">
-                  <div className="space-y-4">
-                    {['technical', 'commercial', 'artistic', 'emotional'].map((type) => (
-                      <div key={type} className="space-y-2">
-                        <div className="flex justify-between">
-                          <Label className="capitalize">{type} {type === 'technical' ? 'Excellence' : type === 'commercial' ? 'Potential' : type === 'artistic' ? 'Vision' : 'Resonance'}</Label>
-                          <span className="text-vault-gold font-mono">{settings[`${type}_weight` as keyof UserSettings]}%</span>
+                  <div className="space-y-6">
+                    {/* Vault Quality Threshold */}
+                    <div className="p-4 rounded-lg border border-vault-gold/30 bg-vault-gold/5 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <Label className="text-base font-semibold">Vault Quality Threshold</Label>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Only photos scoring above this threshold will be uploaded to your vault
+                          </p>
                         </div>
-                        <Slider value={[settings[`${type}_weight` as keyof UserSettings] as number]} onValueChange={([value]) => setSettings({ ...settings, [`${type}_weight`]: value })} max={100} step={5} />
+                        <span className="text-2xl font-bold text-vault-gold">{settings.vault_quality_threshold.toFixed(1)}</span>
                       </div>
-                    ))}
+                      <Slider 
+                        value={[settings.vault_quality_threshold]} 
+                        onValueChange={([value]) => setSettings({ ...settings, vault_quality_threshold: value })} 
+                        min={5} 
+                        max={9} 
+                        step={0.5}
+                        className="py-2"
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>5.0 (More photos)</span>
+                        <span>7.0 (Vault-Worthy)</span>
+                        <span>9.0 (Elite only)</span>
+                      </div>
+                    </div>
+
+                    {/* Scoring Weights */}
+                    <div className="space-y-4">
+                      <Label className="text-base font-semibold">Scoring Weights</Label>
+                      {['technical', 'commercial', 'artistic', 'emotional'].map((type) => (
+                        <div key={type} className="space-y-2">
+                          <div className="flex justify-between">
+                            <Label className="capitalize">{type} {type === 'technical' ? 'Excellence' : type === 'commercial' ? 'Potential' : type === 'artistic' ? 'Vision' : 'Resonance'}</Label>
+                            <span className="text-vault-gold font-mono">{settings[`${type}_weight` as keyof UserSettings]}%</span>
+                          </div>
+                          <Slider value={[settings[`${type}_weight` as keyof UserSettings] as number]} onValueChange={([value]) => setSettings({ ...settings, [`${type}_weight`]: value })} max={100} step={5} />
+                        </div>
+                      ))}
+                    </div>
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-4">
                       {['stock', 'art', 'social', 'personal', 'default'].map(p => (
                         <Button key={p} variant="outline" size="sm" onClick={() => applyPreset(p)} className="capitalize text-xs">{p}</Button>
