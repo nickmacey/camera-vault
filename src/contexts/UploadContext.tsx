@@ -15,6 +15,7 @@ interface UploadStats {
   rejected: number; // Photos that didn't meet quality threshold
   vaultWorthy: number;
   currentFile: string;
+  currentPhase: 'idle' | 'converting' | 'analyzing' | 'uploading';
   startTime: number;
 }
 
@@ -64,6 +65,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
     rejected: 0,
     vaultWorthy: 0,
     currentFile: '',
+    currentPhase: 'idle',
     startTime: 0,
   });
 
@@ -159,6 +161,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
       // Convert HEIC to JPEG if needed
       let processedFile = file;
       if (isHeicFile(file)) {
+        setStats(prev => ({ ...prev, currentPhase: 'converting' }));
         log('Converting HEIC file:', file.name);
         try {
           processedFile = await convertHeicToJpeg(file);
@@ -196,6 +199,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
       }
 
       // ANALYZE FIRST - before uploading
+      setStats(prev => ({ ...prev, currentPhase: 'analyzing' }));
       log('Analyzing before upload:', processedFile.name);
       const analysis = await analyzePhoto(processedFile);
       
@@ -213,6 +217,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
       log(`VAULT-WORTHY (score ${analysis.score} >= ${threshold}):`, processedFile.name);
 
       // Only now upload to storage since it passed the quality threshold
+      setStats(prev => ({ ...prev, currentPhase: 'uploading' }));
       const compressedFile = await compressImage(processedFile);
       const filePath = `${user.id}/${Date.now()}_${processedFile.name}`;
       
@@ -304,6 +309,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
       rejected: 0,
       vaultWorthy: 0,
       currentFile: '',
+      currentPhase: 'idle',
       startTime,
     });
 

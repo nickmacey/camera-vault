@@ -167,11 +167,21 @@ export function FloatingUploadProgress() {
             <div className="bg-black/30 rounded-lg p-3 border border-vault-gold/10">
               <div className="flex items-center gap-2 text-xs text-vault-light-gray mb-1">
                 <ImageIcon className="w-3 h-3" />
-                <span>Now processing:</span>
+                <span>
+                  {(stats as any).currentPhase === 'converting' && 'Converting HEIC:'}
+                  {(stats as any).currentPhase === 'analyzing' && 'Analyzing:'}
+                  {(stats as any).currentPhase === 'uploading' && 'Uploading:'}
+                  {!(stats as any).currentPhase || (stats as any).currentPhase === 'idle' ? 'Processing:' : ''}
+                </span>
               </div>
               <div className="text-sm text-vault-platinum truncate font-medium">
                 {stats.currentFile}
               </div>
+              {(stats as any).currentPhase === 'converting' && (
+                <div className="text-[10px] text-vault-gold mt-1 animate-pulse">
+                  Converting iPhone HEIC → JPEG...
+                </div>
+              )}
             </div>
           )}
 
