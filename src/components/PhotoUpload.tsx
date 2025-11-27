@@ -641,6 +641,29 @@ const PhotoUpload = () => {
         </div>
       </div>
       
+      {/* HEIC Conversion Progress */}
+      {isConvertingHeic && (
+        <Card className="p-4 border-vault-gold/30 bg-vault-gold/5">
+          <div className="flex items-center gap-3">
+            <RefreshCw className="h-5 w-5 text-vault-gold animate-spin" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-foreground">
+                Converting HEIC files to JPEG...
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {heicProgress.current} of {heicProgress.total} — {heicProgress.file || 'Starting...'}
+              </p>
+              <div className="w-full bg-muted h-1.5 rounded-full mt-2 overflow-hidden">
+                <div 
+                  className="h-full bg-vault-gold transition-all duration-300"
+                  style={{ width: `${heicProgress.total > 0 ? (heicProgress.current / heicProgress.total) * 100 : 0}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+      
       {/* Duplicates found notification */}
       {duplicates.length > 0 && (
         <Card className="p-6 bg-amber-950/20 border-amber-700/50">
