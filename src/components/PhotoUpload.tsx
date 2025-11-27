@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Lock, Shield, Link2, FolderOpen, Image as ImageIcon, StopCircle } from "lucide-react";
+import { Lock, Shield, Link2, FolderOpen, Image as ImageIcon, StopCircle, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -14,6 +14,7 @@ import { compressImage, getOptimalQuality } from "@/lib/imageOptimization";
 import { generateFileHash, checkDuplicateHash } from "@/lib/fileHash";
 import { FloatingUploadProgress } from "@/components/FloatingUploadProgress";
 import { useUpload } from "@/contexts/UploadContext";
+import { convertHeicFiles, isHeicFile } from "@/lib/heicConverter";
 
 const PhotoUpload = () => {
   const navigate = useNavigate();
@@ -30,6 +31,8 @@ const PhotoUpload = () => {
   const [checkingDuplicates, setCheckingDuplicates] = useState(false);
   const [thumbnailUrls, setThumbnailUrls] = useState<Map<string, string>>(new Map());
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isConvertingHeic, setIsConvertingHeic] = useState(false);
+  const [heicProgress, setHeicProgress] = useState({ current: 0, total: 0, file: '' });
   const analysisReadyRef = useRef<HTMLDivElement>(null);
   const cancelRef = useRef(false);
   const { isUploading: isGlobalUploading } = useUpload();
@@ -85,29 +88,44 @@ const PhotoUpload = () => {
   };
 
   const checkForDuplicates = async (selectedFiles: File[]) => {
+    // First, convert any HEIC files to JPEG
+    const heicCount = selectedFiles.filter(isHeicFile).length;
+    let filesToProcess = selectedFiles;
+    
+    if (heicCount > 0) {
+      setIsConvertingHeic(true);
+      const conversionToastId = toast.loading(`Converting ${heicCount} HEIC file(s) to JPEG...`);
+      
+      try {
+        filesToProcess = await convertHeicFiles(selectedFiles, (current, total, file) => {
+          setHeicProgress({ current, total, file });
+        });
+        toast.success(`Converted ${heicCount} HEIC file(s) to JPEG`, { id: conversionToastId });
+      } catch (error) {
+        console.error('HEIC conversion error:', error);
+        toast.error('Some HEIC files failed to convert', { id: conversionToastId });
+      } finally {
+        setIsConvertingHeic(false);
+      }
+    }
+    
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
       // Guest users don't need duplicate check but still need thumbnails
-      setFiles(selectedFiles);
+      setFiles(filesToProcess);
       setDuplicates([]);
       
-      // Generate thumbnail URLs for preview (only for browser-supported formats)
-      // HEIC files can't be displayed natively in browsers
-      const browserSupportedFormats = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      // Generate thumbnail URLs for preview (converted files are now JPEG)
       const newThumbnailUrls = new Map<string, string>();
-      selectedFiles.forEach(file => {
-        const isBrowserSupported = browserSupportedFormats.includes(file.type.toLowerCase());
-        if (isBrowserSupported) {
-          const url = URL.createObjectURL(file);
-          newThumbnailUrls.set(file.name, url);
-        }
-        // HEIC and other unsupported formats will show fallback placeholder
+      filesToProcess.forEach(file => {
+        const url = URL.createObjectURL(file);
+        newThumbnailUrls.set(file.name, url);
       });
       setThumbnailUrls(newThumbnailUrls);
       
       // Auto-scroll to analysis section
-      if (selectedFiles.length > 0) {
+      if (filesToProcess.length > 0) {
         setTimeout(() => {
           analysisReadyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 300);
@@ -123,8 +141,8 @@ const PhotoUpload = () => {
       const uniqueFiles: File[] = [];
       const fileHashes = new Map<string, File>();
 
-      // Check for duplicates within the batch first
-      for (const file of selectedFiles) {
+      // Check for duplicates within the batch first (using converted files)
+      for (const file of filesToProcess) {
         const hash = await generateFileHash(file);
         
         if (fileHashes.has(hash)) {
@@ -148,16 +166,11 @@ const PhotoUpload = () => {
       setDuplicates(foundDuplicates);
       setFiles(uniqueFiles);
 
-      // Generate thumbnail URLs for preview (only for browser-supported formats)
-      // HEIC files can't be displayed natively in browsers
-      const browserSupportedFormats = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      // Generate thumbnail URLs for preview (HEIC files are now converted to JPEG)
       const newThumbnailUrls = new Map<string, string>();
       uniqueFiles.forEach(file => {
-        const isBrowserSupported = browserSupportedFormats.includes(file.type.toLowerCase());
-        if (isBrowserSupported) {
-          const url = URL.createObjectURL(file);
-          newThumbnailUrls.set(file.name, url);
-        }
+        const url = URL.createObjectURL(file);
+        newThumbnailUrls.set(file.name, url);
       });
       setThumbnailUrls(newThumbnailUrls);
 
