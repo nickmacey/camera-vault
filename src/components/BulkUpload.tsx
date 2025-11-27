@@ -692,7 +692,7 @@ export function BulkUpload() {
     return (
       <Card className="p-8 border-vault-mid-gray bg-card">
         <div className="text-center space-y-4">
-          <AnimatedLockIcon locked={true} />
+          <AnimatedLockIcon size={64} />
           <h3 className="text-xl font-bold text-vault-platinum">Authentication Required</h3>
           <p className="text-vault-light-gray">
             Please sign in to use bulk upload
