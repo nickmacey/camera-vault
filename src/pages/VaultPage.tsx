@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Check, Share2, Printer, Edit3, Instagram, Image as ImageIcon, Download, Sparkles } from "lucide-react";
+import { ArrowLeft, Check, Share2, Printer, Edit3, Instagram, Image as ImageIcon, Download, Sparkles, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { formatCurrency, getPhotoValueByScore } from "@/lib/photoValue";
+import { AIPhotoSearch } from "@/components/AIPhotoSearch";
 
 interface VaultPhoto {
   id: string;
@@ -35,6 +36,7 @@ export default function VaultPage() {
   const [photos, setPhotos] = useState<VaultPhoto[]>([]);
   const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [searchResults, setSearchResults] = useState<string[] | null>(null);
 
   useEffect(() => {
     fetchVaultPhotos();
@@ -135,6 +137,26 @@ export default function VaultPage() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* AI Search */}
+        <div className="mb-6">
+          <AIPhotoSearch
+            photos={photos}
+            onSearchResults={setSearchResults}
+            tier="vault-worthy"
+            placeholder="Search vault (e.g., 'sunset photos', 'portraits', 'landscapes')"
+          />
+          {searchResults && (
+            <div className="mt-2 flex items-center gap-2">
+              <Badge variant="secondary">
+                Showing {searchResults.length} of {photos.length} photos
+              </Badge>
+              <Button variant="ghost" size="sm" onClick={() => setSearchResults(null)}>
+                Clear search
+              </Button>
+            </div>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Main Gallery - 3 columns */}
           <div className="lg:col-span-3 space-y-6">
@@ -179,7 +201,7 @@ export default function VaultPage() {
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {photos.map((photo) => (
+                {(searchResults ? photos.filter(p => searchResults.includes(p.id)) : photos).map((photo) => (
                   <div
                     key={photo.id}
                     className={`relative group cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${

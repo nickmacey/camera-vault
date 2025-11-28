@@ -30,6 +30,10 @@ export const CategoryShowcase = () => {
     navigate('/app/stars');
   };
   
+  const openGemsPage = () => {
+    navigate('/app/gems');
+  };
+  
   useEffect(() => {
     const fetchTierPhotos = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -177,7 +181,7 @@ export const CategoryShowcase = () => {
             description="Explore and uncover diamonds in the rough waiting to shine."
             previewPhotos={archivePhotosWithUrls.map(p => p.url).filter(Boolean)}
             variant="archive"
-            onClick={scrollToGallery}
+            onClick={openGemsPage}
           />
         </div>
       </div>

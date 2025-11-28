@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { formatCurrency, getPhotoValueByScore } from "@/lib/photoValue";
 import { PhotoEditor } from "@/components/PhotoEditor";
+import { AIPhotoSearch } from "@/components/AIPhotoSearch";
 
 interface StarsPhoto {
   id: string;
@@ -25,6 +26,7 @@ export default function StarsPage() {
   const [photos, setPhotos] = useState<StarsPhoto[]>([]);
   const [selectedPhoto, setSelectedPhoto] = useState<StarsPhoto | null>(null);
   const [loading, setLoading] = useState(true);
+  const [searchResults, setSearchResults] = useState<string[] | null>(null);
 
   useEffect(() => {
     fetchStarsPhotos();
@@ -148,6 +150,14 @@ export default function StarsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* Photo Grid - 3 columns */}
             <div className="lg:col-span-3 space-y-6">
+              {/* AI Search */}
+              <AIPhotoSearch
+                photos={photos}
+                onSearchResults={setSearchResults}
+                tier="high-value"
+                placeholder="Search stars (e.g., 'portraits', 'nature', 'cityscapes')"
+              />
+              
               <div className="bg-card rounded-lg p-4 border border-border">
                 <div className="flex items-center gap-3">
                   <Wand2 className="w-5 h-5 text-emerald-400" />
@@ -175,7 +185,7 @@ export default function StarsPage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {photos.map((photo) => (
+                  {(searchResults ? photos.filter(p => searchResults.includes(p.id)) : photos).map((photo) => (
                     <div
                       key={photo.id}
                       className="relative group cursor-pointer rounded-lg overflow-hidden border-2 border-transparent hover:border-emerald-400/50 transition-all"
