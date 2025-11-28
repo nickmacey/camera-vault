@@ -26,6 +26,10 @@ export const CategoryShowcase = () => {
     navigate('/app/vault');
   };
   
+  const openStarsPage = () => {
+    navigate('/app/stars');
+  };
+  
   useEffect(() => {
     const fetchTierPhotos = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -159,7 +163,7 @@ export const CategoryShowcase = () => {
             description="Exceptional work with elite potential. Refine and elevate."
             previewPhotos={highValuePhotos.slice(0, 12).map(p => p.url)}
             variant="high-value"
-            onClick={scrollToGallery}
+            onClick={openStarsPage}
           />
           
           {/* Gems (Archive) */}
