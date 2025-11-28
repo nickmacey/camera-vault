@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Check, Share2, Printer, Edit3, Instagram, Image as ImageIcon, Download, Sparkles, Lock } from "lucide-react";
+import { ArrowLeft, Check, Share2, Printer, Edit3, Instagram, Image as ImageIcon, Download, Sparkles, Lock, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,14 +9,17 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { formatCurrency, getPhotoValueByScore } from "@/lib/photoValue";
 import { AIPhotoSearch } from "@/components/AIPhotoSearch";
+import { PhotoEditor } from "@/components/PhotoEditor";
 
 interface VaultPhoto {
   id: string;
   filename: string;
   storage_path: string;
+  edited_storage_path?: string | null;
   overall_score: number | null;
   description: string | null;
   url?: string;
+  editedUrl?: string;
 }
 
 const printPartners = [
@@ -35,6 +38,7 @@ export default function VaultPage() {
   const navigate = useNavigate();
   const [photos, setPhotos] = useState<VaultPhoto[]>([]);
   const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
+  const [editingPhoto, setEditingPhoto] = useState<VaultPhoto | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchResults, setSearchResults] = useState<string[] | null>(null);
 
@@ -48,7 +52,7 @@ export default function VaultPage() {
 
     const { data, error } = await supabase
       .from('photos')
-      .select('id, filename, storage_path, overall_score, description')
+      .select('id, filename, storage_path, edited_storage_path, overall_score, description')
       .eq('user_id', user.id)
       .eq('tier', 'vault-worthy')
       .order('overall_score', { ascending: false });
@@ -63,7 +67,16 @@ export default function VaultPage() {
         const { data: urlData } = await supabase.storage
           .from('photos')
           .createSignedUrl(photo.storage_path, 3600);
-        return { ...photo, url: urlData?.signedUrl || '' };
+        
+        let editedUrl: string | undefined;
+        if (photo.edited_storage_path) {
+          const { data: editedUrlData } = await supabase.storage
+            .from('photos')
+            .createSignedUrl(photo.edited_storage_path, 3600);
+          editedUrl = editedUrlData?.signedUrl;
+        }
+        
+        return { ...photo, url: urlData?.signedUrl || '', editedUrl };
       })
     );
 
@@ -107,7 +120,16 @@ export default function VaultPage() {
       toast.error("Select photos to edit");
       return;
     }
-    toast.info("Photo editing studio coming soon!");
+    // Edit the first selected photo
+    const firstSelectedId = Array.from(selectedPhotos)[0];
+    const photo = photos.find(p => p.id === firstSelectedId);
+    if (photo) {
+      setEditingPhoto(photo);
+    }
+  };
+
+  const handlePhotoClick = (photo: VaultPhoto) => {
+    setEditingPhoto(photo);
   };
 
   return (
@@ -137,45 +159,74 @@ export default function VaultPage() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* AI Search */}
-        <div className="mb-6">
-          <AIPhotoSearch
-            photos={photos}
-            onSearchResults={setSearchResults}
-            tier="vault-worthy"
-            placeholder="Search vault (e.g., 'sunset photos', 'portraits', 'landscapes')"
-          />
-          {searchResults && (
-            <div className="mt-2 flex items-center gap-2">
-              <Badge variant="secondary">
-                Showing {searchResults.length} of {photos.length} photos
-              </Badge>
-              <Button variant="ghost" size="sm" onClick={() => setSearchResults(null)}>
-                Clear search
+        {editingPhoto ? (
+          /* Photo Editor View */
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <Button variant="outline" onClick={() => setEditingPhoto(null)}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Gallery
               </Button>
-            </div>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Main Gallery - 3 columns */}
-          <div className="lg:col-span-3 space-y-6">
-            {/* Selection Actions */}
-            <div className="flex items-center justify-between bg-card rounded-lg p-4 border border-border">
-              <div className="flex items-center gap-4">
-                <Button variant="outline" size="sm" onClick={selectAll}>
-                  {selectedPhotos.size === photos.length ? 'Deselect All' : 'Select All'}
-                </Button>
-                <span className="text-sm text-muted-foreground">
-                  {selectedPhotos.size} selected
-                  {selectedPhotos.size > 0 && ` • ${formatCurrency(selectedValue)}`}
-                </span>
+              <div className="flex items-center gap-3">
+                <Badge className="bg-vault-gold/20 text-vault-gold">
+                  Score: {editingPhoto.overall_score?.toFixed(1) || 'N/A'}
+                </Badge>
+                <Badge variant="outline" className="text-vault-gold border-vault-gold">
+                  {formatCurrency(getPhotoValueByScore(editingPhoto.overall_score))}
+                </Badge>
               </div>
-              {selectedPhotos.size > 0 && (
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={handleEditPhotos}>
-                    <Edit3 className="w-4 h-4 mr-2" />
-                    Edit
+            </div>
+            
+            <PhotoEditor 
+              photoUrl={editingPhoto.url || ''} 
+              photoId={editingPhoto.id}
+              filename={editingPhoto.filename}
+              editedUrl={editingPhoto.editedUrl}
+              onSaveComplete={fetchVaultPhotos}
+            />
+          </div>
+        ) : (
+          /* Gallery View */
+          <>
+            {/* AI Search */}
+            <div className="mb-6">
+              <AIPhotoSearch
+                photos={photos}
+                onSearchResults={setSearchResults}
+                tier="vault-worthy"
+                placeholder="Search vault (e.g., 'sunset photos', 'portraits', 'landscapes')"
+              />
+              {searchResults && (
+                <div className="mt-2 flex items-center gap-2">
+                  <Badge variant="secondary">
+                    Showing {searchResults.length} of {photos.length} photos
+                  </Badge>
+                  <Button variant="ghost" size="sm" onClick={() => setSearchResults(null)}>
+                    Clear search
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+              {/* Main Gallery - 3 columns */}
+              <div className="lg:col-span-3 space-y-6">
+                {/* Selection Actions */}
+                <div className="flex items-center justify-between bg-card rounded-lg p-4 border border-border">
+                  <div className="flex items-center gap-4">
+                    <Button variant="outline" size="sm" onClick={selectAll}>
+                      {selectedPhotos.size === photos.length ? 'Deselect All' : 'Select All'}
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                      {selectedPhotos.size} selected
+                      {selectedPhotos.size > 0 && ` • ${formatCurrency(selectedValue)}`}
+                    </span>
+                  </div>
+                  {selectedPhotos.size > 0 && (
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={handleEditPhotos}>
+                        <Edit3 className="w-4 h-4 mr-2" />
+                        Edit
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => toast.info("Download coming soon!")}>
                     <Download className="w-4 h-4 mr-2" />
@@ -209,9 +260,8 @@ export default function VaultPage() {
                         ? 'border-vault-gold ring-2 ring-vault-gold/50'
                         : 'border-transparent hover:border-vault-gold/30'
                     }`}
-                    onClick={() => toggleSelect(photo.id)}
                   >
-                    <div className="aspect-square">
+                    <div className="aspect-square" onClick={() => handlePhotoClick(photo)}>
                       <img
                         src={photo.url}
                         alt={photo.filename}
@@ -220,9 +270,12 @@ export default function VaultPage() {
                     </div>
                     
                     {/* Selection Checkbox */}
-                    <div className={`absolute top-2 left-2 transition-opacity ${
-                      selectedPhotos.has(photo.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                    }`}>
+                    <div 
+                      className={`absolute top-2 left-2 transition-opacity z-10 ${
+                        selectedPhotos.has(photo.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                      }`}
+                      onClick={(e) => { e.stopPropagation(); toggleSelect(photo.id); }}
+                    >
                       <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
                         selectedPhotos.has(photo.id)
                           ? 'bg-vault-gold text-background'
@@ -239,14 +292,23 @@ export default function VaultPage() {
                       </div>
                     )}
 
-                    {/* Hover Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="absolute bottom-0 left-0 right-0 p-3">
-                        <p className="text-xs text-white/80 truncate">{photo.filename}</p>
-                        <p className="text-xs text-vault-gold font-semibold">
-                          {formatCurrency(getPhotoValueByScore(photo.overall_score))}
-                        </p>
+                    {/* Edit Overlay */}
+                    <div 
+                      className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                      onClick={() => handlePhotoClick(photo)}
+                    >
+                      <div className="text-center">
+                        <Wand2 className="w-8 h-8 text-white mx-auto mb-2" />
+                        <span className="text-white text-sm font-medium">Edit Photo</span>
                       </div>
+                    </div>
+
+                    {/* Bottom Info */}
+                    <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
+                      <p className="text-xs text-white/80 truncate">{photo.filename}</p>
+                      <p className="text-xs text-vault-gold font-semibold">
+                        {formatCurrency(getPhotoValueByScore(photo.overall_score))}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -362,6 +424,8 @@ export default function VaultPage() {
             </Card>
           </div>
         </div>
+          </>
+        )}
       </div>
     </div>
   );
