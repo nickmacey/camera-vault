@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Gem, Trash2, ArrowUp, ArrowDown, AlertTriangle, Sparkles, CheckSquare, Square } from "lucide-react";
+import { ArrowLeft, Gem, Trash2, ArrowUp, ArrowDown, AlertTriangle, Sparkles, CheckSquare, Square, Loader2 } from "lucide-react";
+import { useAutoAnalyze } from "@/hooks/useAutoAnalyze";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -15,6 +16,7 @@ interface GemsPhoto {
   storage_path: string;
   overall_score: number | null;
   description: string | null;
+  analyzed_at?: string | null;
   url?: string;
 }
 
@@ -29,6 +31,16 @@ export default function GemsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const removalSectionRef = useRef<HTMLDivElement>(null);
 
+  // Auto-analyze callback
+  const handlePhotoAnalyzed = useCallback((photoId: string, data: any) => {
+    setPhotos(prev => prev.map(p => 
+      p.id === photoId ? { ...p, ...data } : p
+    ));
+  }, []);
+
+  // Auto-analyze unscored photos
+  const { analyzing, queueLength } = useAutoAnalyze(photos, handlePhotoAnalyzed);
+
   useEffect(() => {
     fetchGemsPhotos();
   }, []);
@@ -39,7 +51,7 @@ export default function GemsPage() {
 
     const { data, error } = await supabase
       .from('photos')
-      .select('id, filename, storage_path, overall_score, description')
+      .select('id, filename, storage_path, overall_score, description, analyzed_at')
       .eq('user_id', user.id)
       .or('tier.eq.archive,tier.is.null')
       .order('overall_score', { ascending: false, nullsFirst: false });
@@ -204,6 +216,12 @@ export default function GemsPage() {
             <Badge variant="outline" className="text-gray-400 border-gray-400">
               {photos.length} Photos • {formatCurrency(totalValue)}
             </Badge>
+            {queueLength > 0 && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Analyzing {queueLength}
+              </Badge>
+            )}
             {lowQualityPhotos.length > 0 && (
               <Button variant="outline" size="sm" onClick={scrollToRemoval} className="text-orange-400 border-orange-400/50">
                 <ArrowDown className="w-4 h-4 mr-2" />
@@ -276,11 +294,15 @@ export default function GemsPage() {
                   </div>
 
                   {/* Score Badge */}
-                  {photo.overall_score && (
-                    <div className="absolute top-2 right-2 bg-black/70 backdrop-blur px-2 py-1 rounded text-xs font-bold text-gray-300">
-                      {photo.overall_score.toFixed(1)}
-                    </div>
-                  )}
+                  <div className="absolute top-2 right-2 bg-black/70 backdrop-blur px-2 py-1 rounded text-xs font-bold text-gray-300">
+                    {analyzing.has(photo.id) ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : photo.overall_score ? (
+                      photo.overall_score.toFixed(1)
+                    ) : (
+                      'N/A'
+                    )}
+                  </div>
 
                   {/* Hover Actions */}
                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">

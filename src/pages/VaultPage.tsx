@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Check, Share2, Printer, Edit3, Instagram, Image as ImageIcon, Download, Sparkles, Lock, Wand2, Layers } from "lucide-react";
+import { ArrowLeft, Check, Share2, Printer, Edit3, Instagram, Image as ImageIcon, Download, Sparkles, Lock, Wand2, Layers, Loader2 } from "lucide-react";
+import { useAutoAnalyze } from "@/hooks/useAutoAnalyze";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +20,7 @@ interface VaultPhoto {
   edited_storage_path?: string | null;
   overall_score: number | null;
   description: string | null;
+  analyzed_at?: string | null;
   url?: string;
   editedUrl?: string;
 }
@@ -44,6 +46,16 @@ export default function VaultPage() {
   const [loading, setLoading] = useState(true);
   const [searchResults, setSearchResults] = useState<string[] | null>(null);
 
+  // Auto-analyze callback
+  const handlePhotoAnalyzed = useCallback((photoId: string, data: any) => {
+    setPhotos(prev => prev.map(p => 
+      p.id === photoId ? { ...p, ...data } : p
+    ));
+  }, []);
+
+  // Auto-analyze unscored photos
+  const { analyzing, queueLength } = useAutoAnalyze(photos, handlePhotoAnalyzed);
+
   useEffect(() => {
     fetchVaultPhotos();
   }, []);
@@ -54,7 +66,7 @@ export default function VaultPage() {
 
     const { data, error } = await supabase
       .from('photos')
-      .select('id, filename, storage_path, edited_storage_path, overall_score, description')
+      .select('id, filename, storage_path, edited_storage_path, overall_score, description, analyzed_at')
       .eq('user_id', user.id)
       .eq('tier', 'vault-worthy')
       .order('overall_score', { ascending: false });
@@ -166,6 +178,12 @@ export default function VaultPage() {
             <Badge variant="outline" className="text-vault-gold border-vault-gold">
               {photos.length} Assets • {formatCurrency(totalValue)}
             </Badge>
+            {queueLength > 0 && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Analyzing {queueLength}
+              </Badge>
+            )}
           </div>
         </div>
       </header>
@@ -316,11 +334,15 @@ export default function VaultPage() {
                     </div>
 
                     {/* Score Badge */}
-                    {photo.overall_score && (
-                      <div className="absolute top-2 right-2 bg-black/70 backdrop-blur px-2 py-1 rounded text-xs font-bold text-vault-gold">
-                        {photo.overall_score.toFixed(1)}
-                      </div>
-                    )}
+                    <div className="absolute top-2 right-2 bg-black/70 backdrop-blur px-2 py-1 rounded text-xs font-bold text-vault-gold">
+                      {analyzing.has(photo.id) ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : photo.overall_score ? (
+                        photo.overall_score.toFixed(1)
+                      ) : (
+                        'N/A'
+                      )}
+                    </div>
 
                     {/* Edit Overlay */}
                     <div 
