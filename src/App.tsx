@@ -11,6 +11,7 @@ import GoogleCallback from "./pages/GoogleCallback";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
+import VaultPage from "./pages/VaultPage";
 import { VaultDoorAnimation } from "@/components/VaultDoorAnimation";
 import { AuthGuard } from "@/components/AuthGuard";
 import { UploadProvider } from "@/contexts/UploadContext";
@@ -50,6 +51,7 @@ const App = () => {
                 
                 {/* App routes (protected) */}
                 <Route path="/app" element={<AuthGuard><Index /></AuthGuard>} />
+                <Route path="/app/vault" element={<AuthGuard><VaultPage /></AuthGuard>} />
                 <Route path="/auth/google/callback" element={<GoogleCallback />} />
                 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
