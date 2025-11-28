@@ -2,12 +2,14 @@ import { Lock, TrendingUp, Archive, Sparkles, Gem, Star } from "lucide-react";
 import { PhotoBackgroundCard } from "./PhotoBackgroundCard";
 import { usePhotoStats } from "@/hooks/usePhotoStats";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateTierValue } from "@/lib/photoValue";
 import { InspirationalQuote } from "./InspirationalQuote";
 
 export const CategoryShowcase = () => {
   const { stats } = usePhotoStats();
+  const navigate = useNavigate();
   const [firstName, setFirstName] = useState<string>("");
   const [vaultWorthyPhotos, setVaultWorthyPhotos] = useState<any[]>([]);
   const [highValuePhotos, setHighValuePhotos] = useState<any[]>([]);
@@ -18,6 +20,10 @@ export const CategoryShowcase = () => {
     if (gallerySection) {
       gallerySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+  };
+  
+  const openVaultPage = () => {
+    navigate('/app/vault');
   };
   
   useEffect(() => {
@@ -128,18 +134,18 @@ export const CategoryShowcase = () => {
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-          {/* Elite (Vault Worthy) */}
+          {/* VAULT (Vault Worthy) */}
           <PhotoBackgroundCard
             photoUrl={vaultWorthyPhotos[0]?.url}
-            icon={Sparkles}
-            title="ELITE"
-            subtitle="Ready to Share"
+            icon={Lock}
+            title="VAULT"
+            subtitle="Share • Print • Monetize"
             count={vaultWorthyCount}
             value={`$${vaultWorthyValue.toLocaleString()}`}
-            description="Your most valuable assets. Portfolio-ready and market-tested."
+            description="Your portfolio-ready assets. Print, share, and monetize."
             previewPhotos={vaultWorthyPhotos.slice(0, 12).map(p => p.url)}
             variant="vault-worthy"
-            onClick={scrollToGallery}
+            onClick={openVaultPage}
           />
           
           {/* Stars (High Value) */}
