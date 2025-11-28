@@ -86,15 +86,15 @@ const PhotoCard = ({ photo, onClick, selectionMode, isSelected, onToggleSelect }
               </div>
             )}
             
-            {/* Score Display (on hover or always for high scores) */}
+            {/* Score Display - Always visible */}
             {displayScore !== null && (
-              <div className={`absolute bottom-3 right-3 font-mono text-2xl font-bold backdrop-blur-sm px-3 py-1.5 rounded-lg ${
+              <div className={`absolute bottom-3 right-3 font-mono text-2xl font-bold backdrop-blur-sm px-3 py-1.5 rounded-lg vault-transition ${
                 isVaultWorthy 
                   ? 'text-vault-gold bg-vault-black/80 border border-vault-gold/30'
                   : isHighValue
-                    ? 'text-vault-green bg-vault-black/80 border border-vault-green/30 opacity-0 group-hover:opacity-100'
-                    : 'text-vault-light-gray bg-vault-black/80 border border-vault-mid-gray opacity-0 group-hover:opacity-100'
-              } vault-transition`}>
+                    ? 'text-vault-green bg-vault-black/80 border border-vault-green/30'
+                    : 'text-vault-light-gray bg-vault-black/80 border border-vault-mid-gray'
+              }`}>
                 {displayScore.toFixed(1)}
               </div>
             )}

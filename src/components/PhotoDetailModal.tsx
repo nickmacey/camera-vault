@@ -7,7 +7,8 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { 
   X, Camera, MapPin, Calendar, FileType, Maximize2, Download,
-  Sparkles, ExternalLink, Aperture, Gauge, Zap, Mountain, Trash2, RefreshCw
+  Sparkles, ExternalLink, Aperture, Gauge, Zap, Mountain, Trash2, RefreshCw,
+  DollarSign, Printer, Share2, Image, Info
 } from "lucide-react";
 import ScoreBadge from "./ScoreBadge";
 import { SocialContentModal } from "./SocialContentModal";
@@ -16,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Tables } from "@/integrations/supabase/types";
 import { AnimatedScoreBar } from "./AnimatedScoreBar";
+import { getPhotoValueBreakdown, formatCurrency } from "@/lib/photoValue";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -333,8 +335,9 @@ export const PhotoDetailModal = ({ photo, open, onOpenChange, onPhotoDeleted }: 
 
                 {/* Metadata Tabs */}
                 <Tabs defaultValue="details" className="w-full">
-                  <TabsList className="grid w-full grid-cols-4 h-10 bg-vault-dark-gray">
+                  <TabsList className="grid w-full grid-cols-5 h-10 bg-vault-dark-gray">
                     <TabsTrigger value="details" className="text-xs data-[state=active]:bg-vault-gold data-[state=active]:text-vault-black">Details</TabsTrigger>
+                    <TabsTrigger value="value" className="text-xs data-[state=active]:bg-vault-gold data-[state=active]:text-vault-black">Value</TabsTrigger>
                     <TabsTrigger value="camera" className="text-xs data-[state=active]:bg-vault-gold data-[state=active]:text-vault-black">Camera</TabsTrigger>
                     <TabsTrigger value="location" className="text-xs data-[state=active]:bg-vault-gold data-[state=active]:text-vault-black">Location</TabsTrigger>
                     <TabsTrigger value="social" className="text-xs data-[state=active]:bg-vault-gold data-[state=active]:text-vault-black">Social</TabsTrigger>
@@ -400,6 +403,73 @@ export const PhotoDetailModal = ({ photo, open, onOpenChange, onPhotoDeleted }: 
                         }
                       })()}
                     </div>
+                  </TabsContent>
+
+                  <TabsContent value="value" className="space-y-4 mt-4">
+                    {(() => {
+                      const valueBreakdown = getPhotoValueBreakdown(photo.overall_score);
+                      return (
+                        <div className="space-y-4">
+                          {/* Total Value */}
+                          <div className="text-center p-4 bg-vault-gold/10 rounded-lg border border-vault-gold/30">
+                            <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Estimated Total Value</p>
+                            <p className="text-3xl font-bold text-vault-gold">{formatCurrency(valueBreakdown.total)}</p>
+                            <Badge variant="outline" className="mt-2 text-xs border-vault-gold/50 text-vault-gold">
+                              {valueBreakdown.tier.toUpperCase()} TIER
+                            </Badge>
+                          </div>
+
+                          {/* Value Streams Breakdown */}
+                          <div className="space-y-3">
+                            {/* Print Value */}
+                            <div className="p-3 bg-muted/30 rounded-lg border border-border">
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center gap-2">
+                                  <Printer className="h-4 w-4 text-vault-gold" />
+                                  <span className="text-sm font-medium">Print Sales</span>
+                                </div>
+                                <span className="text-sm font-bold text-vault-gold">{formatCurrency(valueBreakdown.print.value)}</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground">{valueBreakdown.print.description}</p>
+                            </div>
+
+                            {/* Social Value */}
+                            <div className="p-3 bg-muted/30 rounded-lg border border-border">
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center gap-2">
+                                  <Share2 className="h-4 w-4 text-vault-gold" />
+                                  <span className="text-sm font-medium">Social Media</span>
+                                </div>
+                                <span className="text-sm font-bold text-vault-gold">{formatCurrency(valueBreakdown.social.value)}</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground">{valueBreakdown.social.description}</p>
+                            </div>
+
+                            {/* Stock Value */}
+                            <div className="p-3 bg-muted/30 rounded-lg border border-border">
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center gap-2">
+                                  <Image className="h-4 w-4 text-vault-gold" />
+                                  <span className="text-sm font-medium">Stock Licensing</span>
+                                </div>
+                                <span className="text-sm font-bold text-vault-gold">{formatCurrency(valueBreakdown.stock.value)}</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground">{valueBreakdown.stock.description}</p>
+                            </div>
+                          </div>
+
+                          {/* Methodology */}
+                          <div className="p-3 bg-muted/20 rounded-lg border border-dashed border-border">
+                            <div className="flex items-start gap-2">
+                              <Info className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                              <p className="text-xs text-muted-foreground leading-relaxed">
+                                {valueBreakdown.methodology}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </TabsContent>
 
                   <TabsContent value="camera" className="space-y-3 mt-4">
