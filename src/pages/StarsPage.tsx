@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Star, Wand2, Check, Sparkles, TrendingUp } from "lucide-react";
+import { ArrowLeft, Star, Wand2, Check, Sparkles, TrendingUp, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { formatCurrency, getPhotoValueByScore } from "@/lib/photoValue";
 import { PhotoEditor } from "@/components/PhotoEditor";
+import { BatchPhotoEditor } from "@/components/BatchPhotoEditor";
 import { AIPhotoSearch } from "@/components/AIPhotoSearch";
 
 interface StarsPhoto {
@@ -25,8 +27,27 @@ export default function StarsPage() {
   const navigate = useNavigate();
   const [photos, setPhotos] = useState<StarsPhoto[]>([]);
   const [selectedPhoto, setSelectedPhoto] = useState<StarsPhoto | null>(null);
+  const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
+  const [batchEditing, setBatchEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [searchResults, setSearchResults] = useState<string[] | null>(null);
+
+  const toggleSelect = (photoId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newSelected = new Set(selectedPhotos);
+    if (newSelected.has(photoId)) {
+      newSelected.delete(photoId);
+    } else {
+      newSelected.add(photoId);
+    }
+    setSelectedPhotos(newSelected);
+  };
+
+  const handleBatchEditComplete = () => {
+    setBatchEditing(false);
+    setSelectedPhotos(new Set());
+    fetchStarsPhotos();
+  };
 
   useEffect(() => {
     fetchStarsPhotos();
@@ -115,7 +136,19 @@ export default function StarsPage() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {selectedPhoto ? (
+        {batchEditing ? (
+          /* Batch Photo Editor View */
+          <BatchPhotoEditor
+            photos={photos.filter(p => selectedPhotos.has(p.id)).map(p => ({
+              id: p.id,
+              filename: p.filename,
+              storage_path: p.storage_path,
+              url: p.url || ''
+            }))}
+            onComplete={handleBatchEditComplete}
+            onCancel={() => setBatchEditing(false)}
+          />
+        ) : selectedPhoto ? (
           /* Photo Editor View */
           <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -159,14 +192,22 @@ export default function StarsPage() {
               />
               
               <div className="bg-card rounded-lg p-4 border border-border">
-                <div className="flex items-center gap-3">
-                  <Wand2 className="w-5 h-5 text-emerald-400" />
-                  <div>
-                    <h3 className="font-medium">Photo Editing Studio</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Select a photo to edit, enhance, and promote to your Vault
-                    </p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Wand2 className="w-5 h-5 text-emerald-400" />
+                    <div>
+                      <h3 className="font-medium">Photo Editing Studio</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Click to edit, or select multiple for batch editing
+                      </p>
+                    </div>
                   </div>
+                  {selectedPhotos.size > 1 && (
+                    <Button onClick={() => setBatchEditing(true)} className="bg-emerald-500 hover:bg-emerald-600">
+                      <Layers className="w-4 h-4 mr-2" />
+                      Batch Edit ({selectedPhotos.size})
+                    </Button>
+                  )}
                 </div>
               </div>
 
@@ -188,7 +229,11 @@ export default function StarsPage() {
                   {(searchResults ? photos.filter(p => searchResults.includes(p.id)) : photos).map((photo) => (
                     <div
                       key={photo.id}
-                      className="relative group cursor-pointer rounded-lg overflow-hidden border-2 border-transparent hover:border-emerald-400/50 transition-all"
+                      className={`relative group cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
+                        selectedPhotos.has(photo.id)
+                          ? 'border-emerald-400 ring-2 ring-emerald-400/50'
+                          : 'border-transparent hover:border-emerald-400/50'
+                      }`}
                       onClick={() => setSelectedPhoto(photo)}
                     >
                       <div className="aspect-square">
@@ -197,6 +242,22 @@ export default function StarsPage() {
                           alt={photo.filename}
                           className="w-full h-full object-cover"
                         />
+                      </div>
+
+                      {/* Selection Checkbox */}
+                      <div 
+                        className={`absolute top-2 left-2 transition-opacity z-10 ${
+                          selectedPhotos.has(photo.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                        }`}
+                        onClick={(e) => toggleSelect(photo.id, e)}
+                      >
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                          selectedPhotos.has(photo.id)
+                            ? 'bg-emerald-400 text-background'
+                            : 'bg-black/50 text-white'
+                        }`}>
+                          {selectedPhotos.has(photo.id) && <Check className="w-4 h-4" />}
+                        </div>
                       </div>
 
                       {/* Score Badge */}
