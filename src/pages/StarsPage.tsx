@@ -13,9 +13,11 @@ interface StarsPhoto {
   id: string;
   filename: string;
   storage_path: string;
+  edited_storage_path?: string | null;
   overall_score: number | null;
   description: string | null;
   url?: string;
+  editedUrl?: string;
 }
 
 export default function StarsPage() {
@@ -34,7 +36,7 @@ export default function StarsPage() {
 
     const { data, error } = await supabase
       .from('photos')
-      .select('id, filename, storage_path, overall_score, description')
+      .select('id, filename, storage_path, edited_storage_path, overall_score, description')
       .eq('user_id', user.id)
       .eq('tier', 'high-value')
       .order('overall_score', { ascending: false });
@@ -49,7 +51,16 @@ export default function StarsPage() {
         const { data: urlData } = await supabase.storage
           .from('photos')
           .createSignedUrl(photo.storage_path, 3600);
-        return { ...photo, url: urlData?.signedUrl || '' };
+        
+        let editedUrl: string | undefined;
+        if (photo.edited_storage_path) {
+          const { data: editedUrlData } = await supabase.storage
+            .from('photos')
+            .createSignedUrl(photo.edited_storage_path, 3600);
+          editedUrl = editedUrlData?.signedUrl;
+        }
+        
+        return { ...photo, url: urlData?.signedUrl || '', editedUrl };
       })
     );
 
@@ -128,6 +139,8 @@ export default function StarsPage() {
               photoUrl={selectedPhoto.url || ''} 
               photoId={selectedPhoto.id}
               filename={selectedPhoto.filename}
+              editedUrl={selectedPhoto.editedUrl}
+              onSaveComplete={fetchStarsPhotos}
             />
           </div>
         ) : (

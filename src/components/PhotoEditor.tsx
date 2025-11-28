@@ -4,15 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Sun, Contrast, Droplets, RotateCcw, Download, Save, 
-  Sparkles, ImageIcon, Palette
+  Sparkles, ImageIcon, Palette, Loader2, Eye, EyeOff
 } from "lucide-react";
 
 interface PhotoEditorProps {
   photoUrl: string;
   photoId: string;
   filename: string;
+  editedUrl?: string;
+  onSaveComplete?: () => void;
 }
 
 interface Adjustments {
@@ -44,14 +47,19 @@ const presets = [
   { name: "Soft", adjustments: { ...defaultAdjustments, brightness: 108, contrast: 90, saturation: 90, blur: 0.5 } },
 ];
 
-export const PhotoEditor = ({ photoUrl, photoId, filename }: PhotoEditorProps) => {
+export const PhotoEditor = ({ photoUrl, photoId, filename, editedUrl, onSaveComplete }: PhotoEditorProps) => {
   const [adjustments, setAdjustments] = useState<Adjustments>(defaultAdjustments);
   const [activePreset, setActivePreset] = useState<string>("Original");
   const [isModified, setIsModified] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showOriginal, setShowOriginal] = useState(false);
+  const [hasEditedVersion, setHasEditedVersion] = useState(!!editedUrl);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
+  const originalImageRef = useRef<HTMLImageElement | null>(null);
 
   useEffect(() => {
+    // Load the main editing image
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
@@ -59,6 +67,14 @@ export const PhotoEditor = ({ photoUrl, photoId, filename }: PhotoEditorProps) =
       renderCanvas();
     };
     img.src = photoUrl;
+    
+    // Also keep original for comparison
+    const origImg = new Image();
+    origImg.crossOrigin = "anonymous";
+    origImg.onload = () => {
+      originalImageRef.current = origImg;
+    };
+    origImg.src = photoUrl;
   }, [photoUrl]);
 
   useEffect(() => {
@@ -134,9 +150,85 @@ export const PhotoEditor = ({ photoUrl, photoId, filename }: PhotoEditorProps) =
     toast.success("Photo downloaded!");
   };
 
-  const handleSave = () => {
-    // TODO: Save edited version to storage
-    toast.success("Photo saved! (Storage integration coming soon)");
+  const handleSave = async () => {
+    if (!canvasRef.current) return;
+    
+    setIsSaving(true);
+    const toastId = toast.loading("Saving edited photo...");
+    
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      
+      // Convert canvas to blob
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvasRef.current!.toBlob(
+          (blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error("Failed to create blob"));
+          },
+          'image/jpeg',
+          0.95
+        );
+      });
+      
+      // Create unique path for edited version
+      const timestamp = Date.now();
+      const editedPath = `${user.id}/edited/${timestamp}_${filename.replace(/\.[^/.]+$/, '')}.jpg`;
+      
+      // Upload to storage
+      const { error: uploadError } = await supabase.storage
+        .from('photos')
+        .upload(editedPath, blob, {
+          contentType: 'image/jpeg',
+          upsert: false
+        });
+      
+      if (uploadError) throw uploadError;
+      
+      // Update database with edited path
+      const { error: updateError } = await supabase
+        .from('photos')
+        .update({
+          edited_storage_path: editedPath,
+          edited_at: new Date().toISOString()
+        })
+        .eq('id', photoId);
+      
+      if (updateError) throw updateError;
+      
+      setHasEditedVersion(true);
+      setIsModified(false);
+      toast.success("Photo saved! Original preserved.", { id: toastId });
+      onSaveComplete?.();
+      
+    } catch (error: any) {
+      console.error("Save error:", error);
+      toast.error(error.message || "Failed to save photo", { id: toastId });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const toggleOriginal = () => {
+    if (!canvasRef.current || !originalImageRef.current) return;
+    
+    setShowOriginal(!showOriginal);
+    
+    if (!showOriginal) {
+      // Show original without filters
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      
+      const img = originalImageRef.current;
+      ctx.filter = 'none';
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    } else {
+      // Re-render with current adjustments
+      renderCanvas();
+    }
   };
 
   return (
@@ -159,8 +251,20 @@ export const PhotoEditor = ({ photoUrl, photoId, filename }: PhotoEditorProps) =
               <RotateCcw className="w-4 h-4 mr-2" />
               Reset
             </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={toggleOriginal}
+              className={showOriginal ? "bg-muted" : ""}
+            >
+              {showOriginal ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
+              {showOriginal ? "Show Edited" : "Compare"}
+            </Button>
             {isModified && (
               <span className="text-xs text-muted-foreground">Modified</span>
+            )}
+            {hasEditedVersion && !isModified && (
+              <span className="text-xs text-emerald-400">✓ Saved</span>
             )}
           </div>
           <div className="flex items-center gap-2">
@@ -168,9 +272,18 @@ export const PhotoEditor = ({ photoUrl, photoId, filename }: PhotoEditorProps) =
               <Download className="w-4 h-4 mr-2" />
               Download
             </Button>
-            <Button size="sm" onClick={handleSave} className="bg-emerald-500 hover:bg-emerald-600">
-              <Save className="w-4 h-4 mr-2" />
-              Save
+            <Button 
+              size="sm" 
+              onClick={handleSave} 
+              disabled={isSaving || !isModified}
+              className="bg-emerald-500 hover:bg-emerald-600"
+            >
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              {isSaving ? "Saving..." : "Save"}
             </Button>
           </div>
         </div>
