@@ -87,6 +87,8 @@ export type Database = {
           custom_tags: string[] | null
           date_taken: string | null
           description: string | null
+          edited_at: string | null
+          edited_storage_path: string | null
           emotional_score: number | null
           external_id: string | null
           featured_order: number | null
@@ -139,6 +141,8 @@ export type Database = {
           custom_tags?: string[] | null
           date_taken?: string | null
           description?: string | null
+          edited_at?: string | null
+          edited_storage_path?: string | null
           emotional_score?: number | null
           external_id?: string | null
           featured_order?: number | null
@@ -191,6 +195,8 @@ export type Database = {
           custom_tags?: string[] | null
           date_taken?: string | null
           description?: string | null
+          edited_at?: string | null
+          edited_storage_path?: string | null
           emotional_score?: number | null
           external_id?: string | null
           featured_order?: number | null
