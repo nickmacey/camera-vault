@@ -4,8 +4,25 @@ import { usePhotoStats } from "@/hooks/usePhotoStats";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { calculateTierValue } from "@/lib/photoValue";
 import { InspirationalQuote } from "./InspirationalQuote";
+
+// Value streams per tier
+const VALUE_STREAMS = {
+  elite: { print: 1200, social: 800, stock: 800 },
+  stars: { print: 350, social: 250, stock: 200 },
+  archive: { print: 50, social: 50, stock: 50 },
+};
+
+const getTierTotal = (tier: 'elite' | 'stars' | 'archive') => {
+  const streams = VALUE_STREAMS[tier];
+  return streams.print + streams.social + streams.stock;
+};
+
+const getTierBreakdown = (count: number, tier: 'elite' | 'stars' | 'archive') => ({
+  print: count * VALUE_STREAMS[tier].print,
+  social: count * VALUE_STREAMS[tier].social,
+  stock: count * VALUE_STREAMS[tier].stock,
+});
 
 export const CategoryShowcase = () => {
   const { stats } = usePhotoStats();
@@ -124,9 +141,13 @@ export const CategoryShowcase = () => {
   const highValueCount = stats.highValue;
   const archiveCount = stats.archive;
   
-  const vaultWorthyValue = calculateTierValue(vaultWorthyCount, 'elite');
-  const highValueValue = calculateTierValue(highValueCount, 'stars');
-  const archiveValue = calculateTierValue(archiveCount, 'archive');
+  const vaultWorthyValue = vaultWorthyCount * getTierTotal('elite');
+  const highValueValue = highValueCount * getTierTotal('stars');
+  const archiveValue = archiveCount * getTierTotal('archive');
+  
+  const vaultBreakdown = getTierBreakdown(vaultWorthyCount, 'elite');
+  const starsBreakdown = getTierBreakdown(highValueCount, 'stars');
+  const gemsBreakdown = getTierBreakdown(archiveCount, 'archive');
 
   return (
     <section className="relative py-12 md:py-24 px-3 sm:px-4 md:px-12 overflow-hidden">
@@ -150,6 +171,7 @@ export const CategoryShowcase = () => {
             subtitle="Share • Print • Monetize"
             count={vaultWorthyCount}
             value={`$${vaultWorthyValue.toLocaleString()}`}
+            valueBreakdown={vaultBreakdown}
             description="Your portfolio-ready assets. Print, share, and monetize."
             previewPhotos={vaultWorthyPhotos.slice(0, 12).map(p => p.url)}
             variant="vault-worthy"
@@ -164,6 +186,7 @@ export const CategoryShowcase = () => {
             subtitle="Refine with AI"
             count={highValueCount}
             value={`$${highValueValue.toLocaleString()}`}
+            valueBreakdown={starsBreakdown}
             description="Exceptional work with elite potential. Refine and elevate."
             previewPhotos={highValuePhotos.slice(0, 12).map(p => p.url)}
             variant="high-value"
@@ -178,6 +201,7 @@ export const CategoryShowcase = () => {
             subtitle="Hidden Talent"
             count={archiveCount}
             value={`$${archiveValue.toLocaleString()}`}
+            valueBreakdown={gemsBreakdown}
             description="Explore and uncover diamonds in the rough waiting to shine."
             previewPhotos={archivePhotosWithUrls.map(p => p.url).filter(Boolean)}
             variant="archive"
