@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { LucideIcon } from "lucide-react";
+import { LucideIcon, Printer, Share2, Image } from "lucide-react";
+
+interface ValueBreakdown {
+  print: number;
+  social: number;
+  stock: number;
+}
 
 interface PhotoBackgroundCardProps {
   photoUrl?: string;
@@ -9,6 +15,7 @@ interface PhotoBackgroundCardProps {
   subtitle?: string;
   count: number;
   value?: string;
+  valueBreakdown?: ValueBreakdown;
   description: string;
   previewPhotos?: string[];
   onClick?: () => void;
@@ -22,6 +29,7 @@ export const PhotoBackgroundCard = ({
   subtitle,
   count,
   value,
+  valueBreakdown,
   description,
   previewPhotos = [],
   onClick,
@@ -140,6 +148,24 @@ export const PhotoBackgroundCard = ({
             <p className={`text-xl sm:text-2xl md:text-3xl font-black ${styles.valueColor}`}>
               {value}
             </p>
+            
+            {/* Value Breakdown */}
+            {valueBreakdown && (
+              <div className="mt-2 flex flex-wrap gap-2 sm:gap-3">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Printer className="h-3 w-3" />
+                  <span>${valueBreakdown.print.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Share2 className="h-3 w-3" />
+                  <span>${valueBreakdown.social.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Image className="h-3 w-3" />
+                  <span>${valueBreakdown.stock.toLocaleString()}</span>
+                </div>
+              </div>
+            )}
           </div>
         )}
         
