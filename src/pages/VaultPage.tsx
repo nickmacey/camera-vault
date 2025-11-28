@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Check, Share2, Printer, Edit3, Instagram, Image as ImageIcon, Download, Sparkles, Lock, Wand2 } from "lucide-react";
+import { ArrowLeft, Check, Share2, Printer, Edit3, Instagram, Image as ImageIcon, Download, Sparkles, Lock, Wand2, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { formatCurrency, getPhotoValueByScore } from "@/lib/photoValue";
 import { AIPhotoSearch } from "@/components/AIPhotoSearch";
 import { PhotoEditor } from "@/components/PhotoEditor";
+import { BatchPhotoEditor } from "@/components/BatchPhotoEditor";
 
 interface VaultPhoto {
   id: string;
@@ -39,6 +40,7 @@ export default function VaultPage() {
   const [photos, setPhotos] = useState<VaultPhoto[]>([]);
   const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
   const [editingPhoto, setEditingPhoto] = useState<VaultPhoto | null>(null);
+  const [batchEditing, setBatchEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [searchResults, setSearchResults] = useState<string[] | null>(null);
 
@@ -120,12 +122,22 @@ export default function VaultPage() {
       toast.error("Select photos to edit");
       return;
     }
-    // Edit the first selected photo
-    const firstSelectedId = Array.from(selectedPhotos)[0];
-    const photo = photos.find(p => p.id === firstSelectedId);
-    if (photo) {
-      setEditingPhoto(photo);
+    // Single photo - use regular editor, multiple - use batch editor
+    if (selectedPhotos.size === 1) {
+      const firstSelectedId = Array.from(selectedPhotos)[0];
+      const photo = photos.find(p => p.id === firstSelectedId);
+      if (photo) {
+        setEditingPhoto(photo);
+      }
+    } else {
+      setBatchEditing(true);
     }
+  };
+
+  const handleBatchEditComplete = () => {
+    setBatchEditing(false);
+    setSelectedPhotos(new Set());
+    fetchVaultPhotos();
   };
 
   const handlePhotoClick = (photo: VaultPhoto) => {
@@ -159,7 +171,19 @@ export default function VaultPage() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {editingPhoto ? (
+        {batchEditing ? (
+          /* Batch Photo Editor View */
+          <BatchPhotoEditor
+            photos={photos.filter(p => selectedPhotos.has(p.id)).map(p => ({
+              id: p.id,
+              filename: p.filename,
+              storage_path: p.storage_path,
+              url: p.url || ''
+            }))}
+            onComplete={handleBatchEditComplete}
+            onCancel={() => setBatchEditing(false)}
+          />
+        ) : editingPhoto ? (
           /* Photo Editor View */
           <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -224,10 +248,16 @@ export default function VaultPage() {
                   </div>
                   {selectedPhotos.size > 0 && (
                     <div className="flex items-center gap-2">
+                      {selectedPhotos.size > 1 && (
+                        <Button variant="outline" size="sm" onClick={() => setBatchEditing(true)}>
+                          <Layers className="w-4 h-4 mr-2" />
+                          Batch Edit ({selectedPhotos.size})
+                        </Button>
+                      )}
                       <Button variant="outline" size="sm" onClick={handleEditPhotos}>
                         <Edit3 className="w-4 h-4 mr-2" />
-                        Edit
-                  </Button>
+                        {selectedPhotos.size === 1 ? 'Edit' : 'Edit First'}
+                      </Button>
                   <Button variant="outline" size="sm" onClick={() => toast.info("Download coming soon!")}>
                     <Download className="w-4 h-4 mr-2" />
                     Download
