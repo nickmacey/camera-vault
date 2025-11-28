@@ -163,18 +163,23 @@ export default function GemsPage() {
   };
 
   const handlePromoteToStars = async (photoId: string) => {
+    // Optimistic update - remove from local state immediately
+    const previousPhotos = [...photos];
+    setPhotos(prev => prev.filter(p => p.id !== photoId));
+    
     const { error } = await supabase
       .from('photos')
       .update({ tier: 'high-value' })
       .eq('id', photoId);
 
     if (error) {
+      // Revert on error
+      setPhotos(previousPhotos);
       toast.error("Failed to promote photo");
       return;
     }
 
     toast.success("Photo promoted to Stars!");
-    fetchGemsPhotos();
   };
 
   return (

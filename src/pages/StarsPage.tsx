@@ -94,19 +94,24 @@ export default function StarsPage() {
   const totalValue = photos.reduce((sum, p) => sum + getPhotoValueByScore(p.overall_score), 0);
 
   const handlePromoteToVault = async (photoId: string) => {
+    // Optimistic update - remove from local state immediately
+    const previousPhotos = [...photos];
+    setPhotos(prev => prev.filter(p => p.id !== photoId));
+    setSelectedPhoto(null);
+    
     const { error } = await supabase
       .from('photos')
       .update({ tier: 'vault-worthy' })
       .eq('id', photoId);
 
     if (error) {
+      // Revert on error
+      setPhotos(previousPhotos);
       toast.error("Failed to promote photo");
       return;
     }
 
     toast.success("Photo promoted to Vault!");
-    setSelectedPhoto(null);
-    fetchStarsPhotos();
   };
 
   return (
