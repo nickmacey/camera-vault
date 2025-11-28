@@ -13,6 +13,7 @@ import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 import VaultPage from "./pages/VaultPage";
 import StarsPage from "./pages/StarsPage";
+import GemsPage from "./pages/GemsPage";
 import { VaultDoorAnimation } from "@/components/VaultDoorAnimation";
 import { AuthGuard } from "@/components/AuthGuard";
 import { UploadProvider } from "@/contexts/UploadContext";
@@ -54,6 +55,7 @@ const App = () => {
                 <Route path="/app" element={<AuthGuard><Index /></AuthGuard>} />
                 <Route path="/app/vault" element={<AuthGuard><VaultPage /></AuthGuard>} />
                 <Route path="/app/stars" element={<AuthGuard><StarsPage /></AuthGuard>} />
+                <Route path="/app/gems" element={<AuthGuard><GemsPage /></AuthGuard>} />
                 <Route path="/auth/google/callback" element={<GoogleCallback />} />
                 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
