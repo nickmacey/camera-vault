@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Gem, Trash2, ArrowUp, ArrowDown, AlertTriangle, Sparkles } from "lucide-react";
+import { ArrowLeft, Gem, Trash2, ArrowUp, ArrowDown, AlertTriangle, Sparkles, CheckSquare, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { formatCurrency, getPhotoValueByScore } from "@/lib/photoValue";
 import { AIPhotoSearch } from "@/components/AIPhotoSearch";
@@ -18,13 +18,15 @@ interface GemsPhoto {
   url?: string;
 }
 
-const LOW_QUALITY_THRESHOLD = 5.5; // Photos below this score are recommended for removal
+const LOW_QUALITY_THRESHOLD = 5.5;
 
 export default function GemsPage() {
   const navigate = useNavigate();
   const [photos, setPhotos] = useState<GemsPhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchResults, setSearchResults] = useState<string[] | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isDeleting, setIsDeleting] = useState(false);
   const removalSectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -79,6 +81,27 @@ export default function GemsPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const toggleSelectPhoto = (photoId: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(photoId)) {
+        next.delete(photoId);
+      } else {
+        next.add(photoId);
+      }
+      return next;
+    });
+  };
+
+  const selectAllLowQuality = () => {
+    const allLowQualityIds = lowQualityPhotos.map(p => p.id);
+    setSelectedIds(new Set(allLowQualityIds));
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+  };
+
   const handleDeletePhoto = async (photoId: string) => {
     const photo = photos.find(p => p.id === photoId);
     if (!photo) return;
@@ -87,10 +110,7 @@ export default function GemsPage() {
     if (!confirmed) return;
 
     try {
-      // Delete from storage
       await supabase.storage.from('photos').remove([photo.storage_path]);
-      
-      // Delete from database
       const { error } = await supabase
         .from('photos')
         .delete()
@@ -99,9 +119,46 @@ export default function GemsPage() {
       if (error) throw error;
 
       setPhotos(prev => prev.filter(p => p.id !== photoId));
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        next.delete(photoId);
+        return next;
+      });
       toast.success("Photo deleted");
     } catch (error: any) {
       toast.error(error.message || "Failed to delete photo");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+
+    const confirmed = window.confirm(`Are you sure you want to delete ${selectedIds.size} photos? This cannot be undone.`);
+    if (!confirmed) return;
+
+    setIsDeleting(true);
+    const toastId = toast.loading(`Deleting ${selectedIds.size} photos...`);
+
+    try {
+      const photosToDelete = photos.filter(p => selectedIds.has(p.id));
+      const storagePaths = photosToDelete.map(p => p.storage_path);
+
+      await supabase.storage.from('photos').remove(storagePaths);
+
+      const { error } = await supabase
+        .from('photos')
+        .delete()
+        .in('id', Array.from(selectedIds));
+
+      if (error) throw error;
+
+      setPhotos(prev => prev.filter(p => !selectedIds.has(p.id)));
+      setSelectedIds(new Set());
+      toast.success(`Deleted ${selectedIds.size} photos`, { id: toastId });
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete photos", { id: toastId });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -245,15 +302,48 @@ export default function GemsPage() {
         {/* Recommended for Removal Section */}
         {lowQualityPhotos.length > 0 && (
           <div ref={removalSectionRef} className="mt-16 pt-8 border-t border-orange-500/30">
-            <div className="flex items-center gap-3 mb-6">
-              <AlertTriangle className="w-6 h-6 text-orange-400" />
-              <div>
-                <h2 className="text-xl font-semibold text-orange-400">
-                  Recommended for Removal ({lowQualityPhotos.length})
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  These photos scored below {LOW_QUALITY_THRESHOLD} and may be low quality
-                </p>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="w-6 h-6 text-orange-400" />
+                <div>
+                  <h2 className="text-xl font-semibold text-orange-400">
+                    Recommended for Removal ({lowQualityPhotos.length})
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    These photos scored below {LOW_QUALITY_THRESHOLD} and may be low quality
+                  </p>
+                </div>
+              </div>
+              
+              {/* Bulk Actions */}
+              <div className="flex items-center gap-2">
+                {selectedIds.size > 0 ? (
+                  <>
+                    <Badge variant="secondary">{selectedIds.size} selected</Badge>
+                    <Button variant="ghost" size="sm" onClick={clearSelection}>
+                      Clear
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleBulkDelete}
+                      disabled={isDeleting}
+                    >
+                      <Trash2 className="w-4 h-4 mr-1" />
+                      Delete Selected
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={selectAllLowQuality}
+                    className="text-orange-400 border-orange-400/50"
+                  >
+                    <CheckSquare className="w-4 h-4 mr-1" />
+                    Select All
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -261,13 +351,27 @@ export default function GemsPage() {
               {lowQualityPhotos.map((photo) => (
                 <div
                   key={photo.id}
-                  className="relative group rounded-lg overflow-hidden border-2 border-orange-500/30 bg-orange-500/5"
+                  className={`relative group rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${
+                    selectedIds.has(photo.id) 
+                      ? 'border-destructive bg-destructive/10' 
+                      : 'border-orange-500/30 bg-orange-500/5'
+                  }`}
+                  onClick={() => toggleSelectPhoto(photo.id)}
                 >
                   <div className="aspect-square">
                     <img
                       src={photo.url}
                       alt={photo.filename}
-                      className="w-full h-full object-cover opacity-75"
+                      className={`w-full h-full object-cover ${selectedIds.has(photo.id) ? 'opacity-50' : 'opacity-75'}`}
+                    />
+                  </div>
+
+                  {/* Checkbox */}
+                  <div className="absolute top-2 left-2 z-10" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      checked={selectedIds.has(photo.id)}
+                      onCheckedChange={() => toggleSelectPhoto(photo.id)}
+                      className="border-white bg-black/50"
                     />
                   </div>
 
@@ -281,7 +385,10 @@ export default function GemsPage() {
                     <Button
                       size="sm"
                       variant="destructive"
-                      onClick={() => handleDeletePhoto(photo.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeletePhoto(photo.id);
+                      }}
                     >
                       <Trash2 className="w-4 h-4 mr-1" />
                       Remove
