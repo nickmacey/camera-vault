@@ -14,6 +14,7 @@ import NotFound from "./pages/NotFound";
 import VaultPage from "./pages/VaultPage";
 import StarsPage from "./pages/StarsPage";
 import GemsPage from "./pages/GemsPage";
+import HighlightReelPage from "./pages/HighlightReelPage";
 import { VaultDoorAnimation } from "@/components/VaultDoorAnimation";
 import { AuthGuard } from "@/components/AuthGuard";
 import { UploadProvider } from "@/contexts/UploadContext";
@@ -52,6 +53,7 @@ const App = () => {
                 <Route path="/terms" element={<Terms />} />
                 
                 {/* App routes (protected) */}
+                <Route path="/story" element={<AuthGuard><HighlightReelPage /></AuthGuard>} />
                 <Route path="/app" element={<AuthGuard><Index /></AuthGuard>} />
                 <Route path="/app/vault" element={<AuthGuard><VaultPage /></AuthGuard>} />
                 <Route path="/app/stars" element={<AuthGuard><StarsPage /></AuthGuard>} />
