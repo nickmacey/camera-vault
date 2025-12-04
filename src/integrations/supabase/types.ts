@@ -98,11 +98,14 @@ export type Database = {
           hashtags: Json | null
           height: number | null
           hero_order: number | null
+          highlight_reel_order: number | null
+          highlight_reel_preset: string | null
           id: string
           instagram_caption: string | null
           is_favorite: boolean | null
           is_featured: boolean | null
           is_hero: boolean | null
+          is_highlight_reel: boolean | null
           is_top_10: boolean | null
           linkedin_caption: string | null
           location_data: Json | null
@@ -152,11 +155,14 @@ export type Database = {
           hashtags?: Json | null
           height?: number | null
           hero_order?: number | null
+          highlight_reel_order?: number | null
+          highlight_reel_preset?: string | null
           id?: string
           instagram_caption?: string | null
           is_favorite?: boolean | null
           is_featured?: boolean | null
           is_hero?: boolean | null
+          is_highlight_reel?: boolean | null
           is_top_10?: boolean | null
           linkedin_caption?: string | null
           location_data?: Json | null
@@ -206,11 +212,14 @@ export type Database = {
           hashtags?: Json | null
           height?: number | null
           hero_order?: number | null
+          highlight_reel_order?: number | null
+          highlight_reel_preset?: string | null
           id?: string
           instagram_caption?: string | null
           is_favorite?: boolean | null
           is_featured?: boolean | null
           is_hero?: boolean | null
+          is_highlight_reel?: boolean | null
           is_top_10?: boolean | null
           linkedin_caption?: string | null
           location_data?: Json | null
