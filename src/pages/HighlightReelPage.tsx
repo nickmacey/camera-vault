@@ -5,11 +5,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-interface Photo {
+interface MediaItem {
   id: string;
   url: string;
   filename: string;
   score: number | null;
+  isVideo: boolean;
+  mimeType: string | null;
 }
 
 const quotes = [
@@ -35,15 +37,15 @@ const presets = {
 
 export default function HighlightReelPage() {
   const navigate = useNavigate();
-  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [media, setMedia] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
-    fetchBestPhotos();
+    fetchBestMedia();
   }, []);
 
-  const fetchBestPhotos = async () => {
+  const fetchBestMedia = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -53,7 +55,7 @@ export default function HighlightReelPage() {
 
       const { data, error } = await supabase
         .from("photos")
-        .select("id, filename, storage_path, overall_score, score")
+        .select("id, filename, storage_path, overall_score, score, mime_type")
         .eq("user_id", session.user.id)
         .order("overall_score", { ascending: false, nullsFirst: false })
         .limit(30);
@@ -61,35 +63,38 @@ export default function HighlightReelPage() {
       if (error) throw error;
 
       if (data && data.length > 0) {
-        const photosWithUrls = await Promise.all(
-          data.map(async (photo) => {
+        const mediaWithUrls = await Promise.all(
+          data.map(async (item) => {
             const { data: urlData } = await supabase.storage
               .from("photos")
-              .createSignedUrl(photo.storage_path, 3600);
+              .createSignedUrl(item.storage_path, 3600);
+            const isVideo = item.mime_type?.startsWith("video/") || false;
             return {
-              id: photo.id,
+              id: item.id,
               url: urlData?.signedUrl || "",
-              filename: photo.filename,
-              score: photo.overall_score || photo.score,
+              filename: item.filename,
+              score: item.overall_score || item.score,
+              isVideo,
+              mimeType: item.mime_type,
             };
           })
         );
-        setPhotos(photosWithUrls.filter((p) => p.url));
+        setMedia(mediaWithUrls.filter((m) => m.url));
       }
     } catch (error) {
-      console.error("Error fetching photos:", error);
+      console.error("Error fetching media:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Split photos into three groups for different presets
-  const photoGroups = useMemo(() => {
-    const bwPhotos = photos.slice(0, 10);
-    const colorPhotos = photos.slice(10, 20);
-    const filmPhotos = photos.slice(20, 30);
-    return { bw: bwPhotos, color: colorPhotos, film: filmPhotos };
-  }, [photos]);
+  // Split media into three groups for different presets
+  const mediaGroups = useMemo(() => {
+    const bwMedia = media.slice(0, 10);
+    const colorMedia = media.slice(10, 20);
+    const filmMedia = media.slice(20, 30);
+    return { bw: bwMedia, color: colorMedia, film: filmMedia };
+  }, [media]);
 
   // Concatenate quotes for seamless scroll
   const marqueeText = quotes.join(" • ");
@@ -145,21 +150,21 @@ export default function HighlightReelPage() {
         </motion.div>
       </div>
 
-      {/* Photo Grid Sections */}
+      {/* Media Grid Sections */}
       <div className="relative">
         {/* B&W Section */}
         <section className="min-h-screen relative py-20">
-          <PhotoGrid photos={photoGroups.bw} preset="bw" isPaused={isPaused} />
+          <MediaGrid items={mediaGroups.bw} preset="bw" isPaused={isPaused} />
         </section>
 
         {/* Color Section */}
         <section className="min-h-screen relative py-20">
-          <PhotoGrid photos={photoGroups.color} preset="color" isPaused={isPaused} />
+          <MediaGrid items={mediaGroups.color} preset="color" isPaused={isPaused} />
         </section>
 
         {/* Film Section */}
         <section className="min-h-screen relative py-20">
-          <PhotoGrid photos={photoGroups.film} preset="film" isPaused={isPaused} />
+          <MediaGrid items={mediaGroups.film} preset="film" isPaused={isPaused} />
         </section>
       </div>
 
@@ -178,18 +183,18 @@ export default function HighlightReelPage() {
   );
 }
 
-interface PhotoGridProps {
-  photos: Photo[];
+interface MediaGridProps {
+  items: MediaItem[];
   preset: keyof typeof presets;
   isPaused: boolean;
 }
 
-function PhotoGrid({ photos, preset, isPaused }: PhotoGridProps) {
+function MediaGrid({ items, preset, isPaused }: MediaGridProps) {
   const filter = presets[preset];
   
   // Create varied positions for artistic scatter layout
   const positions = useMemo(() => {
-    return photos.map((_, i) => ({
+    return items.map((_, i) => ({
       x: Math.random() * 80 + 5, // 5-85% from left
       y: Math.random() * 70 + 10, // 10-80% from top
       scale: 0.6 + Math.random() * 0.8, // 0.6-1.4 scale
@@ -197,18 +202,18 @@ function PhotoGrid({ photos, preset, isPaused }: PhotoGridProps) {
       delay: i * 0.1,
       duration: 15 + Math.random() * 10, // 15-25s float duration
     }));
-  }, [photos.length]);
+  }, [items.length]);
 
   return (
     <div className="absolute inset-0">
       <AnimatePresence>
-        {photos.map((photo, index) => {
+        {items.map((item, index) => {
           const pos = positions[index];
           if (!pos) return null;
           
           return (
             <motion.div
-              key={photo.id}
+              key={item.id}
               className="absolute"
               style={{
                 left: `${pos.x}%`,
@@ -235,12 +240,24 @@ function PhotoGrid({ photos, preset, isPaused }: PhotoGridProps) {
                 className="w-40 h-40 md:w-56 md:h-56 lg:w-64 lg:h-64 overflow-hidden shadow-2xl"
                 style={{ filter }}
               >
-                <img
-                  src={photo.url}
-                  alt={photo.filename}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
+                {item.isVideo ? (
+                  <video
+                    src={item.url}
+                    className="w-full h-full object-cover"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    style={{ pointerEvents: "none" }}
+                  />
+                ) : (
+                  <img
+                    src={item.url}
+                    alt={item.filename}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                )}
               </div>
             </motion.div>
           );
