@@ -2,8 +2,10 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Play, Pause } from "lucide-react";
+import { ArrowRight, Play, Pause, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { HighlightReelManager } from "@/components/HighlightReelManager";
 
 interface MediaItem {
   id: string;
@@ -12,6 +14,7 @@ interface MediaItem {
   score: number | null;
   isVideo: boolean;
   mimeType: string | null;
+  preset: string | null;
 }
 
 const quotes = [
@@ -40,6 +43,7 @@ export default function HighlightReelPage() {
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
+  const [managerOpen, setManagerOpen] = useState(false);
 
   useEffect(() => {
     fetchBestMedia();
@@ -53,18 +57,34 @@ export default function HighlightReelPage() {
         return;
       }
 
-      const { data, error } = await supabase
+      // First try to get user-selected highlight reel items
+      const { data: reelData, error: reelError } = await supabase
         .from("photos")
-        .select("id, filename, storage_path, overall_score, score, mime_type")
+        .select("id, filename, storage_path, overall_score, score, mime_type, highlight_reel_preset")
         .eq("user_id", session.user.id)
-        .order("overall_score", { ascending: false, nullsFirst: false })
-        .limit(30);
+        .eq("is_highlight_reel", true)
+        .order("highlight_reel_order", { ascending: true });
 
-      if (error) throw error;
+      let dataToUse: typeof reelData = reelData;
 
-      if (data && data.length > 0) {
+      // If no custom selections, fall back to top-scored photos
+      if (!reelData || reelData.length === 0) {
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from("photos")
+          .select("id, filename, storage_path, overall_score, score, mime_type, highlight_reel_preset")
+          .eq("user_id", session.user.id)
+          .order("overall_score", { ascending: false, nullsFirst: false })
+          .limit(30);
+
+        if (fallbackError) throw fallbackError;
+        dataToUse = fallbackData;
+      } else if (reelError) {
+        throw reelError;
+      }
+
+      if (dataToUse && dataToUse.length > 0) {
         const mediaWithUrls = await Promise.all(
-          data.map(async (item) => {
+          dataToUse.map(async (item) => {
             const { data: urlData } = await supabase.storage
               .from("photos")
               .createSignedUrl(item.storage_path, 3600);
@@ -76,6 +96,7 @@ export default function HighlightReelPage() {
               score: item.overall_score || item.score,
               isVideo,
               mimeType: item.mime_type,
+              preset: item.highlight_reel_preset,
             };
           })
         );
@@ -88,13 +109,29 @@ export default function HighlightReelPage() {
     }
   };
 
-  // Split media into three groups for different presets
+  // Group media by preset, or split evenly if no presets assigned
   const mediaGroups = useMemo(() => {
+    const hasCustomPresets = media.some(m => m.preset);
+    
+    if (hasCustomPresets) {
+      return {
+        bw: media.filter(m => m.preset === 'bw'),
+        color: media.filter(m => m.preset === 'color' || !m.preset),
+        film: media.filter(m => m.preset === 'film'),
+      };
+    }
+    
+    // Fallback: split evenly
     const bwMedia = media.slice(0, 10);
     const colorMedia = media.slice(10, 20);
     const filmMedia = media.slice(20, 30);
     return { bw: bwMedia, color: colorMedia, film: filmMedia };
   }, [media]);
+
+  const handleManagerClose = () => {
+    setManagerOpen(false);
+    fetchBestMedia(); // Refresh after customization
+  };
 
   // Concatenate quotes for seamless scroll
   const marqueeText = quotes.join(" • ");
@@ -112,14 +149,32 @@ export default function HighlightReelPage() {
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 bg-gradient-to-b from-background to-transparent">
         <h1 className="text-lg font-light tracking-widest text-foreground/80">MY STORY</h1>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate("/app")}
-          className="text-vault-gold hover:text-vault-gold/80 group"
-        >
-          Enter Vault <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <Sheet open={managerOpen} onOpenChange={setManagerOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="sm" className="text-foreground/60 hover:text-foreground">
+                <Settings2 className="h-4 w-4 mr-2" />
+                Customize
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle>Customize Your Story</SheetTitle>
+              </SheetHeader>
+              <div className="mt-6">
+                <HighlightReelManager />
+              </div>
+            </SheetContent>
+          </Sheet>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/app")}
+            className="text-vault-gold hover:text-vault-gold/80 group"
+          >
+            Enter Vault <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+          </Button>
+        </div>
       </header>
 
       {/* Pause/Play control */}
