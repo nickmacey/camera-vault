@@ -183,115 +183,151 @@ export class SoundGenerator {
     rumble.stop(now + duration);
   }
 
-  // Camera shutter click sound - realistic mechanical shutter
-  playCameraShutter() {
+  // Vault door slowly opening sound - deep metallic creaking
+  playVaultDoorOpen() {
     const now = this.audioContext.currentTime;
+    const duration = 3.5;
     
-    // Create the characteristic "ka-chik" camera sound
+    // Deep metallic groaning/creaking
+    const createMetallicCreak = (startTime: number, freq: number, dur: number) => {
+      const osc = this.audioContext.createOscillator();
+      osc.frequency.setValueAtTime(freq, startTime);
+      // Slow pitch variation for creaking effect
+      osc.frequency.linearRampToValueAtTime(freq * 0.85, startTime + dur * 0.3);
+      osc.frequency.linearRampToValueAtTime(freq * 1.1, startTime + dur * 0.6);
+      osc.frequency.linearRampToValueAtTime(freq * 0.9, startTime + dur);
+      osc.type = 'sawtooth';
+      
+      // LFO for wobble effect
+      const lfo = this.audioContext.createOscillator();
+      lfo.frequency.setValueAtTime(3 + Math.random() * 4, startTime);
+      lfo.type = 'sine';
+      
+      const lfoGain = this.audioContext.createGain();
+      lfoGain.gain.setValueAtTime(freq * 0.05, startTime);
+      
+      lfo.connect(lfoGain);
+      lfoGain.connect(osc.frequency);
+      
+      const gain = this.audioContext.createGain();
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(0.08, startTime + 0.1);
+      gain.gain.setValueAtTime(0.08, startTime + dur * 0.8);
+      gain.gain.linearRampToValueAtTime(0, startTime + dur);
+      
+      // Lowpass for that muffled metal sound
+      const lowpass = this.audioContext.createBiquadFilter();
+      lowpass.type = 'lowpass';
+      lowpass.frequency.setValueAtTime(800, startTime);
+      lowpass.Q.setValueAtTime(2, startTime);
+      
+      osc.connect(lowpass);
+      lowpass.connect(gain);
+      gain.connect(this.audioContext.destination);
+      
+      lfo.start(startTime);
+      osc.start(startTime);
+      lfo.stop(startTime + dur);
+      osc.stop(startTime + dur);
+    };
     
-    // First click - mirror slap (the "ka" part)
-    const createMirrorSlap = (startTime: number) => {
-      // Sharp transient noise burst
-      const bufferSize = Math.floor(this.audioContext.sampleRate * 0.03);
+    // Deep rumbling bass for weight
+    const createDeepRumble = () => {
+      const osc = this.audioContext.createOscillator();
+      osc.frequency.setValueAtTime(35, now);
+      osc.frequency.linearRampToValueAtTime(25, now + duration);
+      osc.type = 'sine';
+      
+      const osc2 = this.audioContext.createOscillator();
+      osc2.frequency.setValueAtTime(50, now);
+      osc2.frequency.linearRampToValueAtTime(40, now + duration);
+      osc2.type = 'triangle';
+      
+      const gain = this.audioContext.createGain();
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.25, now + 0.3);
+      gain.gain.setValueAtTime(0.25, now + duration - 0.5);
+      gain.gain.linearRampToValueAtTime(0, now + duration);
+      
+      osc.connect(gain);
+      osc2.connect(gain);
+      gain.connect(this.audioContext.destination);
+      
+      osc.start(now);
+      osc2.start(now);
+      osc.stop(now + duration);
+      osc2.stop(now + duration);
+    };
+    
+    // Metallic scraping/grinding
+    const createMetallicScrape = () => {
+      const bufferSize = Math.floor(this.audioContext.sampleRate * duration);
       const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
       const data = buffer.getChannelData(0);
       
+      // Filtered noise with varying intensity
       for (let i = 0; i < bufferSize; i++) {
-        // Exponential decay noise
-        const envelope = Math.exp(-i / (bufferSize * 0.1));
-        data[i] = (Math.random() * 2 - 1) * envelope;
+        const t = i / this.audioContext.sampleRate;
+        // Intermittent scraping
+        const scrapeIntensity = Math.sin(t * 2) * 0.5 + 0.5;
+        data[i] = (Math.random() * 2 - 1) * scrapeIntensity * 0.3;
       }
       
       const noise = this.audioContext.createBufferSource();
       noise.buffer = buffer;
       
-      // Bandpass filter for that metallic click quality
       const bandpass = this.audioContext.createBiquadFilter();
       bandpass.type = 'bandpass';
-      bandpass.frequency.setValueAtTime(3000, startTime);
-      bandpass.Q.setValueAtTime(2, startTime);
+      bandpass.frequency.setValueAtTime(400, now);
+      bandpass.frequency.linearRampToValueAtTime(600, now + duration);
+      bandpass.Q.setValueAtTime(8, now);
       
       const gain = this.audioContext.createGain();
-      gain.gain.setValueAtTime(0.5, startTime);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.15, now + 0.5);
+      gain.gain.linearRampToValueAtTime(0.1, now + duration - 0.3);
+      gain.gain.linearRampToValueAtTime(0, now + duration);
       
       noise.connect(bandpass);
       bandpass.connect(gain);
       gain.connect(this.audioContext.destination);
       
-      noise.start(startTime);
+      noise.start(now);
+      noise.stop(now + duration);
     };
     
-    // Second click - shutter curtain (the "chik" part)
-    const createShutterCurtain = (startTime: number) => {
-      // Slightly longer, more resonant click
-      const bufferSize = Math.floor(this.audioContext.sampleRate * 0.05);
-      const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
-      const data = buffer.getChannelData(0);
-      
-      for (let i = 0; i < bufferSize; i++) {
-        // Two-stage decay for that distinctive "chik" sound
-        const t = i / this.audioContext.sampleRate;
-        const envelope = Math.exp(-t * 80) * 0.7 + Math.exp(-t * 30) * 0.3;
-        data[i] = (Math.random() * 2 - 1) * envelope;
-      }
-      
-      const noise = this.audioContext.createBufferSource();
-      noise.buffer = buffer;
-      
-      // Higher frequency bandpass for the crisp "chik"
-      const bandpass = this.audioContext.createBiquadFilter();
-      bandpass.type = 'bandpass';
-      bandpass.frequency.setValueAtTime(4500, startTime);
-      bandpass.Q.setValueAtTime(3, startTime);
-      
-      // Add a subtle resonant tone
-      const tone = this.audioContext.createOscillator();
-      tone.frequency.setValueAtTime(2200, startTime);
-      tone.frequency.exponentialRampToValueAtTime(800, startTime + 0.04);
-      tone.type = 'sine';
-      
-      const toneGain = this.audioContext.createGain();
-      toneGain.gain.setValueAtTime(0.15, startTime);
-      toneGain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.04);
-      
-      const noiseGain = this.audioContext.createGain();
-      noiseGain.gain.setValueAtTime(0.6, startTime);
-      
-      noise.connect(bandpass);
-      bandpass.connect(noiseGain);
-      noiseGain.connect(this.audioContext.destination);
-      
-      tone.connect(toneGain);
-      toneGain.connect(this.audioContext.destination);
-      
-      noise.start(startTime);
-      tone.start(startTime);
-      tone.stop(startTime + 0.05);
-    };
-    
-    // Mechanical body resonance
-    const createBodyResonance = (startTime: number) => {
+    // Heavy mechanical clanks during movement
+    const createMechanicalClank = (startTime: number) => {
       const osc = this.audioContext.createOscillator();
-      osc.frequency.setValueAtTime(180, startTime);
-      osc.frequency.exponentialRampToValueAtTime(100, startTime + 0.1);
-      osc.type = 'sine';
+      osc.frequency.setValueAtTime(120, startTime);
+      osc.frequency.exponentialRampToValueAtTime(60, startTime + 0.15);
+      osc.type = 'square';
       
       const gain = this.audioContext.createGain();
-      gain.gain.setValueAtTime(0.08, startTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.1);
+      gain.gain.setValueAtTime(0.2, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.2);
       
       osc.connect(gain);
       gain.connect(this.audioContext.destination);
       
       osc.start(startTime);
-      osc.stop(startTime + 0.1);
+      osc.stop(startTime + 0.2);
     };
     
-    // Execute the shutter sequence: "ka-chik"
-    createMirrorSlap(now);
-    createBodyResonance(now);
-    createShutterCurtain(now + 0.06); // Brief delay for the "chik"
-    createBodyResonance(now + 0.06);
+    // Execute the vault door sound
+    createDeepRumble();
+    createMetallicScrape();
+    
+    // Creaking sounds at different frequencies
+    createMetallicCreak(now + 0.2, 80, 1.2);
+    createMetallicCreak(now + 0.8, 120, 1.5);
+    createMetallicCreak(now + 1.5, 95, 1.3);
+    createMetallicCreak(now + 2.2, 110, 1.0);
+    
+    // Mechanical clanks as bolts disengage
+    createMechanicalClank(now + 0.1);
+    createMechanicalClank(now + 0.6);
+    createMechanicalClank(now + 1.2);
   }
 
   // Create a simple reverb buffer
