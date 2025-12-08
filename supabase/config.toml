@@ -2,3 +2,12 @@ project_id = "erdsngxlqyhhayzekgid"
 
 [functions.google-oauth-config]
 verify_jwt = false
+
+[functions.spotify-oauth-callback]
+verify_jwt = false
+
+[functions.spotify-api]
+verify_jwt = true
+
+[functions.analyze-lens-profile]
+verify_jwt = true
