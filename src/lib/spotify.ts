@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 const SPOTIFY_CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
+console.log('[Spotify] Client ID configured:', !!SPOTIFY_CLIENT_ID);
 const REDIRECT_URI = `https://erdsngxlqyhhayzekgid.supabase.co/functions/v1/spotify-oauth-callback`;
 const SCOPES = [
   'user-read-private',
