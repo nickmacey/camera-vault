@@ -12,6 +12,11 @@ const SCOPES = [
 ].join(' ');
 
 export async function initiateSpotifyOAuth() {
+  // Check if client ID is configured
+  if (!SPOTIFY_CLIENT_ID) {
+    throw new Error('Spotify Client ID is not configured. Please add the VITE_SPOTIFY_CLIENT_ID secret.');
+  }
+
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     throw new Error('You must be logged in to connect Spotify');
@@ -21,7 +26,7 @@ export async function initiateSpotifyOAuth() {
   const state = user.id;
   
   const authUrl = new URL('https://accounts.spotify.com/authorize');
-  authUrl.searchParams.set('client_id', SPOTIFY_CLIENT_ID || '');
+  authUrl.searchParams.set('client_id', SPOTIFY_CLIENT_ID);
   authUrl.searchParams.set('response_type', 'code');
   authUrl.searchParams.set('redirect_uri', REDIRECT_URI);
   authUrl.searchParams.set('scope', SCOPES);
