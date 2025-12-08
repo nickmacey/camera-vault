@@ -1,8 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 
-const SPOTIFY_CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
-console.log('[Spotify] Client ID configured:', !!SPOTIFY_CLIENT_ID);
-const REDIRECT_URI = `https://erdsngxlqyhhayzekgid.supabase.co/functions/v1/spotify-oauth-callback`;
 const SCOPES = [
   'user-read-private',
   'user-read-email',
@@ -12,23 +9,28 @@ const SCOPES = [
 ].join(' ');
 
 export async function initiateSpotifyOAuth() {
-  // Check if client ID is configured
-  if (!SPOTIFY_CLIENT_ID) {
-    throw new Error('Spotify Client ID is not configured. Please add the VITE_SPOTIFY_CLIENT_ID secret.');
-  }
-
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     throw new Error('You must be logged in to connect Spotify');
   }
 
+  // Fetch OAuth config from backend
+  const { data, error } = await supabase.functions.invoke('spotify-oauth-config');
+  
+  if (error || !data?.clientId) {
+    console.error('Failed to get Spotify config:', error || data);
+    throw new Error('Spotify is not configured. Please contact support.');
+  }
+
+  const { clientId, redirectUri } = data;
+
   // Use user ID as state for callback
   const state = user.id;
   
   const authUrl = new URL('https://accounts.spotify.com/authorize');
-  authUrl.searchParams.set('client_id', SPOTIFY_CLIENT_ID);
+  authUrl.searchParams.set('client_id', clientId);
   authUrl.searchParams.set('response_type', 'code');
-  authUrl.searchParams.set('redirect_uri', REDIRECT_URI);
+  authUrl.searchParams.set('redirect_uri', redirectUri);
   authUrl.searchParams.set('scope', SCOPES);
   authUrl.searchParams.set('state', state);
   authUrl.searchParams.set('show_dialog', 'true');

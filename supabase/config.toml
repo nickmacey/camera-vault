@@ -6,6 +6,9 @@ verify_jwt = false
 [functions.spotify-oauth-callback]
 verify_jwt = false
 
+[functions.spotify-oauth-config]
+verify_jwt = false
+
 [functions.spotify-api]
 verify_jwt = true
 
