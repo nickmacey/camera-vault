@@ -17,20 +17,6 @@ interface MediaItem {
   preset: string | null;
 }
 
-const quotes = [
-  "If you're not failing every now and again, it's a sign you're not doing anything very innovative.",
-  "The creative process is a process of surrender, not control.",
-  "Creativity is allowing yourself to make mistakes. Art is knowing which ones to keep.",
-  "Don't think about making art, just get it done.",
-  "The only way to do great work is to love what you do.",
-  "Photography is the story I fail to put into words.",
-  "Your photography is a record of your living, for anyone who really sees.",
-  "The camera is an instrument that teaches people how to see without a camera.",
-  "Every moment is a fresh beginning.",
-  "Life is what happens when you're busy making other plans.",
-  "In the middle of difficulty lies opportunity.",
-  "The best time to plant a tree was 20 years ago. The second best time is now.",
-];
 
 const presets = {
   bw: "grayscale(100%) contrast(1.1)",
@@ -41,13 +27,47 @@ const presets = {
 export default function HighlightReelPage() {
   const navigate = useNavigate();
   const [media, setMedia] = useState<MediaItem[]>([]);
+  const [locations, setLocations] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [managerOpen, setManagerOpen] = useState(false);
 
   useEffect(() => {
     fetchBestMedia();
+    fetchLocations();
   }, []);
+
+  const fetchLocations = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data: photos } = await supabase
+        .from("photos")
+        .select("location_data")
+        .eq("user_id", session.user.id)
+        .not("location_data", "is", null);
+
+      if (photos) {
+        const locationNames = new Set<string>();
+        photos.forEach((photo) => {
+          const locData = photo.location_data as any;
+          if (locData) {
+            // Extract city, town, or place name from location_data
+            const placeName = locData.city || locData.town || locData.locality || 
+                             locData.place || locData.name || locData.region ||
+                             locData.country || locData.formatted;
+            if (placeName && typeof placeName === "string") {
+              locationNames.add(placeName);
+            }
+          }
+        });
+        setLocations(Array.from(locationNames));
+      }
+    } catch (error) {
+      console.error("Error fetching locations:", error);
+    }
+  };
 
   const fetchBestMedia = async () => {
     try {
@@ -133,8 +153,10 @@ export default function HighlightReelPage() {
     fetchBestMedia(); // Refresh after customization
   };
 
-  // Concatenate quotes for seamless scroll
-  const marqueeText = quotes.join(" • ");
+  // Create marquee text from locations
+  const marqueeText = locations.length > 0 
+    ? locations.join(" • ") 
+    : "Your Journey • Your Memories • Your Story";
 
   if (loading) {
     return (
@@ -247,15 +269,15 @@ interface MediaGridProps {
 function MediaGrid({ items, preset, isPaused }: MediaGridProps) {
   const filter = presets[preset];
   
-  // Create varied positions for artistic scatter layout
+  // Create varied positions for artistic scatter layout - fewer items visible at once due to larger size
   const positions = useMemo(() => {
     return items.map((_, i) => ({
-      x: Math.random() * 80 + 5, // 5-85% from left
-      y: Math.random() * 70 + 10, // 10-80% from top
-      scale: 0.6 + Math.random() * 0.8, // 0.6-1.4 scale
-      rotation: (Math.random() - 0.5) * 10, // -5 to 5 degrees
-      delay: i * 0.1,
-      duration: 15 + Math.random() * 10, // 15-25s float duration
+      x: Math.random() * 60 + 10, // 10-70% from left (tighter range for larger images)
+      y: Math.random() * 50 + 15, // 15-65% from top
+      scale: 0.8 + Math.random() * 0.5, // 0.8-1.3 scale
+      rotation: (Math.random() - 0.5) * 8, // -4 to 4 degrees
+      delay: i * 0.15,
+      duration: 18 + Math.random() * 12, // 18-30s float duration
     }));
   }, [items.length]);
 
@@ -292,7 +314,7 @@ function MediaGrid({ items, preset, isPaused }: MediaGridProps) {
               }}
             >
               <div
-                className="w-40 h-40 md:w-56 md:h-56 lg:w-64 lg:h-64 overflow-hidden shadow-2xl"
+                className="w-[50vw] h-[50vw] md:w-[40vw] md:h-[40vw] lg:w-[35vw] lg:h-[35vw] max-w-[600px] max-h-[600px] overflow-hidden shadow-2xl"
                 style={{ filter }}
               >
                 {item.isVideo ? (
