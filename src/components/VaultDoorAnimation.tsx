@@ -97,14 +97,15 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
       setStage('unlock');
     }, 3500);
 
+    // Play vault door opening sound when doors start to open
+    const soundTimer = setTimeout(() => {
+      soundGeneratorRef.current?.playVaultDoorOpen();
+    }, 3500);
+
     // Brief pause after unlock before flash - 4.2s
     // Camera flash (with dramatic pause before) - 4.8s
     const flashTimer = setTimeout(() => {
       setCameraFlash(true);
-      // Delay sound slightly to sync with visual flash peak (at ~15% of animation = 0.225s)
-      setTimeout(() => {
-        soundGeneratorRef.current?.playCameraShutter();
-      }, 200);
     }, 4800);
 
     // Stage 4: Door opening - delayed for flash to complete + pause after
@@ -127,6 +128,7 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
       clearTimeout(initialTimer);
       clearTimeout(gatherTimer);
       clearTimeout(unlockTimer);
+      clearTimeout(soundTimer);
       clearTimeout(flashTimer);
       clearTimeout(openTimer);
       clearTimeout(stageCompleteTimer);
