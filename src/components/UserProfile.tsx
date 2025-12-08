@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { User, Mail, LogOut, Shield, Image, Award, Star, Link as LinkIcon, Edit2, Save, X, Upload } from "lucide-react";
+import { User, Mail, LogOut, Shield, Image, Award, Star, Link as LinkIcon, Edit2, Save, X, Upload, Eye, Music } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { compressImage } from "@/lib/imageOptimization";
@@ -15,7 +15,9 @@ import { z } from "zod";
 import { usePhotoStats } from "@/hooks/usePhotoStats";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { HeroPhotosManager } from "@/components/HeroPhotosManager";
-
+import { ThroughMyLens } from "@/components/ThroughMyLens";
+import { SpotifyConnect } from "@/components/SpotifyConnect";
+import { MusicVideoCreator } from "@/components/MusicVideoCreator";
 const nameSchema = z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters");
 const avatarSchema = z.instanceof(File).refine((file) => file.size <= 5 * 1024 * 1024, "Avatar must be less than 5MB");
 
@@ -240,8 +242,18 @@ export const UserProfile = () => {
 
   return (
     <Tabs defaultValue="profile" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="profile">Profile & Stats</TabsTrigger>
+      <TabsList className="grid w-full grid-cols-4">
+        <TabsTrigger value="profile">Profile</TabsTrigger>
+        <TabsTrigger value="lens" className="flex items-center gap-1">
+          <Eye className="w-3 h-3" />
+          <span className="hidden sm:inline">Through My Lens</span>
+          <span className="sm:hidden">Lens</span>
+        </TabsTrigger>
+        <TabsTrigger value="music" className="flex items-center gap-1">
+          <Music className="w-3 h-3" />
+          <span className="hidden sm:inline">Music Videos</span>
+          <span className="sm:hidden">Music</span>
+        </TabsTrigger>
         <TabsTrigger value="hero">Hero Photos</TabsTrigger>
       </TabsList>
 
@@ -411,6 +423,15 @@ export const UserProfile = () => {
           </div>
         </CardContent>
       </Card>
+      </TabsContent>
+
+      <TabsContent value="lens" className="space-y-6">
+        <ThroughMyLens />
+      </TabsContent>
+
+      <TabsContent value="music" className="space-y-6">
+        <SpotifyConnect />
+        <MusicVideoCreator />
       </TabsContent>
 
       <TabsContent value="hero">
