@@ -6,10 +6,23 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper to get proper redirect base URL
+function getRedirectBase(): string {
+  const siteUrl = Deno.env.get('SITE_URL');
+  // Ensure we have a full absolute URL
+  if (siteUrl && siteUrl.startsWith('http')) {
+    return siteUrl.replace(/\/$/, ''); // Remove trailing slash
+  }
+  // Fallback to preview URL
+  return 'https://db9c56e1-a36c-4ead-921e-91dd45b6ef6a.lovableproject.com';
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const redirectBase = getRedirectBase();
 
   try {
     const url = new URL(req.url);
@@ -17,7 +30,7 @@ serve(async (req) => {
     const state = url.searchParams.get('state');
     const error = url.searchParams.get('error');
 
-    console.log('Spotify OAuth callback received:', { code: !!code, state, error });
+    console.log('Spotify OAuth callback received:', { code: !!code, state, error, redirectBase });
 
     if (error) {
       console.error('Spotify OAuth error:', error);
@@ -25,15 +38,19 @@ serve(async (req) => {
         status: 302,
         headers: {
           ...corsHeaders,
-          'Location': `${Deno.env.get('SITE_URL') || 'https://erdsngxlqyhhayzekgid.lovableproject.com'}/app?spotify_error=${encodeURIComponent(error)}`,
+          'Location': `${redirectBase}/app?spotify_error=${encodeURIComponent(error)}`,
         },
       });
     }
 
     if (!code) {
-      return new Response(JSON.stringify({ error: 'No authorization code provided' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      // Redirect to app instead of showing error JSON
+      return new Response(null, {
+        status: 302,
+        headers: {
+          ...corsHeaders,
+          'Location': `${redirectBase}/app?spotify_error=no_code`,
+        },
       });
     }
 
@@ -70,7 +87,7 @@ serve(async (req) => {
         status: 302,
         headers: {
           ...corsHeaders,
-          'Location': `${Deno.env.get('SITE_URL') || 'https://erdsngxlqyhhayzekgid.lovableproject.com'}/app?spotify_error=token_exchange_failed`,
+          'Location': `${redirectBase}/app?spotify_error=token_exchange_failed`,
         },
       });
     }
@@ -101,7 +118,7 @@ serve(async (req) => {
         status: 302,
         headers: {
           ...corsHeaders,
-          'Location': `${Deno.env.get('SITE_URL') || 'https://erdsngxlqyhhayzekgid.lovableproject.com'}/app?spotify_error=no_user`,
+          'Location': `${redirectBase}/app?spotify_error=no_user`,
         },
       });
     }
@@ -135,7 +152,7 @@ serve(async (req) => {
         status: 302,
         headers: {
           ...corsHeaders,
-          'Location': `${Deno.env.get('SITE_URL') || 'https://erdsngxlqyhhayzekgid.lovableproject.com'}/app?spotify_error=storage_failed`,
+          'Location': `${redirectBase}/app?spotify_error=storage_failed`,
         },
       });
     }
@@ -147,7 +164,7 @@ serve(async (req) => {
       status: 302,
       headers: {
         ...corsHeaders,
-        'Location': `${Deno.env.get('SITE_URL') || 'https://erdsngxlqyhhayzekgid.lovableproject.com'}/app?spotify_connected=true`,
+        'Location': `${redirectBase}/app?spotify_connected=true`,
       },
     });
 
@@ -157,7 +174,7 @@ serve(async (req) => {
       status: 302,
       headers: {
         ...corsHeaders,
-        'Location': `${Deno.env.get('SITE_URL') || 'https://erdsngxlqyhhayzekgid.lovableproject.com'}/app?spotify_error=unknown`,
+        'Location': `${getRedirectBase()}/app?spotify_error=unknown`,
       },
     });
   }
