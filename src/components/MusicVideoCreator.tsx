@@ -32,6 +32,7 @@ import {
   getPlaylists, 
   getLikedSongs,
   searchTracks,
+  getPopularTracks,
   SpotifyTrack,
   SpotifyPlaylist
 } from "@/lib/spotify";
@@ -66,6 +67,7 @@ export function MusicVideoCreator() {
   const [isConnected, setIsConnected] = useState(false);
   const [playlists, setPlaylists] = useState<SpotifyPlaylist[]>([]);
   const [likedSongs, setLikedSongs] = useState<SpotifyTrack[]>([]);
+  const [popularTracks, setPopularTracks] = useState<SpotifyTrack[]>([]);
   const [selectedTrack, setSelectedTrack] = useState<SpotifyTrack | null>(null);
   const [selectedPhotos, setSelectedPhotos] = useState<SelectedPhoto[]>([]);
   const [userPhotos, setUserPhotos] = useState<SelectedPhoto[]>([]);
@@ -139,9 +141,10 @@ export function MusicVideoCreator() {
 
   const fetchSpotifyData = async () => {
     try {
-      const [playlistsData, likedData] = await Promise.all([
+      const [playlistsData, likedData, popularData] = await Promise.all([
         getPlaylists(),
         getLikedSongs(),
+        getPopularTracks(),
       ]);
       
       if (playlistsData?.items) {
@@ -153,6 +156,13 @@ export function MusicVideoCreator() {
           .map((item: any) => item.track)
           .filter((track: SpotifyTrack) => track.preview_url);
         setLikedSongs(tracksWithPreviews);
+      }
+      if (popularData?.items) {
+        // Filter popular tracks to only those with preview URLs
+        const popularWithPreviews = popularData.items
+          .map((item: any) => item.track)
+          .filter((track: SpotifyTrack) => track?.preview_url);
+        setPopularTracks(popularWithPreviews);
       }
     } catch (err) {
       console.error('Error fetching Spotify data:', err);
@@ -558,10 +568,28 @@ export function MusicVideoCreator() {
                   </p>
                 )}
 
+                {/* Popular Tracks (show when not searching) */}
+                {!searchQuery.trim() && popularTracks.length > 0 && (
+                  <>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">
+                      🔥 Trending Now ({popularTracks.length} playable)
+                    </p>
+                    {popularTracks.slice(0, 15).map(track => (
+                      <TrackButton
+                        key={track.id}
+                        track={track}
+                        isSelected={selectedTrack?.id === track.id}
+                        onSelect={handleSelectTrack}
+                        formatDuration={formatDuration}
+                      />
+                    ))}
+                  </>
+                )}
+
                 {/* Liked Songs (show when not searching) */}
                 {!searchQuery.trim() && likedSongs.length > 0 && (
                   <>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2 mt-4">
                       Your Liked Songs ({likedSongs.length} playable)
                     </p>
                     {likedSongs.slice(0, 20).map(track => (
@@ -576,8 +604,8 @@ export function MusicVideoCreator() {
                   </>
                 )}
 
-                {/* Empty state when no search and no liked songs */}
-                {!searchQuery.trim() && likedSongs.length === 0 && (
+                {/* Empty state when no search and no popular tracks */}
+                {!searchQuery.trim() && popularTracks.length === 0 && likedSongs.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center py-8">
                     Search for any song above to get started!
                   </p>

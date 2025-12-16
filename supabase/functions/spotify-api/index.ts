@@ -149,6 +149,28 @@ serve(async (req) => {
         break;
       }
 
+      case 'get_popular_tracks': {
+        // Get tracks from popular playlists like "Today's Top Hits"
+        const response = await fetch(
+          'https://api.spotify.com/v1/browse/featured-playlists?limit=5',
+          { headers: { 'Authorization': `Bearer ${accessToken}` } }
+        );
+        const featured = await response.json();
+        
+        // Get tracks from the first featured playlist
+        if (featured.playlists?.items?.length > 0) {
+          const playlistId = featured.playlists.items[0].id;
+          const tracksResponse = await fetch(
+            `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=30`,
+            { headers: { 'Authorization': `Bearer ${accessToken}` } }
+          );
+          result = await tracksResponse.json();
+        } else {
+          result = { items: [] };
+        }
+        break;
+      }
+
       case 'disconnect': {
         await supabaseService
           .from('connected_providers')
