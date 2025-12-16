@@ -15,6 +15,8 @@ import VaultPage from "./pages/VaultPage";
 import StarsPage from "./pages/StarsPage";
 import GemsPage from "./pages/GemsPage";
 import HighlightReelPage from "./pages/HighlightReelPage";
+import LensPage from "./pages/LensPage";
+import MusicPage from "./pages/MusicPage";
 import { VaultDoorAnimation } from "@/components/VaultDoorAnimation";
 import { AuthGuard } from "@/components/AuthGuard";
 import { UploadProvider } from "@/contexts/UploadContext";
@@ -58,6 +60,8 @@ const App = () => {
                 <Route path="/app/vault" element={<AuthGuard><VaultPage /></AuthGuard>} />
                 <Route path="/app/stars" element={<AuthGuard><StarsPage /></AuthGuard>} />
                 <Route path="/app/gems" element={<AuthGuard><GemsPage /></AuthGuard>} />
+                <Route path="/app/lens" element={<AuthGuard><LensPage /></AuthGuard>} />
+                <Route path="/app/music" element={<AuthGuard><MusicPage /></AuthGuard>} />
                 <Route path="/auth/google/callback" element={<GoogleCallback />} />
                 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

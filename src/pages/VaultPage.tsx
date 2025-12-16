@@ -12,6 +12,7 @@ import { formatCurrency, getPhotoValueByScore } from "@/lib/photoValue";
 import { AIPhotoSearch } from "@/components/AIPhotoSearch";
 import { PhotoEditor } from "@/components/PhotoEditor";
 import { BatchPhotoEditor } from "@/components/BatchPhotoEditor";
+import { FeatureNav } from "@/components/FeatureNav";
 
 interface VaultPhoto {
   id: string;
@@ -187,6 +188,11 @@ export default function VaultPage() {
           </div>
         </div>
       </header>
+
+      {/* Feature Navigation */}
+      <div className="py-4 border-b border-border bg-card/30">
+        <FeatureNav />
+      </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         {batchEditing ? (
