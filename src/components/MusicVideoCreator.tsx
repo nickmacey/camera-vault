@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Slider } from "@/components/ui/slider";
-import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { 
   Music, 
@@ -12,7 +12,6 @@ import {
   Image as ImageIcon, 
   Plus,
   X,
-  Download,
   Share2,
   Shuffle,
   Clock,
@@ -24,13 +23,15 @@ import {
   Home,
   Search,
   PlusSquare,
-  User
+  User,
+  Loader2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   getSpotifyConnection,
   getPlaylists, 
   getLikedSongs,
+  searchTracks,
   SpotifyTrack,
   SpotifyPlaylist
 } from "@/lib/spotify";
@@ -75,16 +76,52 @@ export function MusicVideoCreator() {
   const [showPhotoSelector, setShowPhotoSelector] = useState(false);
   const [platform, setPlatform] = useState<PlatformType>('instagram');
   const [photosLoading, setPhotosLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SpotifyTrack[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     checkConnectionAndFetch();
     fetchUserPhotos();
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
     };
   }, []);
+
+  // Debounced search
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    searchTimeoutRef.current = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const results = await searchTracks(searchQuery);
+        if (results?.tracks?.items) {
+          // Filter to only tracks with previews
+          const tracksWithPreviews = results.tracks.items.filter(
+            (track: SpotifyTrack) => track.preview_url
+          );
+          setSearchResults(tracksWithPreviews);
+        }
+      } catch (err) {
+        console.error('Search error:', err);
+        toast.error('Failed to search tracks');
+      } finally {
+        setIsSearching(false);
+      }
+    }, 500);
+  }, [searchQuery]);
 
   const checkConnectionAndFetch = async () => {
     try {
@@ -473,50 +510,76 @@ export function MusicVideoCreator() {
 
         {/* Music Selection */}
         <Card className="bg-card/50 backdrop-blur border-border/50">
-          <CardHeader>
+          <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-sm font-medium">
               <Music className="w-4 h-4 text-[#1DB954]" />
               Select Music
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {/* Search Input */}
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search any song on Spotify..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 bg-muted/50"
+              />
+              {isSearching && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" />
+              )}
+            </div>
+
             <ScrollArea className="h-64">
               <div className="space-y-1">
-                {likedSongs.length > 0 ? (
+                {/* Search Results */}
+                {searchQuery.trim() && searchResults.length > 0 && (
                   <>
                     <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">
-                      Your Liked Songs
+                      Search Results ({searchResults.length} playable)
                     </p>
-                    {likedSongs.slice(0, 20).map(track => (
-                      <button
+                    {searchResults.map(track => (
+                      <TrackButton
                         key={track.id}
-                        onClick={() => handleSelectTrack(track)}
-                        className={`w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors ${
-                          selectedTrack?.id === track.id ? 'bg-primary/10 border border-primary/30' : ''
-                        }`}
-                      >
-                        {track.album.images[2] && (
-                          <img 
-                            src={track.album.images[2].url} 
-                            alt="" 
-                            className="w-10 h-10 rounded"
-                          />
-                        )}
-                        <div className="flex-1 min-w-0 text-left">
-                          <p className="font-medium truncate text-sm">{track.name}</p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {track.artists.map(a => a.name).join(', ')}
-                          </p>
-                        </div>
-                        <span className="text-xs text-muted-foreground">
-                          {formatDuration(track.duration_ms)}
-                        </span>
-                      </button>
+                        track={track}
+                        isSelected={selectedTrack?.id === track.id}
+                        onSelect={handleSelectTrack}
+                        formatDuration={formatDuration}
+                      />
                     ))}
                   </>
-                ) : (
+                )}
+
+                {/* No search results message */}
+                {searchQuery.trim() && !isSearching && searchResults.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No playable tracks found. Try another search.
+                  </p>
+                )}
+
+                {/* Liked Songs (show when not searching) */}
+                {!searchQuery.trim() && likedSongs.length > 0 && (
+                  <>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">
+                      Your Liked Songs ({likedSongs.length} playable)
+                    </p>
+                    {likedSongs.slice(0, 20).map(track => (
+                      <TrackButton
+                        key={track.id}
+                        track={track}
+                        isSelected={selectedTrack?.id === track.id}
+                        onSelect={handleSelectTrack}
+                        formatDuration={formatDuration}
+                      />
+                    ))}
+                  </>
+                )}
+
+                {/* Empty state when no search and no liked songs */}
+                {!searchQuery.trim() && likedSongs.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center py-8">
-                    Like some songs on Spotify to see them here!
+                    Search for any song above to get started!
                   </p>
                 )}
               </div>
@@ -525,6 +588,45 @@ export function MusicVideoCreator() {
         </Card>
       </div>
     </div>
+  );
+}
+
+// Track Button Component
+function TrackButton({ 
+  track, 
+  isSelected, 
+  onSelect, 
+  formatDuration 
+}: { 
+  track: SpotifyTrack; 
+  isSelected: boolean; 
+  onSelect: (track: SpotifyTrack) => void;
+  formatDuration: (ms: number) => string;
+}) {
+  return (
+    <button
+      onClick={() => onSelect(track)}
+      className={`w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors ${
+        isSelected ? 'bg-primary/10 border border-primary/30' : ''
+      }`}
+    >
+      {track.album.images[2] && (
+        <img 
+          src={track.album.images[2].url} 
+          alt="" 
+          className="w-10 h-10 rounded"
+        />
+      )}
+      <div className="flex-1 min-w-0 text-left">
+        <p className="font-medium truncate text-sm">{track.name}</p>
+        <p className="text-xs text-muted-foreground truncate">
+          {track.artists.map(a => a.name).join(', ')}
+        </p>
+      </div>
+      <span className="text-xs text-muted-foreground">
+        {formatDuration(track.duration_ms)}
+      </span>
+    </button>
   );
 }
 
