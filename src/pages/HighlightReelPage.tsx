@@ -6,7 +6,6 @@ import { ArrowRight, Play, Pause, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { HighlightReelManager } from "@/components/HighlightReelManager";
-import { FeatureNav } from "@/components/FeatureNav";
 
 interface MediaItem {
   id: string;
@@ -245,10 +244,6 @@ export default function HighlightReelPage() {
         </div>
       </header>
 
-      {/* Feature Navigation - Collapsed at bottom */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-gradient-to-t from-background via-background/95 to-transparent pb-4 pt-8">
-        <FeatureNav />
-      </div>
 
       {/* Pause/Play control */}
       <button
