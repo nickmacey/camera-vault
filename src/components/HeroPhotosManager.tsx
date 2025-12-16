@@ -23,6 +23,7 @@ interface Photo {
   is_hero: boolean;
   hero_order: number | null;
   score: number | null;
+  url?: string;
 }
 
 export function HeroPhotosManager() {
@@ -50,8 +51,19 @@ export function HeroPhotosManager() {
 
       if (error) throw error;
 
-      const hero = photos?.filter(p => p.is_hero).sort((a, b) => (a.hero_order || 0) - (b.hero_order || 0)) || [];
-      const nonHero = photos?.filter(p => !p.is_hero) || [];
+      // Generate signed URLs for all photos
+      const photosWithUrls = await Promise.all(
+        (photos || []).map(async (photo) => {
+          const pathToUse = photo.thumbnail_path || photo.storage_path;
+          const { data: signedData } = await supabase.storage
+            .from('photos')
+            .createSignedUrl(pathToUse, 3600);
+          return { ...photo, url: signedData?.signedUrl || '' };
+        })
+      );
+
+      const hero = photosWithUrls.filter(p => p.is_hero).sort((a, b) => (a.hero_order || 0) - (b.hero_order || 0));
+      const nonHero = photosWithUrls.filter(p => !p.is_hero);
 
       setHeroPhotos(hero);
       setAllPhotos(nonHero);
@@ -116,10 +128,6 @@ export function HeroPhotosManager() {
     }
   };
 
-  const getPhotoUrl = (path: string) => {
-    const { data } = supabase.storage.from('photos').getPublicUrl(path);
-    return data.publicUrl;
-  };
 
   const handleDeleteClick = (photo: Photo) => {
     setPhotoToDelete(photo);
@@ -186,7 +194,7 @@ export function HeroPhotosManager() {
             {heroPhotos.map((photo, index) => (
               <div key={photo.id} className="relative group">
                 <img
-                  src={getPhotoUrl(photo.storage_path)}
+                  src={photo.url || ''}
                   alt={photo.filename}
                   className="w-full aspect-square object-cover rounded-lg"
                 />
@@ -258,7 +266,7 @@ export function HeroPhotosManager() {
                   className="w-full cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <img
-                    src={getPhotoUrl(photo.storage_path)}
+                    src={photo.url || ''}
                     alt={photo.filename}
                     className="w-full aspect-square object-cover rounded-lg"
                   />

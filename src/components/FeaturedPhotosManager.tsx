@@ -16,6 +16,7 @@ interface Photo {
   is_featured: boolean;
   featured_order: number | null;
   score: number | null;
+  url?: string;
 }
 
 export function FeaturedPhotosManager() {
@@ -47,12 +48,21 @@ export function FeaturedPhotosManager() {
       return;
     }
 
-    const all = data || [];
-    const featured = all
+    // Generate signed URLs for all photos
+    const photosWithUrls = await Promise.all(
+      (data || []).map(async (photo) => {
+        const { data: signedData } = await supabase.storage
+          .from('photos')
+          .createSignedUrl(photo.storage_path, 3600);
+        return { ...photo, url: signedData?.signedUrl || '' };
+      })
+    );
+
+    const featured = photosWithUrls
       .filter(p => p.is_featured)
       .sort((a, b) => (a.featured_order || 999) - (b.featured_order || 999));
 
-    setAllPhotos(all);
+    setAllPhotos(photosWithUrls);
     setFeaturedPhotos(featured);
     setLoading(false);
   };
@@ -121,10 +131,6 @@ export function FeaturedPhotosManager() {
     loadPhotos();
   };
 
-  const getPhotoUrl = (path: string) => {
-    const { data } = supabase.storage.from('photos').getPublicUrl(path);
-    return data.publicUrl;
-  };
 
   if (loading) {
     return <div className="text-center py-8">Loading photos...</div>;
@@ -163,7 +169,7 @@ export function FeaturedPhotosManager() {
                 </div>
                 
                 <OptimizedImage
-                  src={getPhotoUrl(photo.storage_path)}
+                  src={photo.url || ''}
                   alt={photo.filename}
                   className="w-full h-48 object-cover"
                 />
@@ -224,7 +230,7 @@ export function FeaturedPhotosManager() {
                 className="group relative bg-vault-dark-gray rounded-lg overflow-hidden border border-vault-mid-gray hover:border-vault-gold transition-all"
               >
                 <OptimizedImage
-                  src={getPhotoUrl(photo.storage_path)}
+                  src={photo.url || ''}
                   alt={photo.filename}
                   className="w-full h-32 object-cover"
                 />
