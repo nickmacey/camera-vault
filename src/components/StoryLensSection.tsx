@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ProfilePhotoUpload } from "./ProfilePhotoUpload";
 import { Button } from "@/components/ui/button";
 import { Eye, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
@@ -120,10 +119,6 @@ export function StoryLensSection() {
     }
   };
 
-  const handleAvatarUpdate = (url: string) => {
-    setProfile(prev => prev ? { ...prev, avatar_url: url } : null);
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -139,11 +134,20 @@ export function StoryLensSection() {
       <div className="max-w-4xl mx-auto">
         {/* Profile Photo & Name */}
         <div className="flex flex-col items-center mb-8">
-          <ProfilePhotoUpload
-            currentAvatarUrl={profile?.avatar_url}
-            onUploadComplete={handleAvatarUpdate}
-            size="lg"
-          />
+          {/* Display only - no upload button */}
+          <div className="w-40 h-40 rounded-full overflow-hidden border-4 border-vault-gold/30 shadow-xl">
+            {profile?.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-card flex items-center justify-center">
+                <Eye className="w-12 h-12 text-vault-gold/30" />
+              </div>
+            )}
+          </div>
           
           <h2 className="mt-6 text-3xl md:text-4xl font-bold text-vault-gold text-center"
               style={{ textShadow: '0 0 20px rgba(212, 175, 55, 0.5)' }}>
