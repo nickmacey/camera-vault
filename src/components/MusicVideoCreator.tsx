@@ -97,10 +97,14 @@ export function MusicVideoCreator() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const photosLoadedRef = useRef(false);
 
   useEffect(() => {
     checkConnectionAndFetch();
-    fetchUserPhotos();
+    // Only fetch photos if not already loaded
+    if (!photosLoadedRef.current && userPhotos.length === 0) {
+      fetchUserPhotos();
+    }
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
@@ -187,6 +191,24 @@ export function MusicVideoCreator() {
   };
 
   const fetchUserPhotos = async () => {
+    // Check sessionStorage cache first
+    const cacheKey = 'music-video-photos';
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        const { photos, timestamp } = JSON.parse(cached);
+        // Use cache if less than 30 minutes old
+        if (Date.now() - timestamp < 30 * 60 * 1000 && photos.length > 0) {
+          setUserPhotos(photos);
+          photosLoadedRef.current = true;
+          setPhotosLoading(false);
+          return;
+        }
+      } catch (e) {
+        // Invalid cache, continue to fetch
+      }
+    }
+
     setPhotosLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -200,7 +222,7 @@ export function MusicVideoCreator() {
         .limit(100);
 
       if (photos && photos.length > 0) {
-        // Use signed URLs since the bucket is private
+        // Use signed URLs since the bucket is private (1 hour expiry)
         const photosWithUrls = await Promise.all(
           photos.map(async (photo) => {
             const { data } = await supabase.storage
@@ -215,7 +237,15 @@ export function MusicVideoCreator() {
             };
           })
         );
-        setUserPhotos(photosWithUrls.filter(p => p.url));
+        const validPhotos = photosWithUrls.filter(p => p.url);
+        setUserPhotos(validPhotos);
+        photosLoadedRef.current = true;
+        
+        // Cache the results
+        sessionStorage.setItem(cacheKey, JSON.stringify({
+          photos: validPhotos,
+          timestamp: Date.now()
+        }));
       }
     } catch (err) {
       console.error('Error fetching photos:', err);
