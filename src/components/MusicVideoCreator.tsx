@@ -677,18 +677,23 @@ export function MusicVideoCreator() {
               )}
             </div>
 
-            {/* Spotify Embed Player */}
+            {/* Selected Track Info - playback handled by persistent player */}
             {selectedTrack && (
-              <div className="mb-4 rounded-xl overflow-hidden bg-[#282828]">
-                <iframe
-                  src={`https://open.spotify.com/embed/track/${selectedTrack.id}?utm_source=generator&theme=0`}
-                  width="100%"
-                  height="80"
-                  frameBorder="0"
-                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                  loading="lazy"
-                  className="rounded-xl"
-                />
+              <div className="mb-4 p-3 rounded-xl bg-[#282828] flex items-center gap-3">
+                {selectedTrack.album?.images?.[0]?.url && (
+                  <img 
+                    src={selectedTrack.album.images[0].url} 
+                    alt={selectedTrack.name}
+                    className="w-12 h-12 rounded"
+                  />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white truncate">{selectedTrack.name}</p>
+                  <p className="text-xs text-white/60 truncate">
+                    {selectedTrack.artists?.map(a => a.name).join(", ")}
+                  </p>
+                </div>
+                <div className="text-xs text-[#1DB954]">Now Playing ↓</div>
               </div>
             )}
 
