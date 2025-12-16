@@ -41,6 +41,8 @@ interface SelectedPhoto {
   id: string;
   url: string;
   filename: string;
+  description?: string;
+  ai_analysis?: string;
 }
 
 type PlatformType = 'instagram' | 'tiktok' | 'youtube';
@@ -75,7 +77,8 @@ export function MusicVideoCreator() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [showPhotoSelector, setShowPhotoSelector] = useState(false);
+  const [showPhotoSelector, setShowPhotoSelector] = useState(true);
+  const [photoSearchQuery, setPhotoSearchQuery] = useState('');
   const [platform, setPlatform] = useState<PlatformType>('instagram');
   const [photosLoading, setPhotosLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -178,10 +181,10 @@ export function MusicVideoCreator() {
 
       const { data: photos } = await supabase
         .from('photos')
-        .select('id, filename, storage_path')
+        .select('id, filename, storage_path, description, ai_analysis')
         .eq('user_id', user.id)
         .order('overall_score', { ascending: false })
-        .limit(50);
+        .limit(100);
 
       if (photos && photos.length > 0) {
         // Use signed URLs since the bucket is private
@@ -194,6 +197,8 @@ export function MusicVideoCreator() {
               id: photo.id,
               url: data?.signedUrl || '',
               filename: photo.filename,
+              description: photo.description || '',
+              ai_analysis: photo.ai_analysis || '',
             };
           })
         );
@@ -206,6 +211,18 @@ export function MusicVideoCreator() {
       setPhotosLoading(false);
     }
   };
+
+  // Filter photos based on search query
+  const filteredPhotos = photoSearchQuery.trim()
+    ? userPhotos.filter(photo => {
+        const query = photoSearchQuery.toLowerCase();
+        return (
+          photo.filename.toLowerCase().includes(query) ||
+          photo.description?.toLowerCase().includes(query) ||
+          photo.ai_analysis?.toLowerCase().includes(query)
+        );
+      })
+    : userPhotos;
 
   const handleSelectTrack = (track: SpotifyTrack) => {
     setSelectedTrack(track);
@@ -422,20 +439,10 @@ export function MusicVideoCreator() {
         {/* Selected Photos */}
         <Card className="bg-card/50 backdrop-blur border-border/50">
           <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <ImageIcon className="w-4 h-4" />
-                Photos ({selectedPhotos.length})
-              </CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowPhotoSelector(!showPhotoSelector)}
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Add Photos
-              </Button>
-            </div>
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <ImageIcon className="w-4 h-4" />
+              Selected ({selectedPhotos.length})
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {selectedPhotos.length > 0 ? (
@@ -473,48 +480,60 @@ export function MusicVideoCreator() {
               </p>
             )}
 
-            {/* Photo selector */}
-            {showPhotoSelector && (
-              <div className="mt-4 border-t border-border pt-4">
-                <p className="text-xs text-muted-foreground mb-2">
-                  Your photos ({userPhotos.length})
-                </p>
-                {photosLoading ? (
-                  <div className="text-center py-4">
-                    <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto" />
-                    <p className="text-xs text-muted-foreground mt-2">Loading photos...</p>
-                  </div>
-                ) : userPhotos.length > 0 ? (
-                  <ScrollArea className="h-40">
-                    <div className="grid grid-cols-5 gap-2">
-                      {userPhotos.map(photo => (
-                        <button
-                          key={photo.id}
-                          onClick={() => addPhoto(photo)}
-                          disabled={selectedPhotos.some(p => p.id === photo.id)}
-                          className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                            selectedPhotos.some(p => p.id === photo.id)
-                              ? 'border-primary opacity-50'
-                              : 'border-transparent hover:border-primary/50 hover:scale-105'
-                          }`}
-                        >
-                          <img 
-                            src={photo.url} 
-                            alt="" 
-                            className="w-full h-full object-cover"
-                            onError={(e) => e.currentTarget.style.display = 'none'}
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    No photos in your vault yet. Upload some photos first!
-                  </p>
-                )}
+            {/* Vault Photos */}
+            <div className="mt-4 border-t border-border pt-4">
+              {/* Photo Search */}
+              <div className="relative mb-3">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search photos by keyword..."
+                  value={photoSearchQuery}
+                  onChange={(e) => setPhotoSearchQuery(e.target.value)}
+                  className="pl-9 bg-muted/50 h-9 text-sm"
+                />
               </div>
-            )}
+              <p className="text-xs text-muted-foreground mb-2">
+                Your Vault ({filteredPhotos.length}{photoSearchQuery ? ` of ${userPhotos.length}` : ''})
+              </p>
+              {photosLoading ? (
+                <div className="text-center py-4">
+                  <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto" />
+                  <p className="text-xs text-muted-foreground mt-2">Loading photos...</p>
+                </div>
+              ) : filteredPhotos.length > 0 ? (
+                <ScrollArea className="h-48">
+                  <div className="grid grid-cols-5 gap-2">
+                    {filteredPhotos.map(photo => (
+                      <button
+                        key={photo.id}
+                        onClick={() => addPhoto(photo)}
+                        disabled={selectedPhotos.some(p => p.id === photo.id)}
+                        className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                          selectedPhotos.some(p => p.id === photo.id)
+                            ? 'border-primary opacity-50'
+                            : 'border-transparent hover:border-primary/50 hover:scale-105'
+                        }`}
+                      >
+                        <img 
+                          src={photo.url} 
+                          alt={photo.description || ''} 
+                          className="w-full h-full object-cover"
+                          onError={(e) => e.currentTarget.style.display = 'none'}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </ScrollArea>
+              ) : photoSearchQuery ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No photos match "{photoSearchQuery}"
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No photos in your vault yet. Upload some photos first!
+                </p>
+              )}
+            </div>
           </CardContent>
         </Card>
 
