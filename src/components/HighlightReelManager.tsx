@@ -35,9 +35,13 @@ const presetStyles: Record<string, string> = {
   film: "sepia(0.35) contrast(0.95) brightness(1.05) saturate(0.9)",
 };
 
+interface MediaWithUrl extends MediaItem {
+  url?: string;
+}
+
 export function HighlightReelManager() {
-  const [allMedia, setAllMedia] = useState<MediaItem[]>([]);
-  const [reelMedia, setReelMedia] = useState<MediaItem[]>([]);
+  const [allMedia, setAllMedia] = useState<MediaWithUrl[]>([]);
+  const [reelMedia, setReelMedia] = useState<MediaWithUrl[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -57,8 +61,22 @@ export function HighlightReelManager() {
 
       if (error) throw error;
 
-      const reel = media?.filter(m => m.is_highlight_reel).sort((a, b) => (a.highlight_reel_order || 0) - (b.highlight_reel_order || 0)) || [];
-      const nonReel = media?.filter(m => !m.is_highlight_reel) || [];
+      // Generate signed URLs for all media
+      const mediaWithUrls = await Promise.all(
+        (media || []).map(async (item) => {
+          const pathToUse = item.thumbnail_path || item.storage_path;
+          const { data: signedData } = await supabase.storage
+            .from('photos')
+            .createSignedUrl(pathToUse, 3600); // 1 hour expiry
+          return {
+            ...item,
+            url: signedData?.signedUrl || ''
+          };
+        })
+      );
+
+      const reel = mediaWithUrls.filter(m => m.is_highlight_reel).sort((a, b) => (a.highlight_reel_order || 0) - (b.highlight_reel_order || 0));
+      const nonReel = mediaWithUrls.filter(m => !m.is_highlight_reel);
 
       setReelMedia(reel);
       setAllMedia(nonReel);
@@ -139,11 +157,6 @@ export function HighlightReelManager() {
     }
   };
 
-  const getMediaUrl = (path: string) => {
-    const { data } = supabase.storage.from('photos').getPublicUrl(path);
-    return data.publicUrl;
-  };
-
   const isVideo = (mimeType: string | null) => mimeType?.startsWith('video/') || false;
 
   if (loading) {
@@ -186,7 +199,7 @@ export function HighlightReelManager() {
                         >
                           {isVideo(item.mime_type) ? (
                             <video
-                              src={getMediaUrl(item.storage_path)}
+                              src={item.url}
                               className="w-full h-full object-cover"
                               muted
                               loop
@@ -194,7 +207,7 @@ export function HighlightReelManager() {
                             />
                           ) : (
                             <img
-                              src={getMediaUrl(item.storage_path)}
+                              src={item.url}
                               alt={item.filename}
                               className="w-full h-full object-cover"
                             />
@@ -275,13 +288,13 @@ export function HighlightReelManager() {
                     <div className="w-full aspect-square overflow-hidden rounded-lg">
                       {isVideo(item.mime_type) ? (
                         <video
-                          src={getMediaUrl(item.storage_path)}
+                          src={item.url}
                           className="w-full h-full object-cover"
                           muted
                         />
                       ) : (
                         <img
-                          src={getMediaUrl(item.storage_path)}
+                          src={item.url}
                           alt={item.filename}
                           className="w-full h-full object-cover"
                         />
