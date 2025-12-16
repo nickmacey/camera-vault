@@ -104,8 +104,13 @@ export default function HighlightReelPage() {
       }
 
       if (dataToUse && dataToUse.length > 0) {
+        // Remove duplicates by id
+        const uniqueData = dataToUse.filter((item, index, self) => 
+          index === self.findIndex((t) => t.id === item.id)
+        );
+        
         const mediaWithUrls = await Promise.all(
-          dataToUse.map(async (item) => {
+          uniqueData.map(async (item) => {
             const { data: urlData } = await supabase.storage
               .from("photos")
               .createSignedUrl(item.storage_path, 3600);
@@ -275,13 +280,13 @@ interface MediaGridProps {
 function MediaGrid({ items, preset, isPaused }: MediaGridProps) {
   const filter = presets[preset];
   
-  // Create varied positions for artistic scatter layout - fewer items visible at once due to larger size
+  // Create varied positions for artistic scatter layout - spread out with larger images
   const positions = useMemo(() => {
     return items.map((_, i) => ({
-      x: Math.random() * 60 + 10, // 10-70% from left (tighter range for larger images)
-      y: Math.random() * 50 + 15, // 15-65% from top
-      scale: 0.8 + Math.random() * 0.5, // 0.8-1.3 scale
-      rotation: (Math.random() - 0.5) * 8, // -4 to 4 degrees
+      x: (i % 3) * 30 + Math.random() * 15 + 5, // Spread across 3 columns with variation
+      y: Math.floor(i / 3) * 40 + Math.random() * 20 + 10, // Spread vertically with variation
+      scale: 0.9 + Math.random() * 0.2, // 0.9-1.1 scale
+      rotation: (Math.random() - 0.5) * 6, // -3 to 3 degrees
       delay: i * 0.15,
       duration: 18 + Math.random() * 12, // 18-30s float duration
     }));
@@ -320,7 +325,7 @@ function MediaGrid({ items, preset, isPaused }: MediaGridProps) {
               }}
             >
               <div
-                className="w-[50vw] h-[50vw] md:w-[40vw] md:h-[40vw] lg:w-[35vw] lg:h-[35vw] max-w-[600px] max-h-[600px] overflow-hidden shadow-2xl"
+                className="w-[70vw] h-[70vw] md:w-[55vw] md:h-[55vw] lg:w-[45vw] lg:h-[45vw] max-w-[800px] max-h-[800px] overflow-hidden shadow-2xl rounded-lg"
                 style={{ filter }}
               >
                 {item.isVideo ? (

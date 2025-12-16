@@ -19,7 +19,6 @@ const features = [
   {
     id: "story",
     label: "My Story",
-    description: "Your highlight reel",
     icon: BookImage,
     path: "/story",
     color: "text-purple-400",
@@ -29,8 +28,7 @@ const features = [
   },
   {
     id: "lens",
-    label: "Through My Lens",
-    description: "Your photography identity",
+    label: "My Lens",
     icon: Eye,
     path: "/app/lens",
     color: "text-cyan-400",
@@ -40,8 +38,7 @@ const features = [
   },
   {
     id: "music",
-    label: "Music Videos",
-    description: "Create with Spotify",
+    label: "Video Lab",
     icon: Music,
     path: "/app/music",
     color: "text-green-400",
@@ -51,8 +48,7 @@ const features = [
   },
   {
     id: "vault",
-    label: "Vault",
-    description: "Elite collection",
+    label: "My Vault",
     icon: Sparkles,
     path: "/app/vault",
     color: "text-primary",
@@ -62,8 +58,7 @@ const features = [
   },
   {
     id: "stars",
-    label: "Stars",
-    description: "Photo editing",
+    label: "Photo Lab",
     icon: Star,
     path: "/app/stars",
     color: "text-amber-400",
@@ -73,8 +68,7 @@ const features = [
   },
   {
     id: "gems",
-    label: "Gems",
-    description: "Discovery & curation",
+    label: "My Library",
     icon: Gem,
     path: "/app/gems",
     color: "text-blue-400",
@@ -120,9 +114,6 @@ export function FeatureNav({ className }: FeatureNavProps) {
                   isActive ? feature.color : "text-foreground"
                 )}>
                   {feature.label}
-                </span>
-                <span className="hidden md:block text-[10px] text-muted-foreground mt-0.5">
-                  {feature.description}
                 </span>
                 
                 {/* Active indicator */}
