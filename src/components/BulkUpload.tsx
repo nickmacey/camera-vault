@@ -403,9 +403,7 @@ export function BulkUpload() {
         throw uploadError;
       }
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('photos')
-        .getPublicUrl(filePath);
+      // File uploaded successfully, proceed to analysis
 
       log('Converting to base64 for analysis');
       const reader = new FileReader();

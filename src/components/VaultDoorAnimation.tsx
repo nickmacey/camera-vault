@@ -150,7 +150,10 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
               height: '2px',
               background: `linear-gradient(to right, transparent, ${stage === 'unlock' ? 'rgba(212, 175, 55, 0.4)' : 'rgba(212, 175, 55, 0.15)'}, transparent)`,
               transform: `rotate(${i * 30}deg) translateX(-50%)`,
-              animation: stage === 'gathering' || stage === 'unlock' ? `rotate-ray 8s linear infinite` : 'none',
+              animationName: stage === 'gathering' || stage === 'unlock' ? 'rotate-ray' : 'none',
+              animationDuration: '8s',
+              animationTimingFunction: 'linear',
+              animationIterationCount: 'infinite',
               animationDelay: `${i * 0.1}s`,
               opacity: stage === 'initial' ? 0 : 1,
               transition: 'opacity 1s ease-in',
@@ -185,7 +188,10 @@ export const VaultDoorAnimation = ({ onComplete }: VaultDoorAnimationProps) => {
               key={particle.id}
               className="absolute"
               style={{
-                animation: stage === 'gathering' ? `orbit ${5 + particle.id * 0.1}s linear infinite` : 'none',
+                animationName: stage === 'gathering' ? 'orbit' : 'none',
+                animationDuration: `${5 + particle.id * 0.1}s`,
+                animationTimingFunction: 'linear',
+                animationIterationCount: 'infinite',
                 animationDelay: `${particle.delay}s`,
               }}
             >

@@ -328,19 +328,19 @@ const Index = () => {
       <footer className="border-t border-border mt-8 sm:mt-12 py-4 sm:py-6">
         <div className="container mx-auto px-3 sm:px-4 text-center text-xs sm:text-sm text-muted-foreground">
           <div className="flex items-center justify-center gap-3 sm:gap-6 flex-wrap">
-            <a 
-              href="/privacy" 
+            <Link 
+              to="/privacy" 
               className="hover:text-foreground transition-colors underline"
             >
               Privacy Policy
-            </a>
+            </Link>
             <span>•</span>
-            <a 
-              href="/terms" 
+            <Link 
+              to="/terms" 
               className="hover:text-foreground transition-colors underline"
             >
               Terms of Service
-            </a>
+            </Link>
           </div>
         </div>
       </footer>
