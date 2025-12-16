@@ -150,24 +150,21 @@ serve(async (req) => {
       }
 
       case 'get_popular_tracks': {
-        // Get tracks from popular playlists like "Today's Top Hits"
-        const response = await fetch(
-          'https://api.spotify.com/v1/browse/featured-playlists?limit=5',
+        // Search for popular tracks that have preview URLs
+        const searchResponse = await fetch(
+          'https://api.spotify.com/v1/search?q=year:2024&type=track&limit=50',
           { headers: { 'Authorization': `Bearer ${accessToken}` } }
         );
-        const featured = await response.json();
+        const searchResult = await searchResponse.json();
+        console.log('Popular tracks search result:', JSON.stringify(searchResult).substring(0, 500));
         
-        // Get tracks from the first featured playlist
-        if (featured.playlists?.items?.length > 0) {
-          const playlistId = featured.playlists.items[0].id;
-          const tracksResponse = await fetch(
-            `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=30`,
-            { headers: { 'Authorization': `Bearer ${accessToken}` } }
-          );
-          result = await tracksResponse.json();
-        } else {
-          result = { items: [] };
-        }
+        // Filter to only tracks with preview URLs and transform to match expected format
+        const tracksWithPreviews = (searchResult.tracks?.items || [])
+          .filter((track: any) => track.preview_url)
+          .slice(0, 30)
+          .map((track: any) => ({ track }));
+        
+        result = { items: tracksWithPreviews };
         break;
       }
 
