@@ -66,6 +66,48 @@ export interface SpotifyWebPlaybackState {
   deviceId: string | null;
 }
 
+// Global state to track SDK loading
+let sdkScriptLoaded = false;
+let sdkReadyPromise: Promise<void> | null = null;
+let sdkReadyResolve: (() => void) | null = null;
+
+// Create a promise that resolves when SDK is ready
+function waitForSpotifySDK(): Promise<void> {
+  if (window.Spotify) {
+    return Promise.resolve();
+  }
+  
+  if (sdkReadyPromise) {
+    return sdkReadyPromise;
+  }
+  
+  sdkReadyPromise = new Promise((resolve) => {
+    sdkReadyResolve = resolve;
+  });
+  
+  return sdkReadyPromise;
+}
+
+// Load SDK script once globally
+function loadSpotifySDK() {
+  if (sdkScriptLoaded) return;
+  
+  sdkScriptLoaded = true;
+  
+  // Set up the callback before loading the script
+  const existingCallback = window.onSpotifyWebPlaybackSDKReady;
+  window.onSpotifyWebPlaybackSDKReady = () => {
+    console.log("Spotify Web Playback SDK loaded");
+    if (existingCallback) existingCallback();
+    if (sdkReadyResolve) sdkReadyResolve();
+  };
+  
+  const script = document.createElement("script");
+  script.src = "https://sdk.scdn.co/spotify-player.js";
+  script.async = true;
+  document.body.appendChild(script);
+}
+
 export function useSpotifyWebPlayback() {
   const [state, setState] = useState<SpotifyWebPlaybackState>({
     isReady: false,
@@ -78,22 +120,7 @@ export function useSpotifyWebPlayback() {
   
   const playerRef = useRef<SpotifyPlayer | null>(null);
   const tokenRef = useRef<string | null>(null);
-  const sdkLoadedRef = useRef(false);
-
-  // Load the Spotify SDK script
-  useEffect(() => {
-    if (sdkLoadedRef.current) return;
-    
-    const script = document.createElement("script");
-    script.src = "https://sdk.scdn.co/spotify-player.js";
-    script.async = true;
-    document.body.appendChild(script);
-    sdkLoadedRef.current = true;
-
-    return () => {
-      // Don't remove script on unmount - keep SDK loaded
-    };
-  }, []);
+  const initializingRef = useRef(false);
 
   // Get access token
   const getAccessToken = useCallback(async (): Promise<string | null> => {
@@ -135,100 +162,107 @@ export function useSpotifyWebPlayback() {
     }
   }, []);
 
-  // Initialize player when SDK is ready
+  // Initialize player
   useEffect(() => {
+    if (initializingRef.current || playerRef.current) return;
+    
     const initPlayer = async () => {
+      initializingRef.current = true;
+      
+      // First check if user has Spotify connected
       const token = await getAccessToken();
       if (!token) {
-        console.log("No Spotify token available");
+        console.log("No Spotify token available - user needs to connect Spotify");
+        initializingRef.current = false;
         return;
       }
 
-      window.onSpotifyWebPlaybackSDKReady = () => {
-        const player = new window.Spotify.Player({
-          name: "VAULT Music Player",
-          getOAuthToken: async (cb) => {
-            const freshToken = await getAccessToken();
-            if (freshToken) cb(freshToken);
-          },
-          volume: 0.5,
-        });
+      // Load SDK script
+      loadSpotifySDK();
+      
+      // Wait for SDK to be ready
+      await waitForSpotifySDK();
+      
+      console.log("Creating Spotify player...");
+      
+      const player = new window.Spotify.Player({
+        name: "VAULT Music Player",
+        getOAuthToken: async (cb) => {
+          const freshToken = await getAccessToken();
+          if (freshToken) cb(freshToken);
+        },
+        volume: 0.5,
+      });
 
-        // Error handling
-        player.addListener("initialization_error", ({ message }) => {
-          console.error("Spotify init error:", message);
-        });
+      // Error handling
+      player.addListener("initialization_error", ({ message }) => {
+        console.error("Spotify init error:", message);
+        toast.error("Spotify player initialization failed");
+      });
 
-        player.addListener("authentication_error", ({ message }) => {
-          console.error("Spotify auth error:", message);
-          toast.error("Spotify authentication failed. Please reconnect.");
-        });
+      player.addListener("authentication_error", ({ message }) => {
+        console.error("Spotify auth error:", message);
+        toast.error("Spotify authentication failed. Please reconnect your account with new permissions.");
+      });
 
-        player.addListener("account_error", ({ message }) => {
-          console.error("Spotify account error:", message);
-          toast.error("Spotify Premium required for playback");
-        });
+      player.addListener("account_error", ({ message }) => {
+        console.error("Spotify account error:", message);
+        toast.error("Spotify Premium required for Web Playback");
+      });
 
-        player.addListener("playback_error", ({ message }) => {
-          console.error("Spotify playback error:", message);
-        });
+      player.addListener("playback_error", ({ message }) => {
+        console.error("Spotify playback error:", message);
+      });
 
-        // Ready
-        player.addListener("ready", ({ device_id }) => {
-          console.log("Spotify Web Playback SDK ready with device ID:", device_id);
-          setState(prev => ({ ...prev, isReady: true, deviceId: device_id }));
-          toast.success("Spotify player connected!");
-        });
+      // Ready
+      player.addListener("ready", ({ device_id }) => {
+        console.log("Spotify Web Playback SDK ready with device ID:", device_id);
+        setState(prev => ({ ...prev, isReady: true, deviceId: device_id }));
+        toast.success("Spotify player connected!");
+      });
 
-        // Not Ready
-        player.addListener("not_ready", ({ device_id }) => {
-          console.log("Device ID went offline:", device_id);
-          setState(prev => ({ ...prev, isReady: false, deviceId: null }));
-        });
+      // Not Ready
+      player.addListener("not_ready", ({ device_id }) => {
+        console.log("Device ID went offline:", device_id);
+        setState(prev => ({ ...prev, isReady: false, deviceId: null }));
+      });
 
-        // Player state changed
-        player.addListener("player_state_changed", (playerState) => {
-          if (!playerState) {
-            setState(prev => ({ ...prev, isPlaying: false, isPaused: true, currentTrack: null }));
-            return;
-          }
+      // Player state changed
+      player.addListener("player_state_changed", (playerState) => {
+        if (!playerState) {
+          setState(prev => ({ ...prev, isPlaying: false, isPaused: true, currentTrack: null }));
+          return;
+        }
 
-          const currentTrack = playerState.track_window.current_track;
-          setState(prev => ({
-            ...prev,
-            isPlaying: !playerState.paused,
-            isPaused: playerState.paused,
-            position: playerState.position,
-            currentTrack: currentTrack ? {
-              id: currentTrack.id,
-              name: currentTrack.name,
-              artists: currentTrack.artists.map(a => a.name).join(", "),
-              albumArt: currentTrack.album.images[0]?.url || "",
-              duration: playerState.duration,
-            } : null,
-          }));
-        });
+        const currentTrack = playerState.track_window.current_track;
+        setState(prev => ({
+          ...prev,
+          isPlaying: !playerState.paused,
+          isPaused: playerState.paused,
+          position: playerState.position,
+          currentTrack: currentTrack ? {
+            id: currentTrack.id,
+            name: currentTrack.name,
+            artists: currentTrack.artists.map(a => a.name).join(", "),
+            albumArt: currentTrack.album.images[0]?.url || "",
+            duration: playerState.duration,
+          } : null,
+        }));
+      });
 
-        player.connect().then(success => {
-          if (success) {
-            console.log("Spotify player connected successfully");
-          }
-        });
-
+      const success = await player.connect();
+      if (success) {
+        console.log("Spotify player connected successfully");
         playerRef.current = player;
-      };
-
-      // If SDK is already loaded, trigger the callback
-      if (window.Spotify) {
-        window.onSpotifyWebPlaybackSDKReady();
+      } else {
+        console.error("Failed to connect Spotify player");
+        toast.error("Failed to connect Spotify player");
       }
+      
+      initializingRef.current = false;
     };
 
     initPlayer();
-
-    return () => {
-      // Don't disconnect on component unmount - keep player alive
-    };
   }, [getAccessToken]);
 
   // Play a track
