@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Lock, Grid, Filter, Search, Trash2, RefreshCw, CheckSquare, Square, Shield, Download } from "lucide-react";
@@ -40,6 +41,7 @@ type Photo = Tables<"photos"> & {
 };
 
 const PhotoGallery = () => {
+  const navigate = useNavigate();
   const [filterStatus, setFilterStatus] = useState("all");
   const [tierFilter, setTierFilter] = useState("all");
   const [scoreFilter, setScoreFilter] = useState("all");
@@ -690,7 +692,7 @@ const PhotoGallery = () => {
               Create an account or log in to upload and manage your premium photo collection
             </p>
             <Button 
-              onClick={() => window.location.href = '/auth'}
+              onClick={() => navigate('/auth')}
               className="bg-vault-gold hover:bg-vault-gold/90 text-vault-black font-bold uppercase tracking-wide vault-glow-gold animate-scale-in group relative overflow-hidden"
               style={{ animationDelay: '0.2s' }}
             >

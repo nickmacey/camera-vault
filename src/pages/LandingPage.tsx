@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -639,7 +639,7 @@ export default function LandingPage() {
               <nav className="space-y-3">
                 <a href="#" className="block text-sm text-muted-foreground hover:text-foreground hover:translate-x-1 transition-all duration-200">About</a>
                 <a href="#" className="block text-sm text-muted-foreground hover:text-foreground hover:translate-x-1 transition-all duration-200">Blog</a>
-                <a href="/privacy" className="block text-sm text-muted-foreground hover:text-foreground hover:translate-x-1 transition-all duration-200">Privacy</a>
+                <Link to="/privacy" className="block text-sm text-muted-foreground hover:text-foreground hover:translate-x-1 transition-all duration-200">Privacy</Link>
               </nav>
             </div>
 
