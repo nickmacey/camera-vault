@@ -12,6 +12,7 @@ import { formatCurrency, getPhotoValueByScore } from "@/lib/photoValue";
 import { PhotoEditor } from "@/components/PhotoEditor";
 import { BatchPhotoEditor } from "@/components/BatchPhotoEditor";
 import { AIPhotoSearch } from "@/components/AIPhotoSearch";
+import { FeatureNav } from "@/components/FeatureNav";
 
 interface StarsPhoto {
   id: string;
@@ -157,6 +158,11 @@ export default function StarsPage() {
           </div>
         </div>
       </header>
+
+      {/* Feature Navigation */}
+      <div className="py-4 border-b border-border bg-card/30">
+        <FeatureNav />
+      </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         {batchEditing ? (

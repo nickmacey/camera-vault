@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { AutoSyncSettings } from "@/components/AutoSyncSettings";
 import { UserProfile } from "@/components/UserProfile";
 import { FeaturedPhotosManager } from "@/components/FeaturedPhotosManager";
+import { FeatureNav } from "@/components/FeatureNav";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
@@ -160,6 +161,12 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background relative">
       <DynamicHero onCTAClick={scrollToUpload} />
+      
+      {/* Feature Navigation */}
+      <div className="py-6 border-b border-border bg-card/30 backdrop-blur-sm sticky top-0 z-40">
+        <FeatureNav />
+      </div>
+      
       <CategoryShowcase />
       <StatsBar />
 

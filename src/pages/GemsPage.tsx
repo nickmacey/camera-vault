@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { formatCurrency, getPhotoValueByScore } from "@/lib/photoValue";
 import { AIPhotoSearch } from "@/components/AIPhotoSearch";
+import { FeatureNav } from "@/components/FeatureNav";
 
 interface GemsPhoto {
   id: string;
@@ -231,6 +232,11 @@ export default function GemsPage() {
           </div>
         </div>
       </header>
+
+      {/* Feature Navigation */}
+      <div className="py-4 border-b border-border bg-card/30">
+        <FeatureNav />
+      </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* AI Search */}
