@@ -84,6 +84,7 @@ export function MusicVideoCreator() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SpotifyTrack[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [tracksLoading, setTracksLoading] = useState(true);
   const audioRef = useRef<HTMLAudioElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -143,6 +144,7 @@ export function MusicVideoCreator() {
   };
 
   const fetchSpotifyData = async () => {
+    setTracksLoading(true);
     try {
       const [playlistsData, likedData, popularData] = await Promise.all([
         getPlaylists(),
@@ -170,6 +172,8 @@ export function MusicVideoCreator() {
     } catch (err) {
       console.error('Error fetching Spotify data:', err);
       toast.error('Failed to load Spotify data');
+    } finally {
+      setTracksLoading(false);
     }
   };
 
@@ -623,8 +627,16 @@ export function MusicVideoCreator() {
                   </>
                 )}
 
-                {/* Empty state when no search and no popular tracks */}
-                {!searchQuery.trim() && popularTracks.length === 0 && likedSongs.length === 0 && (
+                {/* Loading state for tracks */}
+                {!searchQuery.trim() && tracksLoading && (
+                  <div className="text-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin mx-auto text-[#1DB954]" />
+                    <p className="text-xs text-muted-foreground mt-2">Loading trending tracks...</p>
+                  </div>
+                )}
+
+                {/* Empty state when no search and no popular tracks after loading */}
+                {!searchQuery.trim() && !tracksLoading && popularTracks.length === 0 && likedSongs.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center py-8">
                     Search for any song above to get started!
                   </p>
