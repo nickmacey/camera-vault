@@ -49,21 +49,38 @@ export default function HighlightReelPage() {
         .eq("user_id", session.user.id)
         .not("location_data", "is", null);
 
-      if (photos) {
-        const locationNames = new Set<string>();
+      if (photos && photos.length > 0) {
+        // Extract coordinates from location_data
+        const coordinates: { lat: number; lng: number }[] = [];
+        
         photos.forEach((photo) => {
           const locData = photo.location_data as any;
           if (locData) {
-            // Extract city, town, or place name from location_data
-            const placeName = locData.city || locData.town || locData.locality || 
-                             locData.place || locData.name || locData.region ||
-                             locData.country || locData.formatted;
-            if (placeName && typeof placeName === "string") {
-              locationNames.add(placeName);
+            // Try to get coordinates from various possible formats
+            const lat = locData.lat || locData.latitude || locData.coordinates?.lat;
+            const lng = locData.lng || locData.lon || locData.longitude || locData.coordinates?.lng;
+            
+            if (lat && lng && typeof lat === 'number' && typeof lng === 'number') {
+              coordinates.push({ lat, lng });
             }
           }
         });
-        setLocations(Array.from(locationNames));
+
+        if (coordinates.length > 0) {
+          console.log('Reverse geocoding', coordinates.length, 'coordinates...');
+          
+          // Call reverse geocoding edge function
+          const { data, error } = await supabase.functions.invoke('reverse-geocode', {
+            body: { coordinates }
+          });
+
+          if (error) {
+            console.error('Reverse geocoding error:', error);
+          } else if (data?.locations) {
+            console.log('Got locations:', data.locations);
+            setLocations(data.locations);
+          }
+        }
       }
     } catch (error) {
       console.error("Error fetching locations:", error);
