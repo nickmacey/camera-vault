@@ -150,21 +150,41 @@ serve(async (req) => {
       }
 
       case 'get_popular_tracks': {
-        // Search for popular tracks that have preview URLs
-        const searchResponse = await fetch(
-          'https://api.spotify.com/v1/search?q=year:2024&type=track&limit=50',
-          { headers: { 'Authorization': `Bearer ${accessToken}` } }
-        );
-        const searchResult = await searchResponse.json();
-        console.log('Popular tracks search result:', JSON.stringify(searchResult).substring(0, 500));
+        // Try multiple search queries to find tracks with preview URLs
+        const searchQueries = [
+          'genre:pop year:2024',
+          'genre:electronic',
+          'genre:indie',
+          'genre:hip-hop',
+          'viral hits'
+        ];
         
-        // Filter to only tracks with preview URLs and transform to match expected format
-        const tracksWithPreviews = (searchResult.tracks?.items || [])
-          .filter((track: any) => track.preview_url)
-          .slice(0, 30)
-          .map((track: any) => ({ track }));
+        const allTracks: any[] = [];
         
-        result = { items: tracksWithPreviews };
+        for (const query of searchQueries) {
+          const searchResponse = await fetch(
+            `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=50`,
+            { headers: { 'Authorization': `Bearer ${accessToken}` } }
+          );
+          const searchResult = await searchResponse.json();
+          
+          const tracksWithPreviews = (searchResult.tracks?.items || [])
+            .filter((track: any) => track.preview_url);
+          
+          allTracks.push(...tracksWithPreviews);
+          
+          // Stop if we have enough tracks
+          if (allTracks.length >= 30) break;
+        }
+        
+        // Deduplicate by track ID
+        const uniqueTracks = Array.from(
+          new Map(allTracks.map((track: any) => [track.id, track])).values()
+        ).slice(0, 30);
+        
+        console.log(`Found ${uniqueTracks.length} tracks with preview URLs`);
+        
+        result = { items: uniqueTracks.map((track: any) => ({ track })) };
         break;
       }
 
