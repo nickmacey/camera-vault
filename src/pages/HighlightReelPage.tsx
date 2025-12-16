@@ -88,14 +88,14 @@ export default function HighlightReelPage() {
 
       let dataToUse: typeof reelData = reelData;
 
-      // If no custom selections, fall back to top-scored photos
+      // If no custom selections, fall back to top-scored photos (doubled to 60)
       if (!reelData || reelData.length === 0) {
         const { data: fallbackData, error: fallbackError } = await supabase
           .from("photos")
           .select("id, filename, storage_path, overall_score, score, mime_type, highlight_reel_preset")
           .eq("user_id", session.user.id)
           .order("overall_score", { ascending: false, nullsFirst: false })
-          .limit(30);
+          .limit(60);
 
         if (fallbackError) throw fallbackError;
         dataToUse = fallbackData;
@@ -111,22 +111,45 @@ export default function HighlightReelPage() {
         
         const mediaWithUrls = await Promise.all(
           uniqueData.map(async (item) => {
-            const { data: urlData } = await supabase.storage
-              .from("photos")
-              .createSignedUrl(item.storage_path, 3600);
-            const isVideo = item.mime_type?.startsWith("video/") || false;
-            return {
-              id: item.id,
-              url: urlData?.signedUrl || "",
-              filename: item.filename,
-              score: item.overall_score || item.score,
-              isVideo,
-              mimeType: item.mime_type,
-              preset: item.highlight_reel_preset,
-            };
+            try {
+              console.log("Creating signed URL for:", item.storage_path);
+              const { data: urlData, error: urlError } = await supabase.storage
+                .from("photos")
+                .createSignedUrl(item.storage_path, 7200);
+              
+              if (urlError) {
+                console.error("Signed URL error for", item.storage_path, ":", urlError);
+                return null;
+              }
+              
+              const signedUrl = urlData?.signedUrl;
+              if (!signedUrl) {
+                console.error("No signed URL returned for:", item.storage_path);
+                return null;
+              }
+              
+              console.log("Got signed URL for", item.filename, ":", signedUrl.substring(0, 100) + "...");
+              
+              const isVideo = item.mime_type?.startsWith("video/") || false;
+              return {
+                id: item.id,
+                url: signedUrl,
+                filename: item.filename,
+                score: item.overall_score || item.score,
+                isVideo,
+                mimeType: item.mime_type,
+                preset: item.highlight_reel_preset,
+              };
+            } catch (err) {
+              console.error("Error processing media item:", item.id, err);
+              return null;
+            }
           })
         );
-        setMedia(mediaWithUrls.filter((m) => m.url));
+        
+        const validMedia = mediaWithUrls.filter((m): m is MediaItem => m !== null && !!m.url);
+        console.log("Total valid media items:", validMedia.length);
+        setMedia(validMedia);
       }
     } catch (error) {
       console.error("Error fetching media:", error);
@@ -147,10 +170,10 @@ export default function HighlightReelPage() {
       };
     }
     
-    // Fallback: split evenly
-    const bwMedia = media.slice(0, 10);
-    const colorMedia = media.slice(10, 20);
-    const filmMedia = media.slice(20, 30);
+    // Fallback: split evenly into 3 groups (20 each for 60 total)
+    const bwMedia = media.slice(0, 20);
+    const colorMedia = media.slice(20, 40);
+    const filmMedia = media.slice(40, 60);
     return { bw: bwMedia, color: colorMedia, film: filmMedia };
   }, [media]);
 
@@ -344,6 +367,10 @@ function MediaGrid({ items, preset, isPaused }: MediaGridProps) {
                     alt={item.filename}
                     className="w-full h-full object-cover"
                     loading="lazy"
+                    onError={(e) => {
+                      console.error("Image failed to load:", item.url);
+                      e.currentTarget.style.display = "none";
+                    }}
                   />
                 )}
               </div>
