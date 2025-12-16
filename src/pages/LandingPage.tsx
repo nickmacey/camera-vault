@@ -40,8 +40,39 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4">
-        <div className="container mx-auto max-w-6xl text-center animate-fade-in">
+      <section className="pt-32 pb-20 px-4 relative overflow-hidden">
+        {/* Animated Background */}
+        <div className="absolute inset-0 -z-10">
+          {/* Gradient orbs */}
+          <div className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-[100px] animate-pulse" />
+          <div className="absolute top-40 right-20 w-96 h-96 bg-primary/15 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute bottom-20 left-1/3 w-80 h-80 bg-primary/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }} />
+          
+          {/* Floating particles */}
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1 h-1 bg-primary/40 rounded-full"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animation: `float ${3 + Math.random() * 4}s ease-in-out infinite`,
+                animationDelay: `${Math.random() * 2}s`,
+              }}
+            />
+          ))}
+          
+          {/* Grid pattern overlay */}
+          <div 
+            className="absolute inset-0 opacity-[0.03]"
+            style={{
+              backgroundImage: `linear-gradient(hsl(var(--primary) / 0.3) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary) / 0.3) 1px, transparent 1px)`,
+              backgroundSize: '50px 50px',
+            }}
+          />
+        </div>
+
+        <div className="container mx-auto max-w-6xl text-center animate-fade-in relative z-10">
           <div className="flex justify-center mb-8">
             <Logo variant="icon" size="lg" animated />
           </div>
@@ -54,8 +85,8 @@ export default function LandingPage() {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-black text-foreground mb-6 uppercase tracking-tight leading-tight">
-            Turn Your Camera Roll<br />
-            Into <span className="text-primary">Magic</span>
+            Unlock the <span className="text-primary">Magic</span><br />
+            of your Photos & Videos
           </h1>
 
           <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-3xl mx-auto leading-relaxed">
