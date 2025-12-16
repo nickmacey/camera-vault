@@ -73,13 +73,11 @@ const platformConfig = {
 };
 
 export function MusicVideoCreator() {
-  const { currentTrack, setCurrentTrack } = useSpotifyPlayer();
+  const { selectedTrack, setSelectedTrack, playTrack, isReady, isPlaying: sdkIsPlaying, currentTrack } = useSpotifyPlayer();
   const [isConnected, setIsConnected] = useState(false);
   const [playlists, setPlaylists] = useState<SpotifyPlaylist[]>([]);
   const [likedSongs, setLikedSongs] = useState<SpotifyTrack[]>([]);
   
-  // Use context track as selected track
-  const selectedTrack = currentTrack;
   const [selectedPhotos, setSelectedPhotos] = useState<SelectedPhoto[]>([]);
   const [userPhotos, setUserPhotos] = useState<SelectedPhoto[]>([]);
   const [photoDuration, setPhotoDuration] = useState(3);
@@ -262,7 +260,7 @@ export function MusicVideoCreator() {
     : userPhotos;
 
   const handleSelectTrack = (track: SpotifyTrack) => {
-    setCurrentTrack(track);
+    playTrack(track);
     if (audioRef.current && track.preview_url) {
       audioRef.current.src = track.preview_url;
     }

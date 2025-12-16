@@ -6,6 +6,9 @@ const SCOPES = [
   'user-library-read',
   'playlist-read-private',
   'playlist-read-collaborative',
+  'streaming',
+  'user-read-playback-state',
+  'user-modify-playback-state',
 ].join(' ');
 
 export async function initiateSpotifyOAuth() {
@@ -114,6 +117,7 @@ export async function getPopularTracks() {
 export interface SpotifyTrack {
   id: string;
   name: string;
+  uri: string;
   artists: { name: string }[];
   album: {
     name: string;
