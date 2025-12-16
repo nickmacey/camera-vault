@@ -30,12 +30,39 @@ interface LensProfile {
     title: string;
     explanation: string;
   };
+  firstPersonStory?: string;
 }
 
 export function ThroughMyLens() {
   const [lensProfile, setLensProfile] = useState<LensProfile | null>(null);
   const [loading, setLoading] = useState(false);
-  const [hasAnalyzed, setHasAnalyzed] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+
+  // Load saved lens profile on mount
+  useEffect(() => {
+    loadSavedProfile();
+  }, []);
+
+  const loadSavedProfile = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('lens_profile, lens_updated_at')
+        .eq('id', session.user.id)
+        .single();
+
+      if (profile?.lens_profile) {
+        setLensProfile(profile.lens_profile as unknown as LensProfile);
+      }
+    } catch (err) {
+      console.error('Error loading lens profile:', err);
+    } finally {
+      setInitialLoading(false);
+    }
+  };
 
   const analyzeLensProfile = async () => {
     setLoading(true);
@@ -55,7 +82,6 @@ export function ThroughMyLens() {
 
       if (data?.lensProfile) {
         setLensProfile(data.lensProfile);
-        setHasAnalyzed(true);
         toast.success('Your lens profile is ready');
       }
     } catch (err) {
@@ -65,6 +91,18 @@ export function ThroughMyLens() {
       setLoading(false);
     }
   };
+
+  if (initialLoading) {
+    return (
+      <Card className="bg-card/50 backdrop-blur border-border/50">
+        <CardContent className="py-8">
+          <div className="flex items-center justify-center">
+            <div className="animate-pulse text-muted-foreground">Loading your profile...</div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (loading) {
     return (
@@ -92,7 +130,7 @@ export function ThroughMyLens() {
     );
   }
 
-  if (!hasAnalyzed || !lensProfile) {
+  if (!lensProfile) {
     return (
       <Card className="bg-card/50 backdrop-blur border-border/50">
         <CardHeader>
