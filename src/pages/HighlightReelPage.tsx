@@ -36,6 +36,13 @@ export default function HighlightReelPage() {
     fetchBestMedia();
     fetchLocations();
   }, []);
+  // Convert DMS (degrees, minutes, seconds) array to decimal degrees
+  const dmsToDecimal = (dms: number[] | number): number | null => {
+    if (typeof dms === 'number') return dms;
+    if (!Array.isArray(dms) || dms.length < 3) return null;
+    const [degrees, minutes, seconds] = dms;
+    return degrees + (minutes / 60) + (seconds / 3600);
+  };
 
   const fetchLocations = async () => {
     try {
@@ -55,18 +62,36 @@ export default function HighlightReelPage() {
         photos.forEach((photo) => {
           const locData = photo.location_data as any;
           if (locData) {
-            // Try to get coordinates from various possible formats
-            const lat = locData.lat || locData.latitude || locData.coordinates?.lat;
-            const lng = locData.lng || locData.lon || locData.longitude || locData.coordinates?.lng;
+            let lat: number | null = null;
+            let lng: number | null = null;
             
-            if (lat && lng && typeof lat === 'number' && typeof lng === 'number') {
+            // Handle DMS array format: { latitude: [43, 26, 39.54], longitude: [6, 58, 39.78] }
+            if (Array.isArray(locData.latitude)) {
+              lat = dmsToDecimal(locData.latitude);
+            } else if (typeof locData.latitude === 'number') {
+              lat = locData.latitude;
+            } else if (typeof locData.lat === 'number') {
+              lat = locData.lat;
+            }
+            
+            if (Array.isArray(locData.longitude)) {
+              lng = dmsToDecimal(locData.longitude);
+            } else if (typeof locData.longitude === 'number') {
+              lng = locData.longitude;
+            } else if (typeof locData.lng === 'number' || typeof locData.lon === 'number') {
+              lng = locData.lng || locData.lon;
+            }
+            
+            if (lat !== null && lng !== null) {
               coordinates.push({ lat, lng });
             }
           }
         });
 
+        console.log('Found', coordinates.length, 'coordinates from', photos.length, 'photos with location data');
+
         if (coordinates.length > 0) {
-          console.log('Reverse geocoding', coordinates.length, 'coordinates...');
+          console.log('Sample coordinates:', coordinates.slice(0, 3));
           
           // Call reverse geocoding edge function
           const { data, error } = await supabase.functions.invoke('reverse-geocode', {
@@ -75,9 +100,11 @@ export default function HighlightReelPage() {
 
           if (error) {
             console.error('Reverse geocoding error:', error);
-          } else if (data?.locations) {
+          } else if (data?.locations && data.locations.length > 0) {
             console.log('Got locations:', data.locations);
             setLocations(data.locations);
+          } else {
+            console.log('No locations returned from geocoding');
           }
         }
       }
