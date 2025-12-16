@@ -111,7 +111,11 @@ export function MusicVideoCreator() {
         setPlaylists(playlistsData.items);
       }
       if (likedData?.items) {
-        setLikedSongs(likedData.items.map((item: any) => item.track));
+        // Filter to only include tracks with preview URLs
+        const tracksWithPreviews = likedData.items
+          .map((item: any) => item.track)
+          .filter((track: SpotifyTrack) => track.preview_url);
+        setLikedSongs(tracksWithPreviews);
       }
     } catch (err) {
       console.error('Error fetching Spotify data:', err);
@@ -507,9 +511,6 @@ export function MusicVideoCreator() {
                         <span className="text-xs text-muted-foreground">
                           {formatDuration(track.duration_ms)}
                         </span>
-                        {!track.preview_url && (
-                          <Badge variant="outline" className="text-[10px]">No preview</Badge>
-                        )}
                       </button>
                     ))}
                   </>
