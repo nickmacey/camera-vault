@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronUp, ChevronDown, X, Plus, Palette } from 'lucide-react';
+import { ChevronUp, ChevronDown, X, Plus, Palette, User } from 'lucide-react';
 import { toast } from 'sonner';
+import { ProfilePhotoUpload } from './ProfilePhotoUpload';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,10 +44,31 @@ export function HighlightReelManager() {
   const [allMedia, setAllMedia] = useState<MediaWithUrl[]>([]);
   const [reelMedia, setReelMedia] = useState<MediaWithUrl[]>([]);
   const [loading, setLoading] = useState(true);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
     loadMedia();
+    loadProfile();
   }, []);
+
+  const loadProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('id', user.id)
+        .single();
+
+      if (data) {
+        setAvatarUrl(data.avatar_url);
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    }
+  };
 
   const loadMedia = async () => {
     try {
@@ -172,6 +194,24 @@ export function HighlightReelManager() {
 
   return (
     <div className="space-y-6">
+      {/* Profile Photo Section */}
+      <Card className="p-6 bg-card">
+        <div className="flex items-center gap-2 mb-4">
+          <User className="w-5 h-5 text-vault-gold" />
+          <h3 className="text-xl font-bold text-foreground">Profile Photo</h3>
+        </div>
+        <p className="text-muted-foreground mb-4">
+          Upload a photo of yourself to display on your story page.
+        </p>
+        <div className="flex justify-center">
+          <ProfilePhotoUpload
+            currentAvatarUrl={avatarUrl}
+            onUploadComplete={(url) => setAvatarUrl(url)}
+            size="lg"
+          />
+        </div>
+      </Card>
+
       <Card className="p-6 bg-card">
         <h3 className="text-xl font-bold mb-4 text-foreground">Highlight Reel ({reelMedia.length})</h3>
         <p className="text-muted-foreground mb-6">
