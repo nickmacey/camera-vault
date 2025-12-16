@@ -32,7 +32,6 @@ import {
   getPlaylists, 
   getLikedSongs,
   searchTracks,
-  getPopularTracks,
   SpotifyTrack,
   SpotifyPlaylist
 } from "@/lib/spotify";
@@ -76,7 +75,7 @@ export function MusicVideoCreator() {
   const [isConnected, setIsConnected] = useState(false);
   const [playlists, setPlaylists] = useState<SpotifyPlaylist[]>([]);
   const [likedSongs, setLikedSongs] = useState<SpotifyTrack[]>([]);
-  const [popularTracks, setPopularTracks] = useState<SpotifyTrack[]>([]);
+  
   const [selectedTrack, setSelectedTrack] = useState<SpotifyTrack | null>(null);
   const [selectedPhotos, setSelectedPhotos] = useState<SelectedPhoto[]>([]);
   const [userPhotos, setUserPhotos] = useState<SelectedPhoto[]>([]);
@@ -159,28 +158,20 @@ export function MusicVideoCreator() {
   const fetchSpotifyData = async () => {
     setTracksLoading(true);
     try {
-      const [playlistsData, likedData, popularData] = await Promise.all([
+      const [playlistsData, likedData] = await Promise.all([
         getPlaylists(),
         getLikedSongs(),
-        getPopularTracks(),
       ]);
       
       if (playlistsData?.items) {
         setPlaylists(playlistsData.items);
       }
       if (likedData?.items) {
-        // Filter to only include tracks with preview URLs
-        const tracksWithPreviews = likedData.items
+        // Show ALL liked songs - we'll use Spotify embed for playback
+        const allTracks = likedData.items
           .map((item: any) => item.track)
-          .filter((track: SpotifyTrack) => track.preview_url);
-        setLikedSongs(tracksWithPreviews);
-      }
-      if (popularData?.items) {
-        // Filter popular tracks to only those with preview URLs
-        const popularWithPreviews = popularData.items
-          .map((item: any) => item.track)
-          .filter((track: SpotifyTrack) => track?.preview_url);
-        setPopularTracks(popularWithPreviews);
+          .filter((track: SpotifyTrack) => track && track.id);
+        setLikedSongs(allTracks);
       }
     } catch (err) {
       console.error('Error fetching Spotify data:', err);
@@ -683,13 +674,28 @@ export function MusicVideoCreator() {
               )}
             </div>
 
-            <ScrollArea className="h-64">
+            {/* Spotify Embed Player */}
+            {selectedTrack && (
+              <div className="mb-4 rounded-xl overflow-hidden bg-[#282828]">
+                <iframe
+                  src={`https://open.spotify.com/embed/track/${selectedTrack.id}?utm_source=generator&theme=0`}
+                  width="100%"
+                  height="80"
+                  frameBorder="0"
+                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                  loading="lazy"
+                  className="rounded-xl"
+                />
+              </div>
+            )}
+
+            <ScrollArea className="h-52">
               <div className="space-y-1">
                 {/* Search Results */}
                 {searchQuery.trim() && searchResults.length > 0 && (
                   <>
                     <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">
-                      Search Results ({searchResults.length} playable)
+                      Search Results
                     </p>
                     {searchResults.map(track => (
                       <TrackButton
@@ -706,35 +712,17 @@ export function MusicVideoCreator() {
                 {/* No search results message */}
                 {searchQuery.trim() && !isSearching && searchResults.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center py-4">
-                    No playable tracks found. Try another search.
+                    No tracks found. Try another search.
                   </p>
                 )}
 
-                {/* Popular Tracks (show when not searching) */}
-                {!searchQuery.trim() && popularTracks.length > 0 && (
-                  <>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">
-                      🔥 Trending Now ({popularTracks.length} playable)
-                    </p>
-                    {popularTracks.slice(0, 15).map(track => (
-                      <TrackButton
-                        key={track.id}
-                        track={track}
-                        isSelected={selectedTrack?.id === track.id}
-                        onSelect={handleSelectTrack}
-                        formatDuration={formatDuration}
-                      />
-                    ))}
-                  </>
-                )}
-
-                {/* Liked Songs (show when not searching) */}
+                {/* Liked Songs (show when not searching) - PRIMARY */}
                 {!searchQuery.trim() && likedSongs.length > 0 && (
                   <>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2 mt-4">
-                      Your Liked Songs ({likedSongs.length} playable)
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">
+                      💚 Your Favorites ({likedSongs.length})
                     </p>
-                    {likedSongs.slice(0, 20).map(track => (
+                    {likedSongs.slice(0, 30).map(track => (
                       <TrackButton
                         key={track.id}
                         track={track}
@@ -750,14 +738,14 @@ export function MusicVideoCreator() {
                 {!searchQuery.trim() && tracksLoading && (
                   <div className="text-center py-8">
                     <Loader2 className="w-6 h-6 animate-spin mx-auto text-[#1DB954]" />
-                    <p className="text-xs text-muted-foreground mt-2">Loading trending tracks...</p>
+                    <p className="text-xs text-muted-foreground mt-2">Loading your music...</p>
                   </div>
                 )}
 
-                {/* Empty state when no search and no popular tracks after loading */}
-                {!searchQuery.trim() && !tracksLoading && popularTracks.length === 0 && likedSongs.length === 0 && (
+                {/* Empty state */}
+                {!searchQuery.trim() && !tracksLoading && likedSongs.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center py-8">
-                    Search for any song above to get started!
+                    No liked songs found. Search for any song above!
                   </p>
                 )}
               </div>
