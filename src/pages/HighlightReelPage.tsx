@@ -6,6 +6,7 @@ import { ArrowRight, Play, Pause, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { HighlightReelManager } from "@/components/HighlightReelManager";
+import { StoryLensSection } from "@/components/StoryLensSection";
 
 interface MediaItem {
   id: string;
@@ -299,6 +300,9 @@ export default function HighlightReelPage() {
           </span>
         </motion.div>
       </div>
+
+      {/* Story Lens Section - At the top */}
+      <StoryLensSection />
 
       {/* Media Grid Sections */}
       <div className="relative">

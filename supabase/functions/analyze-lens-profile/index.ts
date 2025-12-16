@@ -45,6 +45,15 @@ serve(async (req) => {
 
     console.log('Analyzing lens profile for user:', user.id);
 
+    // Get user's profile for first name
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('first_name')
+      .eq('id', user.id)
+      .single();
+
+    const firstName = profile?.first_name || 'this photographer';
+
     // Get user's top photos with AI analysis
     const { data: photos, error: photosError } = await supabase
       .from('photos')
@@ -121,6 +130,9 @@ A philosophical reflection on what their photography reveals about how they expe
 6. **PHOTOGRAPHER ARCHETYPE** (single phrase + explanation)
 Give them a unique photographer archetype title (like "The Quiet Observer" or "The Light Chaser" or "The Moment Keeper") with a brief explanation of why this fits.
 
+7. **FIRST-PERSON STORY** (3-4 paragraphs)
+Write a beautiful first-person narrative from ${firstName}'s perspective about how they see the world through their lens. Use "I" statements. This should be intimate, reflective, and poetic - like they are sharing their soul with readers. Start with something like "Through my lens, I see..." and continue telling their story of how they capture and experience the world.
+
 Format the response as JSON with these exact keys:
 {
   "vision": "string",
@@ -136,7 +148,8 @@ Format the response as JSON with these exact keys:
   "archetype": {
     "title": "string",
     "explanation": "string"
-  }
+  },
+  "firstPersonStory": "string"
 }`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -189,15 +202,22 @@ Format the response as JSON with these exact keys:
       lensProfile = { raw: content };
     }
 
-    // Store the lens profile in user settings or a dedicated table
+    // Store the lens profile in the profiles table
     const { error: updateError } = await supabase
       .from('profiles')
       .update({
+        lens_profile: lensProfile,
+        lens_story: lensProfile.firstPersonStory || null,
+        lens_updated_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
       .eq('id', user.id);
 
-    console.log('Lens profile generated successfully');
+    if (updateError) {
+      console.error('Error saving lens profile:', updateError);
+    }
+
+    console.log('Lens profile generated and saved successfully');
 
     return new Response(JSON.stringify({
       success: true,
