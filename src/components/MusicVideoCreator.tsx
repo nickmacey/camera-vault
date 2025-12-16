@@ -45,22 +45,29 @@ interface SelectedPhoto {
   ai_analysis?: string;
 }
 
+interface GeneratedCaption {
+  instagram: string;
+  tiktok: string;
+  youtube: string;
+  hashtags: string[];
+}
+
 type PlatformType = 'instagram' | 'tiktok' | 'youtube';
 
 const platformConfig = {
   instagram: {
     name: 'Instagram',
-    aspectRatio: '4/5',
+    aspectRatio: '9/19.5',
     color: 'bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400',
   },
   tiktok: {
     name: 'TikTok',
-    aspectRatio: '9/16',
+    aspectRatio: '9/19.5',
     color: 'bg-black',
   },
   youtube: {
     name: 'YouTube Shorts',
-    aspectRatio: '9/16',
+    aspectRatio: '9/19.5',
     color: 'bg-red-600',
   },
 };
@@ -85,6 +92,8 @@ export function MusicVideoCreator() {
   const [searchResults, setSearchResults] = useState<SpotifyTrack[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [tracksLoading, setTracksLoading] = useState(true);
+  const [generatedCaption, setGeneratedCaption] = useState<GeneratedCaption | null>(null);
+  const [isGeneratingCaption, setIsGeneratingCaption] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -267,8 +276,73 @@ export function MusicVideoCreator() {
       toast.error('Photo already added');
       return;
     }
-    setSelectedPhotos([...selectedPhotos, photo]);
+    const newPhotos = [...selectedPhotos, photo];
+    setSelectedPhotos(newPhotos);
     toast.success('Photo added');
+    
+    // Generate caption when first photo is added
+    if (newPhotos.length === 1) {
+      generateCaption(photo);
+    }
+  };
+
+  const generateCaption = async (photo: SelectedPhoto) => {
+    if (!photo.ai_analysis && !photo.description) {
+      // Set default captions if no analysis available
+      setGeneratedCaption({
+        instagram: "Capturing moments that matter. What story does this image tell you? ✨",
+        tiktok: "POV: When the moment is just perfect 📸 #photography #moments",
+        youtube: "This is what happens when you pay attention to the details around you.",
+        hashtags: ['photography', 'photooftheday', 'visualstorytelling', 'moments', 'capture']
+      });
+      return;
+    }
+
+    setIsGeneratingCaption(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-social-content', {
+        body: {
+          photoAnalysis: photo.ai_analysis || photo.description || 'A beautiful photograph',
+          scores: {
+            technical: 8,
+            commercial: 7,
+            artistic: 8,
+            emotional: 8,
+            overall: 8
+          },
+          brandVoice: {
+            tone: 'authentic',
+            style: 'storyteller',
+            personality: ['creative', 'inspiring'],
+            emoji_preference: 'moderately'
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      setGeneratedCaption({
+        instagram: data.captions?.instagram || "Sharing moments worth remembering ✨",
+        tiktok: data.captions?.twitter || "This moment though 📸 #photography",
+        youtube: data.captions?.linkedin || "Sometimes the best moments find you.",
+        hashtags: [
+          ...(data.hashtags?.high || []),
+          ...(data.hashtags?.medium || []),
+          ...(data.hashtags?.niche || [])
+        ].slice(0, 8)
+      });
+    } catch (err) {
+      console.error('Error generating caption:', err);
+      // Fallback captions
+      setGeneratedCaption({
+        instagram: "Every photo tells a story. What does this one say to you? 📸",
+        tiktok: "Caught in 4K 📸✨ #photography #fyp",
+        youtube: "The moments that make life beautiful.",
+        hashtags: ['photography', 'photooftheday', 'moments', 'storytelling', 'creative']
+      });
+    } finally {
+      setIsGeneratingCaption(false);
+    }
   };
 
   const removePhoto = (photoId: string) => {
@@ -331,20 +405,26 @@ export function MusicVideoCreator() {
         ))}
       </div>
 
-      {/* Phone Mockup Preview */}
+      {/* iPhone 17 Pro Max Mockup Preview */}
       <div className="flex justify-center">
         <div className="relative">
-          {/* Phone Frame */}
-          <div className="relative bg-black rounded-[3rem] p-3 shadow-2xl">
-            {/* Phone Notch */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-7 bg-black rounded-b-2xl z-20" />
+          {/* Phone Frame - iPhone 17 Pro Max dimensions */}
+          <div className="relative bg-[#1a1a1a] rounded-[55px] p-[14px] shadow-2xl border border-[#333]">
+            {/* Dynamic Island */}
+            <div className="absolute top-[18px] left-1/2 -translate-x-1/2 w-[126px] h-[37px] bg-black rounded-full z-30" />
+            
+            {/* Side buttons */}
+            <div className="absolute -right-[3px] top-[140px] w-[4px] h-[40px] bg-[#333] rounded-l" />
+            <div className="absolute -right-[3px] top-[200px] w-[4px] h-[80px] bg-[#333] rounded-l" />
+            <div className="absolute -left-[3px] top-[180px] w-[4px] h-[34px] bg-[#333] rounded-r" />
+            <div className="absolute -left-[3px] top-[230px] w-[4px] h-[68px] bg-[#333] rounded-r" />
             
             {/* Screen */}
             <div 
-              className="relative bg-black rounded-[2.5rem] overflow-hidden"
+              className="relative bg-black rounded-[42px] overflow-hidden"
               style={{ 
-                width: platform === 'instagram' ? '320px' : '280px',
-                aspectRatio: currentConfig.aspectRatio
+                width: '250px',
+                height: '542px'
               }}
             >
               {/* Content Area */}
@@ -362,8 +442,8 @@ export function MusicVideoCreator() {
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted/20 to-muted/5">
                     <div className="text-center text-muted-foreground p-4">
-                      <ImageIcon className="w-16 h-16 mx-auto mb-3 opacity-30" />
-                      <p className="text-sm">Add photos to preview</p>
+                      <ImageIcon className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                      <p className="text-xs">Add photos to preview</p>
                     </div>
                   </div>
                 )}
@@ -374,20 +454,29 @@ export function MusicVideoCreator() {
                 <InstagramOverlay 
                   track={selectedTrack} 
                   isPlaying={isPlaying}
+                  caption={generatedCaption}
+                  isGenerating={isGeneratingCaption}
                 />
               )}
               {platform === 'tiktok' && (
                 <TikTokOverlay 
                   track={selectedTrack}
                   isPlaying={isPlaying}
+                  caption={generatedCaption}
+                  isGenerating={isGeneratingCaption}
                 />
               )}
               {platform === 'youtube' && (
                 <YouTubeOverlay 
                   track={selectedTrack}
                   isPlaying={isPlaying}
+                  caption={generatedCaption}
+                  isGenerating={isGeneratingCaption}
                 />
               )}
+
+              {/* Home Indicator */}
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[100px] h-[4px] bg-white/30 rounded-full z-30" />
             </div>
           </div>
         </div>
@@ -690,114 +779,176 @@ function TrackButton({
 }
 
 // Instagram UI Overlay
-function InstagramOverlay({ track, isPlaying }: { track: SpotifyTrack | null; isPlaying: boolean }) {
+function InstagramOverlay({ 
+  track, 
+  isPlaying,
+  caption,
+  isGenerating 
+}: { 
+  track: SpotifyTrack | null; 
+  isPlaying: boolean;
+  caption: GeneratedCaption | null;
+  isGenerating: boolean;
+}) {
   return (
     <>
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-10 p-3 bg-gradient-to-b from-black/50 to-transparent">
+      <div className="absolute top-12 left-0 right-0 z-10 px-3 bg-gradient-to-b from-black/50 to-transparent">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 p-0.5">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 p-0.5">
               <div className="w-full h-full rounded-full bg-black flex items-center justify-center">
-                <User className="w-4 h-4 text-white" />
+                <User className="w-3 h-3 text-white" />
               </div>
             </div>
-            <span className="text-white text-sm font-medium">your_username</span>
+            <span className="text-white text-xs font-medium">your_username</span>
           </div>
-          <MoreHorizontal className="w-5 h-5 text-white" />
+          <MoreHorizontal className="w-4 h-4 text-white" />
         </div>
       </div>
 
       {/* Actions */}
-      <div className="absolute bottom-16 right-3 flex flex-col gap-4 z-10">
-        <button className="flex flex-col items-center gap-1">
-          <Heart className="w-7 h-7 text-white" />
-          <span className="text-white text-xs">24.5k</span>
+      <div className="absolute bottom-28 right-2 flex flex-col gap-3 z-10">
+        <button className="flex flex-col items-center gap-0.5">
+          <Heart className="w-6 h-6 text-white" />
+          <span className="text-white text-[10px]">24.5k</span>
         </button>
-        <button className="flex flex-col items-center gap-1">
-          <MessageCircle className="w-7 h-7 text-white" />
-          <span className="text-white text-xs">482</span>
+        <button className="flex flex-col items-center gap-0.5">
+          <MessageCircle className="w-6 h-6 text-white" />
+          <span className="text-white text-[10px]">482</span>
         </button>
-        <button className="flex flex-col items-center gap-1">
-          <Send className="w-7 h-7 text-white" />
+        <button className="flex flex-col items-center gap-0.5">
+          <Send className="w-6 h-6 text-white" />
         </button>
-        <button className="flex flex-col items-center gap-1">
-          <Bookmark className="w-7 h-7 text-white" />
+        <button className="flex flex-col items-center gap-0.5">
+          <Bookmark className="w-6 h-6 text-white" />
         </button>
       </div>
 
-      {/* Track Info */}
-      {track && (
-        <div className="absolute bottom-16 left-3 right-14 z-10">
-          <div className="flex items-center gap-2 bg-black/40 backdrop-blur-sm rounded-full px-3 py-2 overflow-hidden">
-            <Music className="w-4 h-4 text-white flex-shrink-0" />
-            <div className="overflow-hidden">
-              <span className="text-white text-xs whitespace-nowrap animate-marquee inline-block">
-                {track.name} • {track.artists.map(a => a.name).join(', ')}
-              </span>
-            </div>
+      {/* Caption & Description */}
+      <div className="absolute bottom-14 left-2 right-10 z-10 space-y-1.5">
+        {/* Username */}
+        <p className="text-white text-[10px] font-semibold">your_username</p>
+        
+        {/* Caption */}
+        {isGenerating ? (
+          <div className="flex items-center gap-1">
+            <Loader2 className="w-3 h-3 text-white/60 animate-spin" />
+            <span className="text-white/60 text-[9px]">Generating caption...</span>
           </div>
-        </div>
-      )}
+        ) : caption ? (
+          <p className="text-white text-[9px] leading-tight line-clamp-2">
+            {caption.instagram}
+          </p>
+        ) : null}
+
+        {/* Hashtags */}
+        {caption?.hashtags && caption.hashtags.length > 0 && (
+          <p className="text-blue-400 text-[8px] leading-tight line-clamp-1">
+            {caption.hashtags.slice(0, 4).map(tag => `#${tag}`).join(' ')}
+          </p>
+        )}
+
+        {/* Track Info */}
+        {track && (
+          <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-sm rounded-full px-2 py-1 overflow-hidden w-fit">
+            <Music className="w-3 h-3 text-white flex-shrink-0" />
+            <span className="text-white text-[8px] whitespace-nowrap truncate max-w-[120px]">
+              {track.name} • {track.artists[0]?.name}
+            </span>
+          </div>
+        )}
+      </div>
 
       {/* Bottom Nav */}
-      <div className="absolute bottom-0 left-0 right-0 h-14 bg-black flex items-center justify-around px-4 z-10">
-        <Home className="w-6 h-6 text-white" />
-        <Search className="w-6 h-6 text-white/60" />
-        <PlusSquare className="w-6 h-6 text-white/60" />
-        <Heart className="w-6 h-6 text-white/60" />
-        <div className="w-6 h-6 rounded-full bg-gray-600" />
+      <div className="absolute bottom-0 left-0 right-0 h-11 bg-black flex items-center justify-around px-3 z-10">
+        <Home className="w-5 h-5 text-white" />
+        <Search className="w-5 h-5 text-white/60" />
+        <PlusSquare className="w-5 h-5 text-white/60" />
+        <Heart className="w-5 h-5 text-white/60" />
+        <div className="w-5 h-5 rounded-full bg-gray-600" />
       </div>
     </>
   );
 }
 
 // TikTok UI Overlay
-function TikTokOverlay({ track, isPlaying }: { track: SpotifyTrack | null; isPlaying: boolean }) {
+function TikTokOverlay({ 
+  track, 
+  isPlaying,
+  caption,
+  isGenerating 
+}: { 
+  track: SpotifyTrack | null; 
+  isPlaying: boolean;
+  caption: GeneratedCaption | null;
+  isGenerating: boolean;
+}) {
   return (
     <>
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-10 p-4">
-        <div className="flex justify-center gap-4">
-          <span className="text-white/60 text-base">Following</span>
-          <span className="text-white text-base font-semibold border-b-2 border-white pb-1">For You</span>
+      <div className="absolute top-12 left-0 right-0 z-10 px-3">
+        <div className="flex justify-center gap-3">
+          <span className="text-white/60 text-xs">Following</span>
+          <span className="text-white text-xs font-semibold border-b-2 border-white pb-0.5">For You</span>
         </div>
       </div>
 
       {/* Right Actions */}
-      <div className="absolute bottom-24 right-3 flex flex-col gap-5 z-10">
-        <div className="w-12 h-12 rounded-full bg-gray-600 border-2 border-white" />
+      <div className="absolute bottom-28 right-2 flex flex-col gap-4 z-10">
+        <div className="w-10 h-10 rounded-full bg-gray-600 border-2 border-white" />
         <button className="flex flex-col items-center">
-          <Heart className="w-8 h-8 text-white" />
-          <span className="text-white text-xs mt-1">128.4k</span>
+          <Heart className="w-6 h-6 text-white" />
+          <span className="text-white text-[9px] mt-0.5">128.4k</span>
         </button>
         <button className="flex flex-col items-center">
-          <MessageCircle className="w-8 h-8 text-white" />
-          <span className="text-white text-xs mt-1">2,847</span>
+          <MessageCircle className="w-6 h-6 text-white" />
+          <span className="text-white text-[9px] mt-0.5">2,847</span>
         </button>
         <button className="flex flex-col items-center">
-          <Bookmark className="w-8 h-8 text-white" />
-          <span className="text-white text-xs mt-1">45.2k</span>
+          <Bookmark className="w-6 h-6 text-white" />
+          <span className="text-white text-[9px] mt-0.5">45.2k</span>
         </button>
         <button className="flex flex-col items-center">
-          <Share2 className="w-8 h-8 text-white" />
-          <span className="text-white text-xs mt-1">Share</span>
+          <Share2 className="w-6 h-6 text-white" />
+          <span className="text-white text-[9px] mt-0.5">Share</span>
         </button>
         {track?.album.images[2] && (
-          <div className="w-12 h-12 rounded-full border-2 border-gray-800 overflow-hidden animate-spin-slow">
+          <div className="w-10 h-10 rounded-full border-2 border-gray-800 overflow-hidden animate-spin-slow">
             <img src={track.album.images[2].url} alt="" className="w-full h-full object-cover" />
           </div>
         )}
       </div>
 
       {/* Bottom Info */}
-      <div className="absolute bottom-16 left-3 right-16 z-10">
-        <p className="text-white font-semibold">@your_username</p>
-        <p className="text-white text-sm mt-1">Check out my photos! 📸✨ #photography #vault</p>
+      <div className="absolute bottom-14 left-2 right-14 z-10 space-y-1">
+        <p className="text-white font-semibold text-xs">@your_username</p>
+        
+        {/* Caption */}
+        {isGenerating ? (
+          <div className="flex items-center gap-1">
+            <Loader2 className="w-3 h-3 text-white/60 animate-spin" />
+            <span className="text-white/60 text-[9px]">Generating...</span>
+          </div>
+        ) : caption ? (
+          <p className="text-white text-[10px] leading-tight line-clamp-2">
+            {caption.tiktok}
+          </p>
+        ) : (
+          <p className="text-white text-[10px]">Check out my photos! 📸✨</p>
+        )}
+
+        {/* Hashtags */}
+        {caption?.hashtags && caption.hashtags.length > 0 && (
+          <p className="text-white/80 text-[9px]">
+            {caption.hashtags.slice(0, 5).map(tag => `#${tag}`).join(' ')}
+          </p>
+        )}
+
         {track && (
-          <div className="flex items-center gap-2 mt-2 overflow-hidden">
-            <Music className="w-4 h-4 text-white flex-shrink-0" />
-            <span className="text-white text-sm whitespace-nowrap animate-marquee">
+          <div className="flex items-center gap-1.5 mt-1 overflow-hidden">
+            <Music className="w-3 h-3 text-white flex-shrink-0" />
+            <span className="text-white text-[9px] whitespace-nowrap animate-marquee">
               {track.name} - {track.artists[0]?.name}
             </span>
           </div>
@@ -805,75 +956,104 @@ function TikTokOverlay({ track, isPlaying }: { track: SpotifyTrack | null; isPla
       </div>
 
       {/* Bottom Nav */}
-      <div className="absolute bottom-0 left-0 right-0 h-14 bg-black flex items-center justify-around px-4 z-10">
-        <Home className="w-6 h-6 text-white" />
-        <Search className="w-6 h-6 text-white/60" />
-        <div className="w-10 h-7 bg-white rounded-lg flex items-center justify-center">
-          <Plus className="w-5 h-5 text-black" />
+      <div className="absolute bottom-0 left-0 right-0 h-11 bg-black flex items-center justify-around px-3 z-10">
+        <Home className="w-5 h-5 text-white" />
+        <Search className="w-5 h-5 text-white/60" />
+        <div className="w-8 h-5 bg-white rounded flex items-center justify-center">
+          <Plus className="w-4 h-4 text-black" />
         </div>
-        <MessageCircle className="w-6 h-6 text-white/60" />
-        <User className="w-6 h-6 text-white/60" />
+        <MessageCircle className="w-5 h-5 text-white/60" />
+        <User className="w-5 h-5 text-white/60" />
       </div>
     </>
   );
 }
 
 // YouTube Shorts UI Overlay  
-function YouTubeOverlay({ track, isPlaying }: { track: SpotifyTrack | null; isPlaying: boolean }) {
+function YouTubeOverlay({ 
+  track, 
+  isPlaying,
+  caption,
+  isGenerating 
+}: { 
+  track: SpotifyTrack | null; 
+  isPlaying: boolean;
+  caption: GeneratedCaption | null;
+  isGenerating: boolean;
+}) {
   return (
     <>
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-10 p-4 flex items-center justify-between">
-        <span className="text-white text-lg font-semibold">Shorts</span>
-        <Search className="w-6 h-6 text-white" />
+      <div className="absolute top-12 left-0 right-0 z-10 px-3 flex items-center justify-between">
+        <span className="text-white text-sm font-semibold">Shorts</span>
+        <Search className="w-5 h-5 text-white" />
       </div>
 
       {/* Right Actions */}
-      <div className="absolute bottom-24 right-3 flex flex-col gap-5 z-10">
+      <div className="absolute bottom-28 right-2 flex flex-col gap-3 z-10">
         <button className="flex flex-col items-center">
-          <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
-            <span className="text-black text-lg">👍</span>
+          <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center">
+            <span className="text-black text-sm">👍</span>
           </div>
-          <span className="text-white text-xs mt-1">85k</span>
+          <span className="text-white text-[9px] mt-0.5">85k</span>
         </button>
         <button className="flex flex-col items-center">
-          <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
-            <span className="text-black text-lg">👎</span>
+          <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center">
+            <span className="text-black text-sm">👎</span>
           </div>
-          <span className="text-white text-xs mt-1">Dislike</span>
+          <span className="text-white text-[9px] mt-0.5">Dislike</span>
         </button>
         <button className="flex flex-col items-center">
-          <MessageCircle className="w-8 h-8 text-white" />
-          <span className="text-white text-xs mt-1">1.2k</span>
+          <MessageCircle className="w-6 h-6 text-white" />
+          <span className="text-white text-[9px] mt-0.5">1.2k</span>
         </button>
         <button className="flex flex-col items-center">
-          <Share2 className="w-8 h-8 text-white" />
-          <span className="text-white text-xs mt-1">Share</span>
+          <Share2 className="w-6 h-6 text-white" />
+          <span className="text-white text-[9px] mt-0.5">Share</span>
         </button>
         <button className="flex flex-col items-center">
-          <MoreHorizontal className="w-8 h-8 text-white" />
+          <MoreHorizontal className="w-6 h-6 text-white" />
         </button>
         {track?.album.images[2] && (
-          <div className="w-10 h-10 rounded-lg border border-white overflow-hidden">
+          <div className="w-8 h-8 rounded border border-white overflow-hidden">
             <img src={track.album.images[2].url} alt="" className="w-full h-full object-cover" />
           </div>
         )}
       </div>
 
       {/* Bottom Info */}
-      <div className="absolute bottom-16 left-3 right-16 z-10">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-8 h-8 rounded-full bg-gray-600" />
-          <span className="text-white font-medium">@your_channel</span>
-          <button className="bg-red-600 text-white text-xs px-3 py-1 rounded-full font-medium">
+      <div className="absolute bottom-14 left-2 right-12 z-10 space-y-1">
+        <div className="flex items-center gap-1.5 mb-1">
+          <div className="w-6 h-6 rounded-full bg-gray-600" />
+          <span className="text-white font-medium text-[10px]">@your_channel</span>
+          <button className="bg-red-600 text-white text-[8px] px-2 py-0.5 rounded-full font-medium">
             Subscribe
           </button>
         </div>
-        <p className="text-white text-sm">Amazing photo collection 📸</p>
+        
+        {/* Caption */}
+        {isGenerating ? (
+          <div className="flex items-center gap-1">
+            <Loader2 className="w-3 h-3 text-white/60 animate-spin" />
+            <span className="text-white/60 text-[9px]">Generating...</span>
+          </div>
+        ) : caption ? (
+          <p className="text-white text-[10px] leading-tight line-clamp-2">{caption.youtube}</p>
+        ) : (
+          <p className="text-white text-[10px]">Amazing photo collection 📸</p>
+        )}
+
+        {/* Hashtags */}
+        {caption?.hashtags && caption.hashtags.length > 0 && (
+          <p className="text-blue-400 text-[8px]">
+            {caption.hashtags.slice(0, 3).map(tag => `#${tag}`).join(' ')}
+          </p>
+        )}
+
         {track && (
-          <div className="flex items-center gap-2 mt-2 bg-black/40 rounded-full px-2 py-1 w-fit">
-            <Music className="w-3 h-3 text-white" />
-            <span className="text-white text-xs truncate max-w-[150px]">
+          <div className="flex items-center gap-1.5 bg-black/40 rounded-full px-2 py-0.5 w-fit">
+            <Music className="w-2.5 h-2.5 text-white" />
+            <span className="text-white text-[8px] truncate max-w-[100px]">
               {track.name}
             </span>
           </div>
@@ -881,29 +1061,29 @@ function YouTubeOverlay({ track, isPlaying }: { track: SpotifyTrack | null; isPl
       </div>
 
       {/* Bottom Nav */}
-      <div className="absolute bottom-0 left-0 right-0 h-14 bg-[#212121] flex items-center justify-around px-4 z-10">
+      <div className="absolute bottom-0 left-0 right-0 h-11 bg-[#212121] flex items-center justify-around px-2 z-10">
         <div className="flex flex-col items-center">
-          <Home className="w-6 h-6 text-white" />
-          <span className="text-white text-[10px]">Home</span>
+          <Home className="w-5 h-5 text-white" />
+          <span className="text-white text-[8px]">Home</span>
         </div>
         <div className="flex flex-col items-center">
-          <svg className="w-6 h-6 text-white/60" viewBox="0 0 24 24" fill="currentColor">
+          <svg className="w-5 h-5 text-white/60" viewBox="0 0 24 24" fill="currentColor">
             <path d="M10 14.65v-5.3L15 12l-5 2.65zm7.77-4.33c-.77-.32-1.2-.5-1.2-.5L18 9.06c1.84-.96 2.53-3.23 1.56-5.06s-3.24-2.53-5.07-1.56L6 6.94c-1.29.68-2.07 2.04-2 3.49.07 1.42.93 2.67 2.22 3.25.03.01 1.2.5 1.2.5L6 14.93c-1.83.97-2.53 3.24-1.56 5.07.97 1.83 3.24 2.53 5.07 1.56l8.5-4.5c1.29-.68 2.06-2.04 1.99-3.49-.07-1.42-.94-2.68-2.23-3.25z"/>
           </svg>
-          <span className="text-white/60 text-[10px]">Shorts</span>
+          <span className="text-white/60 text-[8px]">Shorts</span>
         </div>
-        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center -mt-4">
-          <Plus className="w-6 h-6 text-black" />
+        <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center -mt-3">
+          <Plus className="w-5 h-5 text-black" />
         </div>
         <div className="flex flex-col items-center">
-          <svg className="w-6 h-6 text-white/60" viewBox="0 0 24 24" fill="currentColor">
+          <svg className="w-5 h-5 text-white/60" viewBox="0 0 24 24" fill="currentColor">
             <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8 12.5v-9l6 4.5-6 4.5z"/>
           </svg>
-          <span className="text-white/60 text-[10px]">Subs</span>
+          <span className="text-white/60 text-[8px]">Subs</span>
         </div>
         <div className="flex flex-col items-center">
-          <User className="w-6 h-6 text-white/60" />
-          <span className="text-white/60 text-[10px]">You</span>
+          <User className="w-5 h-5 text-white/60" />
+          <span className="text-white/60 text-[8px]">You</span>
         </div>
       </div>
     </>
