@@ -3,21 +3,38 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Music, Unlink, Check, ExternalLink } from "lucide-react";
+import { Music, Unlink, Check, ExternalLink, RefreshCw } from "lucide-react";
 import { 
   initiateSpotifyOAuth, 
   getSpotifyConnection, 
   disconnectSpotify 
 } from "@/lib/spotify";
+import { useSpotifyPlayer } from "@/contexts/SpotifyPlayerContext";
 
 export function SpotifyConnect() {
   const [isConnected, setIsConnected] = useState(false);
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [disconnecting, setDisconnecting] = useState(false);
+  const [connecting, setConnecting] = useState(false);
+  
+  const { isReady: sdkReady } = useSpotifyPlayer();
 
   useEffect(() => {
     checkConnection();
+    
+    // Check URL params for OAuth callback status
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('spotify_connected') === 'true') {
+      toast.success('Spotify connected successfully!');
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+      checkConnection();
+    } else if (params.get('spotify_error')) {
+      const error = params.get('spotify_error');
+      toast.error('Spotify connection failed', { description: error });
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }, []);
 
   const checkConnection = async () => {
@@ -26,6 +43,9 @@ export function SpotifyConnect() {
       if (connection) {
         setIsConnected(true);
         setDisplayName(connection.display_name);
+      } else {
+        setIsConnected(false);
+        setDisplayName(null);
       }
     } catch (err) {
       console.error('Error checking Spotify connection:', err);
@@ -35,12 +55,14 @@ export function SpotifyConnect() {
   };
 
   const handleConnect = async () => {
+    setConnecting(true);
     try {
       await initiateSpotifyOAuth();
     } catch (err) {
       toast.error('Failed to connect', { 
         description: err instanceof Error ? err.message : 'Unknown error' 
       });
+      setConnecting(false);
     }
   };
 
@@ -81,28 +103,58 @@ export function SpotifyConnect() {
       </CardHeader>
       <CardContent>
         {isConnected ? (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Badge variant="secondary" className="bg-[#1DB954]/10 text-[#1DB954] border-[#1DB954]/30">
-                <Check className="w-3 h-3 mr-1" />
-                Connected
-              </Badge>
-              {displayName && (
-                <span className="text-sm text-muted-foreground">
-                  as {displayName}
-                </span>
-              )}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Badge variant="secondary" className="bg-[#1DB954]/10 text-[#1DB954] border-[#1DB954]/30">
+                  <Check className="w-3 h-3 mr-1" />
+                  Connected
+                </Badge>
+                {displayName && (
+                  <span className="text-sm text-muted-foreground">
+                    as {displayName}
+                  </span>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDisconnect}
+                disabled={disconnecting}
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                <Unlink className="w-4 h-4 mr-1" />
+                Disconnect
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDisconnect}
-              disabled={disconnecting}
-              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-            >
-              <Unlink className="w-4 h-4 mr-1" />
-              Disconnect
-            </Button>
+            
+            {!sdkReady && (
+              <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                <p className="text-xs text-muted-foreground">
+                  Reconnect to enable continuous playback
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleConnect}
+                  disabled={connecting}
+                  className="text-[#1DB954] border-[#1DB954]/50 hover:bg-[#1DB954]/10"
+                >
+                  <RefreshCw className={`w-3 h-3 mr-1 ${connecting ? 'animate-spin' : ''}`} />
+                  Reconnect
+                </Button>
+              </div>
+            )}
+            
+            {sdkReady && (
+              <div className="flex items-center gap-2 pt-2 border-t border-border/50">
+                <Badge variant="secondary" className="bg-green-500/10 text-green-500 border-green-500/30 text-xs">
+                  <Check className="w-3 h-3 mr-1" />
+                  SDK Ready
+                </Badge>
+                <span className="text-xs text-muted-foreground">Continuous playback enabled</span>
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex items-center justify-between">
@@ -111,9 +163,14 @@ export function SpotifyConnect() {
             </p>
             <Button
               onClick={handleConnect}
+              disabled={connecting}
               className="bg-[#1DB954] hover:bg-[#1ed760] text-black"
             >
-              <ExternalLink className="w-4 h-4 mr-2" />
+              {connecting ? (
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <ExternalLink className="w-4 h-4 mr-2" />
+              )}
               Connect Spotify
             </Button>
           </div>
