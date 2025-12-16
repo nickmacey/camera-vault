@@ -75,27 +75,17 @@ serve(async (req) => {
           // Extract city/locality and country
           let city = '';
           let country = '';
-          let state = '';
           
           for (const component of components) {
             if (component.types.includes('locality')) {
               city = component.long_name;
-            } else if (component.types.includes('administrative_area_level_1')) {
-              state = component.short_name;
             } else if (component.types.includes('country')) {
               country = component.long_name;
             }
           }
           
-          // Format: "City, Country" or "State, Country" or just "Country"
-          let locationName = '';
-          if (city) {
-            locationName = `${city}, ${country}`;
-          } else if (state) {
-            locationName = `${state}, ${country}`;
-          } else if (country) {
-            locationName = country;
-          }
+          // Prefer city, fallback to country
+          const locationName = city || country;
           
           if (locationName && !uniqueLocations.has(locationName)) {
             uniqueLocations.add(locationName);
