@@ -130,8 +130,8 @@ A philosophical reflection on what their photography reveals about how they expe
 6. **PHOTOGRAPHER ARCHETYPE** (single phrase + explanation)
 Give them a unique photographer archetype title (like "The Quiet Observer" or "The Light Chaser" or "The Moment Keeper") with a brief explanation of why this fits.
 
-7. **FIRST-PERSON STORY** (3-4 paragraphs)
-Write a beautiful first-person narrative from ${firstName}'s perspective about how they see the world through their lens. Use "I" statements. This should be intimate, reflective, and poetic - like they are sharing their soul with readers. Start with something like "Through my lens, I see..." and continue telling their story of how they capture and experience the world.
+7. **FIRST-PERSON STORY** (EXACTLY 3 sentences, ONE paragraph)
+Write a powerful, poetic 3-sentence paragraph from ${firstName}'s perspective about how they see the world through their lens. Use "I" statements. This must be exactly 3 sentences - no more, no less. Make each sentence impactful and beautiful. Start with "Through my lens," and tell their essence in just these 3 sentences.
 
 Format the response as JSON with these exact keys:
 {
