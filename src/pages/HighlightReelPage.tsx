@@ -281,8 +281,8 @@ export default function HighlightReelPage() {
         {isPaused ? <Play className="h-5 w-5 text-vault-gold" /> : <Pause className="h-5 w-5 text-vault-gold" />}
       </button>
 
-      {/* Rolling Marquee Text - Center */}
-      <div className="fixed top-1/2 left-0 right-0 -translate-y-1/2 z-40 pointer-events-none overflow-hidden">
+      {/* Rolling Marquee Text - Bottom quarter */}
+      <div className="fixed bottom-[20%] left-0 right-0 z-40 pointer-events-none overflow-hidden">
         <motion.div
           className="whitespace-nowrap"
           animate={isPaused ? {} : { x: [0, -2000] }}
