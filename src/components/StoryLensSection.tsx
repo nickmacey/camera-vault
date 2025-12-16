@@ -1,10 +1,62 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProfilePhotoUpload } from "./ProfilePhotoUpload";
 import { Button } from "@/components/ui/button";
 import { Eye, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+
+// Typewriter hook
+function useTypewriter(text: string, speed: number = 30) {
+  const [displayedText, setDisplayedText] = useState("");
+  const [isComplete, setIsComplete] = useState(false);
+  const indexRef = useRef(0);
+
+  useEffect(() => {
+    if (!text) return;
+    
+    setDisplayedText("");
+    setIsComplete(false);
+    indexRef.current = 0;
+
+    const interval = setInterval(() => {
+      if (indexRef.current < text.length) {
+        setDisplayedText(text.slice(0, indexRef.current + 1));
+        indexRef.current++;
+      } else {
+        setIsComplete(true);
+        clearInterval(interval);
+      }
+    }, speed);
+
+    return () => clearInterval(interval);
+  }, [text, speed]);
+
+  return { displayedText, isComplete };
+}
+
+// TypewriterText component with thin font
+function TypewriterText({ text }: { text: string }) {
+  const { displayedText, isComplete } = useTypewriter(text, 25);
+  
+  return (
+    <div className="prose prose-invert max-w-none">
+      <p 
+        className="text-lg md:text-xl text-foreground/90 leading-relaxed italic"
+        style={{ 
+          fontFamily: "'IBM Plex Mono', monospace",
+          fontWeight: 300,
+          letterSpacing: '0.01em'
+        }}
+      >
+        {displayedText}
+        {!isComplete && (
+          <span className="inline-block w-0.5 h-5 bg-vault-gold ml-1 animate-pulse" />
+        )}
+      </p>
+    </div>
+  );
+}
 
 export function StoryLensSection() {
   const navigate = useNavigate();
@@ -113,11 +165,7 @@ export function StoryLensSection() {
           </div>
 
           {profile?.lens_story ? (
-            <div className="prose prose-invert max-w-none">
-              <p className="text-lg md:text-xl text-foreground/90 leading-relaxed whitespace-pre-line italic">
-                {profile.lens_story}
-              </p>
-            </div>
+            <TypewriterText text={profile.lens_story} />
           ) : (
             <div className="text-center py-8">
               <p className="text-muted-foreground mb-4">
