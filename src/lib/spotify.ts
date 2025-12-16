@@ -102,6 +102,15 @@ export async function searchTracks(query: string) {
   return data;
 }
 
+export async function getPopularTracks() {
+  const { data, error } = await supabase.functions.invoke('spotify-api', {
+    body: { action: 'get_popular_tracks' },
+  });
+
+  if (error) throw error;
+  return data;
+}
+
 export interface SpotifyTrack {
   id: string;
   name: string;
