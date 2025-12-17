@@ -10,6 +10,13 @@ interface PrintPhoto {
   filename: string;
   score: number | null;
   description: string | null;
+  preset: string | null;
+}
+
+interface CategoryPhotos {
+  bw: PrintPhoto[];
+  color: PrintPhoto[];
+  film: PrintPhoto[];
 }
 
 const PRINT_SIZES = [
@@ -19,8 +26,20 @@ const PRINT_SIZES = [
   { name: '24×36"', price: 129 },
 ];
 
+const CATEGORY_LABELS = {
+  bw: "BLACK & WHITE",
+  color: "VIBRANT",
+  film: "VINTAGE FILM",
+};
+
+const presets = {
+  bw: "grayscale(100%) contrast(1.1)",
+  color: "saturate(1.3) contrast(1.05) brightness(1.02)",
+  film: "sepia(0.35) contrast(0.95) brightness(1.05) saturate(0.9)",
+};
+
 export function PrintShopSection() {
-  const [photos, setPhotos] = useState<PrintPhoto[]>([]);
+  const [categoryPhotos, setCategoryPhotos] = useState<CategoryPhotos>({ bw: [], color: [], film: [] });
   const [loading, setLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
 
@@ -33,19 +52,19 @@ export function PrintShopSection() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      // Fetch high-scoring photos, excluding those with people (based on description/AI analysis)
+      // Fetch high-scoring photos, excluding those with people
       const { data, error } = await supabase
         .from("photos")
-        .select("id, filename, storage_path, overall_score, score, description, ai_analysis")
+        .select("id, filename, storage_path, overall_score, score, description, ai_analysis, highlight_reel_preset")
         .eq("user_id", session.user.id)
         .gte("overall_score", 7.0)
         .order("overall_score", { ascending: false })
-        .limit(30);
+        .limit(50);
 
       if (error) throw error;
 
       if (data) {
-        // Filter out photos that mention people/faces/portraits in description or analysis
+        // Filter out photos that mention people/faces/portraits
         const peopleKeywords = ['person', 'people', 'face', 'portrait', 'man', 'woman', 'child', 'boy', 'girl', 'human', 'selfie', 'crowd'];
         
         const filteredPhotos = data.filter(photo => {
@@ -53,24 +72,70 @@ export function PrintShopSection() {
           return !peopleKeywords.some(keyword => textToCheck.includes(keyword));
         });
 
-        // Get signed URLs
-        const photosWithUrls = await Promise.all(
-          filteredPhotos.slice(0, 12).map(async (photo) => {
-            const { data: urlData } = await supabase.storage
-              .from("photos")
-              .createSignedUrl(photo.storage_path, 7200);
-            
-            return {
-              id: photo.id,
-              url: urlData?.signedUrl || "",
-              filename: photo.filename,
-              score: photo.overall_score || photo.score,
-              description: photo.description,
-            };
-          })
-        );
+        // Track used photo IDs to prevent duplicates
+        const usedIds = new Set<string>();
+        
+        type DbPhoto = typeof filteredPhotos[number];
+        
+        // Categorize photos - first by explicit preset, then distribute remaining
+        const categories: { bw: DbPhoto[]; color: DbPhoto[]; film: DbPhoto[] } = { bw: [], color: [], film: [] };
+        const uncategorized: DbPhoto[] = [];
+        
+        filteredPhotos.forEach(photo => {
+          if (photo.highlight_reel_preset && ['bw', 'color', 'film'].includes(photo.highlight_reel_preset)) {
+            const preset = photo.highlight_reel_preset as keyof typeof categories;
+            if (categories[preset].length < 3 && !usedIds.has(photo.id)) {
+              categories[preset].push(photo);
+              usedIds.add(photo.id);
+            }
+          } else {
+            uncategorized.push(photo);
+          }
+        });
 
-        setPhotos(photosWithUrls.filter(p => p.url));
+        // Fill remaining slots with uncategorized photos
+        const presetOrder: (keyof typeof categories)[] = ['bw', 'color', 'film'];
+        for (const preset of presetOrder) {
+          while (categories[preset].length < 3 && uncategorized.length > 0) {
+            const photo = uncategorized.shift();
+            if (photo && !usedIds.has(photo.id)) {
+              categories[preset].push(photo);
+              usedIds.add(photo.id);
+            }
+          }
+        }
+
+        // Get signed URLs for all photos
+        const getUrlsForCategory = async (photos: DbPhoto[], preset: keyof CategoryPhotos) => {
+          return Promise.all(
+            photos.map(async (photo) => {
+              const { data: urlData } = await supabase.storage
+                .from("photos")
+                .createSignedUrl(photo.storage_path, 7200);
+              
+              return {
+                id: photo.id,
+                url: urlData?.signedUrl || "",
+                filename: photo.filename,
+                score: photo.overall_score || photo.score,
+                description: photo.description,
+                preset,
+              };
+            })
+          );
+        };
+
+        const [bwPhotos, colorPhotos, filmPhotos] = await Promise.all([
+          getUrlsForCategory(categories.bw, 'bw'),
+          getUrlsForCategory(categories.color, 'color'),
+          getUrlsForCategory(categories.film, 'film'),
+        ]);
+
+        setCategoryPhotos({
+          bw: bwPhotos.filter(p => p.url),
+          color: colorPhotos.filter(p => p.url),
+          film: filmPhotos.filter(p => p.url),
+        });
       }
     } catch (error) {
       console.error("Error fetching printable photos:", error);
@@ -78,6 +143,8 @@ export function PrintShopSection() {
       setLoading(false);
     }
   };
+
+  const totalPhotos = categoryPhotos.bw.length + categoryPhotos.color.length + categoryPhotos.film.length;
 
   if (loading) {
     return (
@@ -91,9 +158,123 @@ export function PrintShopSection() {
     );
   }
 
-  if (photos.length === 0) {
+  if (totalPhotos === 0) {
     return null;
   }
+
+  const renderCategoryRow = (photos: PrintPhoto[], category: keyof CategoryPhotos, index: number) => {
+    if (photos.length === 0) return null;
+
+    return (
+      <div key={category} className="mb-16">
+        {/* Category Label */}
+        <motion.h3
+          initial={{ opacity: 0, x: -20 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: index * 0.1 }}
+          className="font-display text-2xl md:text-3xl text-vault-gold/80 tracking-[0.2em] mb-8"
+        >
+          {CATEGORY_LABELS[category]}
+        </motion.h3>
+
+        {/* Photos Row */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {photos.map((photo, photoIndex) => (
+            <motion.div
+              key={photo.id}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: (index * 3 + photoIndex) * 0.1, duration: 0.5 }}
+              className="group"
+            >
+              {/* Frame Container - Dark brown/almost black frame */}
+              <div
+                className={`relative p-4 md:p-6 rounded-sm shadow-2xl transition-all duration-500 cursor-pointer
+                  ${selectedPhoto === photo.id 
+                    ? 'ring-2 ring-vault-gold scale-[1.02]' 
+                    : 'hover:scale-[1.02]'
+                  }`}
+                style={{
+                  background: 'linear-gradient(135deg, hsl(20 15% 8%) 0%, hsl(20 20% 12%) 50%, hsl(20 15% 8%) 100%)',
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+                }}
+                onClick={() => setSelectedPhoto(selectedPhoto === photo.id ? null : photo.id)}
+              >
+                {/* Inner Mat */}
+                <div className="bg-foreground/95 p-3 md:p-4 shadow-inner">
+                  {/* Photo */}
+                  <div className="relative overflow-hidden aspect-[4/3]">
+                    <img
+                      src={photo.url}
+                      alt={photo.filename}
+                      className="w-full h-full object-cover"
+                      style={{ filter: presets[category] }}
+                      loading="lazy"
+                    />
+                    
+                    {/* Hover Overlay */}
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-4">
+                      <Button size="sm" variant="secondary" className="gap-2">
+                        <Frame className="w-4 h-4" />
+                        Order Print
+                      </Button>
+                      <Button size="sm" variant="outline" className="gap-2 bg-background/20 border-foreground/30">
+                        <Download className="w-4 h-4" />
+                        Digital
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Photo Info */}
+              <div className="mt-4 text-center">
+                <p className="font-display text-sm text-foreground/80 tracking-wider truncate">
+                  {photo.filename.replace(/\.[^/.]+$/, "")}
+                </p>
+                {photo.score && (
+                  <p className="text-xs text-vault-gold tracking-widest mt-1">
+                    SCORE: {Number(photo.score).toFixed(1)}
+                  </p>
+                )}
+              </div>
+
+              {/* Size/Price Selection */}
+              {selectedPhoto === photo.id && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mt-4 p-4 bg-card/50 rounded-lg border border-border/30"
+                >
+                  <p className="text-xs text-muted-foreground tracking-wider mb-3">SELECT SIZE</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {PRINT_SIZES.map((size) => (
+                      <Button
+                        key={size.name}
+                        variant="outline"
+                        size="sm"
+                        className="justify-between text-xs"
+                      >
+                        <span>{size.name}</span>
+                        <span className="text-vault-gold">${size.price}</span>
+                      </Button>
+                    ))}
+                  </div>
+                  <Button className="w-full mt-3 gap-2 bg-vault-gold text-vault-dark hover:bg-vault-gold/90">
+                    <ShoppingCart className="w-4 h-4" />
+                    Add to Cart
+                  </Button>
+                </motion.div>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <section className="w-full py-20 bg-gradient-to-b from-background via-card/30 to-background">
@@ -114,104 +295,29 @@ export function PrintShopSection() {
           </motion.div>
         </div>
 
-        {/* Photo Grid - Framed Prints */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-          {photos.map((photo, index) => (
-            <motion.div
-              key={photo.id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1, duration: 0.5 }}
-              className="group"
-            >
-              {/* Frame Container */}
-              <div 
-                className={`relative p-4 bg-gradient-to-br from-amber-950/80 via-amber-900/60 to-amber-950/80 rounded-sm shadow-2xl cursor-pointer transition-all duration-300 ${
-                  selectedPhoto === photo.id ? 'ring-2 ring-vault-gold scale-[1.02]' : 'hover:scale-[1.01]'
-                }`}
-                onClick={() => setSelectedPhoto(selectedPhoto === photo.id ? null : photo.id)}
-              >
-                {/* Inner Frame Border */}
-                <div className="p-2 bg-gradient-to-br from-amber-800/40 to-amber-900/40 rounded-sm">
-                  {/* Mat/Mount */}
-                  <div className="p-6 md:p-8 bg-foreground/95">
-                    {/* Photo */}
-                    <div className="relative aspect-[4/3] overflow-hidden shadow-inner">
-                      <img
-                        src={photo.url}
-                        alt={photo.filename}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Frame Shadow */}
-                <div className="absolute inset-0 rounded-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.3),inset_0_-2px_4px_rgba(255,255,255,0.1)] pointer-events-none" />
-              </div>
-
-              {/* Photo Info */}
-              <div className="mt-4 text-center">
-                <p className="text-foreground/80 text-sm tracking-wide truncate">
-                  {photo.description || photo.filename}
-                </p>
-                {photo.score && (
-                  <p className="text-vault-gold/70 text-xs mt-1 tracking-wider">
-                    SCORE: {photo.score.toFixed(1)}
-                  </p>
-                )}
-              </div>
-
-              {/* Purchase Options (shown when selected) */}
-              {selectedPhoto === photo.id && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="mt-4 p-4 bg-card/80 backdrop-blur-sm rounded-lg border border-vault-gold/20"
-                >
-                  <p className="text-xs text-muted-foreground tracking-wider mb-3">SELECT SIZE</p>
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    {PRINT_SIZES.map((size) => (
-                      <button
-                        key={size.name}
-                        className="px-3 py-2 text-sm bg-background/50 hover:bg-vault-gold/20 border border-border hover:border-vault-gold/50 rounded transition-colors tracking-wide"
-                      >
-                        {size.name} - ${size.price}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" className="flex-1 bg-vault-gold text-background hover:bg-vault-gold/90">
-                      <ShoppingCart className="w-4 h-4 mr-2" />
-                      Add to Cart
-                    </Button>
-                    <Button size="sm" variant="outline" className="border-vault-gold/30 text-vault-gold hover:bg-vault-gold/10">
-                      <Download className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </motion.div>
-              )}
-            </motion.div>
-          ))}
-        </div>
+        {/* Category Rows */}
+        {renderCategoryRow(categoryPhotos.bw, 'bw', 0)}
+        {renderCategoryRow(categoryPhotos.color, 'color', 1)}
+        {renderCategoryRow(categoryPhotos.film, 'film', 2)}
 
         {/* Bottom CTA */}
-        <div className="text-center">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="inline-flex items-center gap-3 px-6 py-3 bg-card/50 backdrop-blur-sm rounded-full border border-vault-gold/20"
-          >
-            <Frame className="w-5 h-5 text-vault-gold" />
-            <span className="text-foreground/80 tracking-wide">
-              Free shipping on orders over $100
-            </span>
-          </motion.div>
-        </div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="text-center mt-8"
+        >
+          <p className="text-muted-foreground text-sm tracking-wider mb-4">
+            All prints are professionally produced on archival-quality paper with museum-grade framing
+          </p>
+          <div className="flex items-center justify-center gap-8 text-xs text-muted-foreground/60 tracking-widest">
+            <span>FREE SHIPPING</span>
+            <span>•</span>
+            <span>100% SATISFACTION</span>
+            <span>•</span>
+            <span>SECURE CHECKOUT</span>
+          </div>
+        </motion.div>
       </div>
     </section>
   );
