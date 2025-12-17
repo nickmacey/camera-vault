@@ -76,8 +76,9 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        sans: ['Montserrat', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
         mono: ['JetBrains Mono', 'SF Mono', 'monospace'],
+        display: ['Bebas Neue', 'sans-serif'],
       },
       borderRadius: {
         lg: "var(--radius)",
