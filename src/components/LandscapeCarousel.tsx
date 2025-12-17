@@ -85,10 +85,7 @@ export function LandscapeCarousel() {
   return (
     <section className="w-full py-12">
       <div className="mb-8 px-6">
-        <h2 className="font-display text-4xl md:text-5xl text-vault-gold tracking-wider">
-          BEST LANDSCAPES
-        </h2>
-        <p className="text-muted-foreground mt-2 tracking-wide">Your top scenic captures</p>
+        <h3 className="font-display text-3xl text-foreground/60 tracking-[0.2em]">LANDSCAPES</h3>
       </div>
       
       <Carousel
