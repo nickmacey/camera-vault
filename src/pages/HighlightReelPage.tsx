@@ -6,9 +6,9 @@ import { ArrowRight, Play, Pause, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { HighlightReelManager } from "@/components/HighlightReelManager";
-
 import { LandscapeCarousel } from "@/components/LandscapeCarousel";
 import { PrintShopSection } from "@/components/PrintShopSection";
+import { MyStorySection } from "@/components/MyStorySection";
 
 interface MediaItem {
   id: string;
@@ -333,6 +333,9 @@ export default function HighlightReelPage() {
           <MediaGrid items={mediaGroups.film} preset="film" isPaused={isPaused} />
         </section>
       </div>
+
+      {/* My Story Section */}
+      <MyStorySection />
 
       {/* Print Shop Section */}
       <PrintShopSection />
