@@ -1,19 +1,26 @@
 import { useEffect, useRef, useState } from 'react';
 import { Loader } from '@googlemaps/js-api-loader';
 import { supabase } from '@/integrations/supabase/client';
-import { Camera, MapPin } from 'lucide-react';
+import { Camera, MapPin, Pencil, Check, X } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface Coordinate {
   lat: number;
   lng: number;
 }
 
+const DEFAULT_LENS_STORY = "Every photograph captures a moment, a feeling, a piece of the world as I see it. These are the places I've been, the stories I've witnessed, and the memories I've preserved.";
+
 export const MyStorySection = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [mapError, setMapError] = useState(false);
   const [coordinates, setCoordinates] = useState<Coordinate[]>([]);
-  const [profile, setProfile] = useState<{ firstName: string; avatarUrl: string | null }>({ firstName: '', avatarUrl: null });
+  const [profile, setProfile] = useState<{ firstName: string; avatarUrl: string | null; lensStory: string | null }>({ firstName: '', avatarUrl: null, lensStory: null });
   const [locationCount, setLocationCount] = useState(0);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState('');
 
   // Convert DMS array to decimal
   const dmsToDecimal = (dms: number[] | number): number | null => {
@@ -35,14 +42,15 @@ export const MyStorySection = () => {
       // Fetch profile
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('first_name, avatar_url')
+        .select('first_name, avatar_url, lens_story')
         .eq('id', session.user.id)
         .single();
 
       if (profileData) {
         setProfile({
           firstName: profileData.first_name || 'Photographer',
-          avatarUrl: profileData.avatar_url
+          avatarUrl: profileData.avatar_url,
+          lensStory: profileData.lens_story
         });
       }
 
@@ -89,6 +97,37 @@ export const MyStorySection = () => {
       }
     } catch (error) {
       console.error('Error fetching data:', error);
+    }
+  };
+
+  const handleStartEdit = () => {
+    setEditText(profile.lensStory || DEFAULT_LENS_STORY);
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditText('');
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ lens_story: editText.trim() || null })
+        .eq('id', session.user.id);
+
+      if (error) throw error;
+
+      setProfile(prev => ({ ...prev, lensStory: editText.trim() || null }));
+      setIsEditing(false);
+      toast.success('Photography statement saved');
+    } catch (error) {
+      console.error('Error saving lens story:', error);
+      toast.error('Failed to save');
     }
   };
 
@@ -208,14 +247,58 @@ export const MyStorySection = () => {
             </div>
 
             {/* Through My Lens Text */}
-            <div className="space-y-4">
-              <h3 className="font-display text-2xl md:text-3xl tracking-[0.2em] text-vault-gold">
-                THROUGH MY LENS
-              </h3>
-              <p className="text-muted-foreground max-w-sm leading-relaxed">
-                Every photograph captures a moment, a feeling, a piece of the world as I see it. 
-                These are the places I've been, the stories I've witnessed, and the memories I've preserved.
-              </p>
+            <div className="space-y-4 w-full max-w-sm">
+              <div className="flex items-center justify-center gap-2">
+                <h3 className="font-display text-2xl md:text-3xl tracking-[0.2em] text-vault-gold">
+                  THROUGH MY LENS
+                </h3>
+                {!isEditing && (
+                  <button
+                    onClick={handleStartEdit}
+                    className="p-1.5 rounded-full hover:bg-vault-gold/10 transition-colors group"
+                    aria-label="Edit photography statement"
+                  >
+                    <Pencil className="w-4 h-4 text-muted-foreground group-hover:text-vault-gold transition-colors" />
+                  </button>
+                )}
+              </div>
+              
+              {isEditing ? (
+                <div className="space-y-3">
+                  <Textarea
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    placeholder="Write your personal photography statement..."
+                    className="min-h-[120px] text-center bg-vault-dark-gray border-vault-mid-gray focus:border-vault-gold resize-none"
+                    maxLength={500}
+                  />
+                  <div className="flex items-center justify-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleCancelEdit}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="w-4 h-4 mr-1" />
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={handleSaveEdit}
+                      className="bg-vault-gold text-background hover:bg-vault-gold/90"
+                    >
+                      <Check className="w-4 h-4 mr-1" />
+                      Save
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{editText.length}/500</p>
+                </div>
+              ) : (
+                <p className="text-muted-foreground leading-relaxed">
+                  {profile.lensStory || DEFAULT_LENS_STORY}
+                </p>
+              )}
+              
               <div className="flex items-center justify-center gap-2 text-vault-gold/80">
                 <MapPin className="w-4 h-4" />
                 <span className="text-sm tracking-wider">
