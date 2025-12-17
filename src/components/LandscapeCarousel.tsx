@@ -93,14 +93,14 @@ export function LandscapeCarousel() {
       <div className="relative w-full">
         <motion.div
           className="flex gap-4"
-          animate={{
-            x: [0, -50 * photos.length + "%"],
-          }}
-          transition={{
-            x: {
-              repeat: Infinity,
-              repeatType: "loop",
-              duration: 30,
+        animate={{
+          x: [0, -50 * photos.length + "%"],
+        }}
+        transition={{
+          x: {
+            repeat: Infinity,
+            repeatType: "loop",
+            duration: 60,
               ease: "linear",
             },
           }}
