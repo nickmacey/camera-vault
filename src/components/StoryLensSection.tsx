@@ -149,13 +149,13 @@ export function StoryLensSection() {
             )}
           </div>
           
-          <h2 className="mt-6 text-3xl md:text-4xl font-bold text-vault-gold text-center"
+          <h2 className="mt-6 text-4xl md:text-5xl font-display text-vault-gold text-center tracking-[0.2em]"
               style={{ textShadow: '0 0 20px rgba(212, 175, 55, 0.5)' }}>
             {profile?.first_name ? `${profile.first_name.toUpperCase()}'S STORY` : 'MY STORY'}
           </h2>
           
           {archetype && (
-            <p className="mt-2 text-lg text-foreground/70 italic">
+            <p className="mt-2 text-lg text-foreground/70 italic tracking-wide">
               {archetype}
             </p>
           )}
@@ -165,7 +165,7 @@ export function StoryLensSection() {
         <div className="bg-card/40 backdrop-blur-sm rounded-2xl border border-vault-gold/20 p-8 md:p-12">
           <div className="flex items-center gap-2 mb-6">
             <Eye className="w-5 h-5 text-vault-gold" />
-            <h3 className="text-xl font-semibold text-vault-gold">Through My Lens</h3>
+            <h3 className="text-xl font-display text-vault-gold tracking-wider">THROUGH MY LENS</h3>
           </div>
 
           {profile?.lens_story ? (

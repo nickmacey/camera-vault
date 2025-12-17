@@ -157,14 +157,15 @@ html {
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
+    letter-spacing: 0.05em;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Inter', sans-serif;
-    font-weight: 900;
-    letter-spacing: -0.02em;
+    font-family: 'Bebas Neue', 'Montserrat', sans-serif;
+    font-weight: 400;
+    letter-spacing: 0.15em;
   }
 
   .font-mono {

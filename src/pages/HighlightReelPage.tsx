@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { HighlightReelManager } from "@/components/HighlightReelManager";
 import { StoryLensSection } from "@/components/StoryLensSection";
+import { LandscapeCarousel } from "@/components/LandscapeCarousel";
+import { PrintShopSection } from "@/components/PrintShopSection";
 
 interface MediaItem {
   id: string;
@@ -243,7 +245,7 @@ export default function HighlightReelPage() {
     <div className="min-h-screen bg-background overflow-hidden relative">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 bg-gradient-to-b from-background to-transparent">
-        <h1 className="text-lg font-light tracking-widest text-foreground/80">MY STORY</h1>
+        <h1 className="text-lg font-display tracking-[0.3em] text-foreground/80">MY STORY</h1>
         <div className="flex items-center gap-2">
           <Sheet open={managerOpen} onOpenChange={setManagerOpen}>
             <SheetTrigger asChild>
@@ -304,33 +306,48 @@ export default function HighlightReelPage() {
       {/* Story Lens Section - At the top */}
       <StoryLensSection />
 
-      {/* Media Grid Sections */}
+      {/* Landscape Carousel - Full Width */}
+      <LandscapeCarousel />
+
+      {/* Media Grid Sections - Restructured with less overlap */}
       <div className="relative">
         {/* B&W Section */}
         <section className="min-h-screen relative py-20">
+          <div className="mb-8 px-6">
+            <h3 className="font-display text-3xl text-foreground/60 tracking-[0.2em]">BLACK & WHITE</h3>
+          </div>
           <MediaGrid items={mediaGroups.bw} preset="bw" isPaused={isPaused} />
         </section>
 
         {/* Color Section */}
         <section className="min-h-screen relative py-20">
+          <div className="mb-8 px-6">
+            <h3 className="font-display text-3xl text-foreground/60 tracking-[0.2em]">VIBRANT</h3>
+          </div>
           <MediaGrid items={mediaGroups.color} preset="color" isPaused={isPaused} />
         </section>
 
         {/* Film Section */}
         <section className="min-h-screen relative py-20">
+          <div className="mb-8 px-6">
+            <h3 className="font-display text-3xl text-foreground/60 tracking-[0.2em]">FILM</h3>
+          </div>
           <MediaGrid items={mediaGroups.film} preset="film" isPaused={isPaused} />
         </section>
       </div>
 
+      {/* Print Shop Section */}
+      <PrintShopSection />
+
       {/* Footer CTA */}
       <footer className="relative z-30 py-20 flex flex-col items-center justify-center gap-6 bg-gradient-to-t from-background via-background to-transparent">
-        <p className="text-muted-foreground text-sm tracking-widest uppercase">Your Photos. Your Fortune.</p>
+        <p className="text-muted-foreground text-sm tracking-[0.3em] uppercase font-display">Your Photos. Your Fortune.</p>
         <Button
           size="lg"
           onClick={() => navigate("/app")}
-          className="bg-vault-gold text-vault-dark hover:bg-vault-gold/90 px-8"
+          className="bg-vault-gold text-background hover:bg-vault-gold/90 px-8 font-display tracking-wider"
         >
-          Continue to Vault
+          CONTINUE TO VAULT
         </Button>
       </footer>
     </div>
@@ -346,81 +363,95 @@ interface MediaGridProps {
 function MediaGrid({ items, preset, isPaused }: MediaGridProps) {
   const filter = presets[preset];
   
-  // Create varied positions for artistic scatter layout - spread out with larger images
+  // Create grid-based positions with subtle offset for artistic feel - much less overlap
   const positions = useMemo(() => {
-    return items.map((_, i) => ({
-      x: (i % 3) * 30 + Math.random() * 15 + 5, // Spread across 3 columns with variation
-      y: Math.floor(i / 3) * 40 + Math.random() * 20 + 10, // Spread vertically with variation
-      scale: 0.9 + Math.random() * 0.2, // 0.9-1.1 scale
-      rotation: (Math.random() - 0.5) * 6, // -3 to 3 degrees
-      delay: i * 0.15,
-      duration: 18 + Math.random() * 12, // 18-30s float duration
-    }));
+    const cols = 4; // 4 columns for better spacing
+    const rowHeight = 35; // percentage height per row
+    
+    return items.map((_, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      
+      // Base position with small random offset
+      const baseX = col * 24 + 2; // 24% width per column + 2% margin
+      const baseY = row * rowHeight + 5;
+      const offsetX = (Math.random() - 0.5) * 6; // Small random offset ±3%
+      const offsetY = (Math.random() - 0.5) * 8; // Small random offset ±4%
+      
+      return {
+        x: baseX + offsetX,
+        y: baseY + offsetY,
+        scale: 0.95 + Math.random() * 0.1, // 0.95-1.05 scale (minimal variation)
+        rotation: (Math.random() - 0.5) * 4, // -2 to 2 degrees
+        delay: i * 0.1,
+        duration: 20 + Math.random() * 10, // 20-30s gentle float
+      };
+    });
   }, [items.length]);
 
   return (
-    <div className="absolute inset-0">
-      <AnimatePresence>
-        {items.map((item, index) => {
-          const pos = positions[index];
-          if (!pos) return null;
-          
-          return (
-            <motion.div
-              key={item.id}
-              className="absolute"
-              style={{
-                left: `${pos.x}%`,
-                top: `${pos.y}%`,
-                transform: `scale(${pos.scale}) rotate(${pos.rotation}deg)`,
-              }}
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={
-                isPaused
-                  ? { opacity: 1 }
-                  : {
-                      opacity: 1,
-                      y: [0, -30, 0, 20, 0],
-                      x: [0, 15, -10, 5, 0],
-                    }
-              }
-              transition={{
-                opacity: { duration: 0.8, delay: pos.delay },
-                y: { duration: pos.duration, repeat: Infinity, ease: "easeInOut" },
-                x: { duration: pos.duration * 1.2, repeat: Infinity, ease: "easeInOut" },
-              }}
-            >
-              <div
-                className="w-[70vw] h-[70vw] md:w-[55vw] md:h-[55vw] lg:w-[45vw] lg:h-[45vw] max-w-[800px] max-h-[800px] overflow-hidden shadow-2xl rounded-lg"
-                style={{ filter }}
+    <div className="relative min-h-[120vh] px-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
+        <AnimatePresence>
+          {items.map((item, index) => {
+            const pos = positions[index];
+            if (!pos) return null;
+            
+            return (
+              <motion.div
+                key={item.id}
+                className="relative"
+                initial={{ opacity: 0, y: 30 }}
+                animate={
+                  isPaused
+                    ? { opacity: 1, y: 0 }
+                    : {
+                        opacity: 1,
+                        y: [0, -8, 0, 6, 0],
+                        rotate: [pos.rotation, pos.rotation + 1, pos.rotation - 1, pos.rotation],
+                      }
+                }
+                transition={{
+                  opacity: { duration: 0.6, delay: pos.delay },
+                  y: { duration: pos.duration, repeat: Infinity, ease: "easeInOut" },
+                  rotate: { duration: pos.duration * 1.5, repeat: Infinity, ease: "easeInOut" },
+                }}
+                style={{
+                  transform: `rotate(${pos.rotation}deg)`,
+                }}
               >
-                {item.isVideo ? (
-                  <video
-                    src={item.url}
-                    className="w-full h-full object-cover"
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    style={{ pointerEvents: "none" }}
-                  />
-                ) : (
-                  <img
-                    src={item.url}
-                    alt={item.filename}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                    onError={(e) => {
-                      console.error("Image failed to load:", item.url);
-                      e.currentTarget.style.display = "none";
-                    }}
-                  />
-                )}
-              </div>
-            </motion.div>
-          );
-        })}
-      </AnimatePresence>
+                <div
+                  className="w-full aspect-square overflow-hidden shadow-xl rounded-md hover:shadow-2xl transition-shadow duration-300"
+                  style={{ filter }}
+                >
+                  {item.isVideo ? (
+                    <video
+                      src={item.url}
+                      className="w-full h-full object-cover"
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      style={{ pointerEvents: "none" }}
+                    />
+                  ) : (
+                    <img
+                      src={item.url}
+                      alt={item.filename}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      onError={(e) => {
+                        console.error("Image failed to load:", item.url);
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
