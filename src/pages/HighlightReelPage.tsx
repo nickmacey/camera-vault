@@ -9,6 +9,7 @@ import { HighlightReelManager } from "@/components/HighlightReelManager";
 import { LandscapeCarousel } from "@/components/LandscapeCarousel";
 import { PrintShopSection } from "@/components/PrintShopSection";
 import { MyStorySection } from "@/components/MyStorySection";
+import { PersistentSpotifyPlayer } from "@/components/PersistentSpotifyPlayer";
 
 interface MediaItem {
   id: string;
@@ -339,6 +340,9 @@ export default function HighlightReelPage() {
 
       {/* Print Shop Section */}
       <PrintShopSection />
+
+      {/* Spotify Mini Player */}
+      <PersistentSpotifyPlayer />
 
       {/* Footer CTA */}
       <footer className="relative z-30 py-20 flex flex-col items-center justify-center gap-6 bg-gradient-to-t from-background via-background to-transparent">
