@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { motion } from "framer-motion";
 
 interface LandscapePhoto {
@@ -82,52 +81,56 @@ export function LandscapeCarousel() {
     return null;
   }
 
+  // Duplicate photos for seamless loop
+  const duplicatedPhotos = [...photos, ...photos];
+
   return (
-    <section className="w-full py-12">
+    <section className="w-full py-12 overflow-hidden">
       <div className="mb-8 px-6">
         <h3 className="font-display text-3xl text-foreground/60 tracking-[0.2em]">LANDSCAPES</h3>
       </div>
       
-      <Carousel
-        opts={{
-          align: "start",
-          loop: true,
-        }}
-        className="w-full"
-      >
-        <CarouselContent className="-ml-0">
-          {photos.map((photo, index) => (
-            <CarouselItem key={photo.id} className="pl-0 basis-full md:basis-4/5 lg:basis-3/4">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
-                className="relative aspect-[16/9] w-full overflow-hidden"
-              >
-                <img
-                  src={photo.url}
-                  alt={photo.filename}
-                  className="w-full h-full object-cover"
-                  loading={index < 3 ? "eager" : "lazy"}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
-                <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
-                  <span className="text-foreground/70 text-sm tracking-wide truncate max-w-[60%]">
-                    {photo.filename}
+      <div className="relative w-full">
+        <motion.div
+          className="flex gap-4"
+          animate={{
+            x: [0, -50 * photos.length + "%"],
+          }}
+          transition={{
+            x: {
+              repeat: Infinity,
+              repeatType: "loop",
+              duration: 30,
+              ease: "linear",
+            },
+          }}
+        >
+          {duplicatedPhotos.map((photo, index) => (
+            <div
+              key={`${photo.id}-${index}`}
+              className="relative flex-shrink-0 w-[80vw] md:w-[60vw] lg:w-[50vw] aspect-[16/9] overflow-hidden"
+            >
+              <img
+                src={photo.url}
+                alt={photo.filename}
+                className="w-full h-full object-cover"
+                loading={index < 3 ? "eager" : "lazy"}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
+              <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
+                <span className="text-foreground/70 text-sm tracking-wide truncate max-w-[60%]">
+                  {photo.filename}
+                </span>
+                {photo.score && (
+                  <span className="text-vault-gold font-display text-2xl">
+                    {photo.score.toFixed(1)}
                   </span>
-                  {photo.score && (
-                    <span className="text-vault-gold font-display text-2xl">
-                      {photo.score.toFixed(1)}
-                    </span>
-                  )}
-                </div>
-              </motion.div>
-            </CarouselItem>
+                )}
+              </div>
+            </div>
           ))}
-        </CarouselContent>
-        <CarouselPrevious className="left-4 bg-background/80 border-vault-gold/30 text-vault-gold hover:bg-background hover:text-vault-gold" />
-        <CarouselNext className="right-4 bg-background/80 border-vault-gold/30 text-vault-gold hover:bg-background hover:text-vault-gold" />
-      </Carousel>
+        </motion.div>
+      </div>
     </section>
   );
 }
