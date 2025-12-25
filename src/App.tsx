@@ -21,6 +21,7 @@ import { VaultDoorAnimation } from "@/components/VaultDoorAnimation";
 import { AuthGuard } from "@/components/AuthGuard";
 import { UploadProvider } from "@/contexts/UploadContext";
 import { SpotifyPlayerProvider } from "@/contexts/SpotifyPlayerContext";
+import { MusicSyncProvider } from "@/contexts/MusicSyncContext";
 import { FloatingUploadProgress } from "@/components/FloatingUploadProgress";
 import { PersistentSpotifyPlayer } from "@/components/PersistentSpotifyPlayer";
 
@@ -42,9 +43,10 @@ const App = () => {
       <TooltipProvider>
         <UploadProvider>
           <SpotifyPlayerProvider>
-            <Toaster />
-            <Sonner />
-            <FloatingUploadProgress />
+            <MusicSyncProvider>
+              <Toaster />
+              <Sonner />
+              <FloatingUploadProgress />
             {showAnimation && !animationComplete && (
               <VaultDoorAnimation onComplete={handleAnimationComplete} />
             )}
@@ -73,6 +75,7 @@ const App = () => {
                 </Routes>
               </BrowserRouter>
             </div>
+            </MusicSyncProvider>
           </SpotifyPlayerProvider>
         </UploadProvider>
       </TooltipProvider>

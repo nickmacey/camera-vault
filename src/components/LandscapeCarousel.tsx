@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
+import { useMusicSync } from "@/contexts/MusicSyncContext";
 
 interface LandscapePhoto {
   id: string;
@@ -14,6 +15,12 @@ interface LandscapePhoto {
 export function LandscapeCarousel() {
   const [photos, setPhotos] = useState<LandscapePhoto[]>([]);
   const [loading, setLoading] = useState(true);
+  const { syncEnabled, getAdjustedDuration, pulseEnabled, isPlaying } = useMusicSync();
+  
+  // Calculate carousel duration based on music sync
+  const carouselDuration = useMemo(() => {
+    return getAdjustedDuration(60);
+  }, [getAdjustedDuration]);
 
   useEffect(() => {
     fetchLandscapePhotos();
@@ -93,15 +100,21 @@ export function LandscapeCarousel() {
       <div className="relative w-full">
         <motion.div
           className="flex gap-4"
-        animate={{
-          x: [0, -50 * photos.length + "%"],
-        }}
-        transition={{
-          x: {
-            repeat: Infinity,
-            repeatType: "loop",
-            duration: 60,
+          animate={{
+            x: [0, -50 * photos.length + "%"],
+            scale: pulseEnabled && isPlaying ? [1, 1.02, 1] : 1,
+          }}
+          transition={{
+            x: {
+              repeat: Infinity,
+              repeatType: "loop",
+              duration: carouselDuration,
               ease: "linear",
+            },
+            scale: {
+              repeat: Infinity,
+              duration: 0.5,
+              ease: "easeInOut",
             },
           }}
         >
