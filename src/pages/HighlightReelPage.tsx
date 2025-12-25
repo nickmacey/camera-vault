@@ -10,6 +10,8 @@ import { LandscapeCarousel } from "@/components/LandscapeCarousel";
 import { PrintShopSection } from "@/components/PrintShopSection";
 import { MyStorySection } from "@/components/MyStorySection";
 import { PersistentSpotifyPlayer } from "@/components/PersistentSpotifyPlayer";
+import { MusicSyncControls } from "@/components/MusicSyncControls";
+import { useMusicSync } from "@/contexts/MusicSyncContext";
 
 interface MediaItem {
   id: string;
@@ -35,6 +37,7 @@ export default function HighlightReelPage() {
   const [loading, setLoading] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [managerOpen, setManagerOpen] = useState(false);
+  const { syncEnabled, getAdjustedDuration } = useMusicSync();
 
   useEffect(() => {
     fetchBestMedia();
@@ -293,7 +296,7 @@ export default function HighlightReelPage() {
             x: {
               repeat: Infinity,
               repeatType: "loop",
-              duration: 30,
+              duration: getAdjustedDuration(30),
               ease: "linear",
             },
           }}
@@ -341,6 +344,9 @@ export default function HighlightReelPage() {
       {/* Print Shop Section */}
       <PrintShopSection />
 
+      {/* Music Sync Controls */}
+      <MusicSyncControls />
+
       {/* Spotify Mini Player */}
       <PersistentSpotifyPlayer />
 
@@ -367,6 +373,7 @@ interface MediaGridProps {
 
 function MediaGrid({ items, preset, isPaused }: MediaGridProps) {
   const filter = presets[preset];
+  const { syncEnabled, getAdjustedDuration, pulseEnabled, isPlaying: musicPlaying } = useMusicSync();
   
   // Create grid-based positions with subtle offset for artistic feel - much less overlap
   const positions = useMemo(() => {
@@ -383,13 +390,15 @@ function MediaGrid({ items, preset, isPaused }: MediaGridProps) {
       const offsetX = (Math.random() - 0.5) * 6; // Small random offset ±3%
       const offsetY = (Math.random() - 0.5) * 8; // Small random offset ±4%
       
+      const baseDuration = 20 + Math.random() * 10;
+      
       return {
         x: baseX + offsetX,
         y: baseY + offsetY,
         scale: 0.95 + Math.random() * 0.1, // 0.95-1.05 scale (minimal variation)
         rotation: (Math.random() - 0.5) * 4, // -2 to 2 degrees
         delay: i * 0.1,
-        duration: 20 + Math.random() * 10, // 20-30s gentle float
+        baseDuration, // Store base duration
       };
     });
   }, [items.length]);
@@ -414,12 +423,14 @@ function MediaGrid({ items, preset, isPaused }: MediaGridProps) {
                         opacity: 1,
                         y: [0, -8, 0, 6, 0],
                         rotate: [pos.rotation, pos.rotation + 1, pos.rotation - 1, pos.rotation],
+                        scale: pulseEnabled && musicPlaying ? [1, 1.03, 1] : 1,
                       }
                 }
                 transition={{
                   opacity: { duration: 0.6, delay: pos.delay },
-                  y: { duration: pos.duration, repeat: Infinity, ease: "easeInOut" },
-                  rotate: { duration: pos.duration * 1.5, repeat: Infinity, ease: "easeInOut" },
+                  y: { duration: getAdjustedDuration(pos.baseDuration), repeat: Infinity, ease: "easeInOut" },
+                  rotate: { duration: getAdjustedDuration(pos.baseDuration * 1.5), repeat: Infinity, ease: "easeInOut" },
+                  scale: { duration: 0.4, repeat: Infinity, ease: "easeInOut" },
                 }}
                 style={{
                   transform: `rotate(${pos.rotation}deg)`,
