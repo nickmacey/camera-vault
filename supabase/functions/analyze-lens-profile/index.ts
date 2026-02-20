@@ -22,10 +22,10 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: 'AI service not configured' }), {
+    if (!ANTHROPIC_API_KEY) {
+      return new Response(JSON.stringify({ error: 'ANTHROPIC_API_KEY is not configured' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -45,7 +45,6 @@ serve(async (req) => {
 
     console.log('Analyzing lens profile for user:', user.id);
 
-    // Get user's profile for first name
     const { data: profile } = await supabase
       .from('profiles')
       .select('first_name')
@@ -54,7 +53,6 @@ serve(async (req) => {
 
     const firstName = profile?.first_name || 'this photographer';
 
-    // Get user's top photos with AI analysis
     const { data: photos, error: photosError } = await supabase
       .from('photos')
       .select('ai_analysis, description, overall_score, artistic_score, emotional_score, technical_score, commercial_score, location_data, date_taken, custom_tags')
@@ -81,7 +79,6 @@ serve(async (req) => {
       });
     }
 
-    // Compile photo insights
     const photoInsights = photos.map((p, i) => ({
       rank: i + 1,
       analysis: p.ai_analysis,
@@ -152,44 +149,40 @@ Format the response as JSON with these exact keys:
   "firstPersonStory": "string"
 }`;
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4096,
+        system: systemPrompt,
         messages: [
-          { role: 'system', content: systemPrompt },
           { role: 'user', content: analysisPrompt },
         ],
       }),
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Anthropic API error:', response.status, errorText);
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: 'Rate limit exceeded, please try again later' }), {
           status: 429,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: 'AI credits required' }), {
-          status: 402,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      throw new Error('AI analysis failed');
+      throw new Error('Anthropic API error');
     }
 
     const aiResponse = await response.json();
-    const content = aiResponse.choices?.[0]?.message?.content;
+    const content = aiResponse.content?.[0]?.text;
 
-    // Parse JSON from response
     let lensProfile;
     try {
-      // Try to extract JSON from the response
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         lensProfile = JSON.parse(jsonMatch[0]);
@@ -198,11 +191,9 @@ Format the response as JSON with these exact keys:
       }
     } catch (parseError) {
       console.error('Failed to parse AI response:', parseError);
-      // Return raw content if parsing fails
       lensProfile = { raw: content };
     }
 
-    // Store the lens profile in the profiles table
     const { error: updateError } = await supabase
       .from('profiles')
       .update({

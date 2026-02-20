@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,12 +20,11 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
+    const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+    if (!ANTHROPIC_API_KEY) {
+      throw new Error('ANTHROPIC_API_KEY is not configured');
     }
 
-    // Create a prompt for semantic search
     const photoList = photoDescriptions.map((p: any, i: number) => 
       `[${i}] ID: ${p.id} | Score: ${p.score || 'N/A'} | Filename: ${p.filename} | Description: ${p.description || 'No description'}`
     ).join('\n');
@@ -47,14 +45,16 @@ Instructions:
 
 Respond with ONLY the JSON array, no explanation. Example: ["id1", "id2", "id3"]`;
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1024,
         messages: [
           { role: 'user', content: prompt }
         ],
@@ -63,7 +63,7 @@ Respond with ONLY the JSON array, no explanation. Example: ["id1", "id2", "id3"]
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('AI Gateway error:', response.status, errorText);
+      console.error('Anthropic API error:', response.status, errorText);
       
       if (response.status === 429) {
         return new Response(
@@ -71,23 +71,15 @@ Respond with ONLY the JSON array, no explanation. Example: ["id1", "id2", "id3"]
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: 'Usage limit reached' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
       
-      throw new Error(`AI Gateway error: ${response.status}`);
+      throw new Error(`Anthropic API error: ${response.status}`);
     }
 
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || '[]';
+    const content = data.content?.[0]?.text || '[]';
     
-    // Parse the JSON response
     let matchingIds: string[] = [];
     try {
-      // Clean up the response (remove markdown code blocks if present)
       const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       matchingIds = JSON.parse(cleaned);
     } catch (e) {
